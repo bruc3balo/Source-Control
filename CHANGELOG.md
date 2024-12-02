@@ -1,3 +1,5 @@
 ## 1.0.0
 
-- Initial version.
+- Command parsing
+- Command interpretation
+- Command execution

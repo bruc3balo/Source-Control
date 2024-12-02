@@ -14,13 +14,13 @@ class Branch {
     bool Function(String name)? isValidBranchName,
     Function(String name)? onInvalidBranchName,
     Function()? onBranchAlreadyExists,
-    Function()? onRepositoryInitialized,
-    Function()? onBranchCreated,
+    Function()? onRepositoryNotInitialized,
+    Function(Directory)? onBranchCreated,
     Function(FileSystemException)? onFileSystemException,
   }) async {
     try {
       if (!repository.isInitialized) {
-        onRepositoryInitialized?.call();
+        onRepositoryNotInitialized?.call();
         return;
       }
 
@@ -52,7 +52,7 @@ class Branch {
         recursive: true,
       );
 
-      onBranchCreated?.call();
+      onBranchCreated?.call(newBranch);
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
@@ -61,12 +61,12 @@ class Branch {
   Future<void> deleteBranch({
     Function()? onBranchDoesntExist,
     Function()? onBranchDeleted,
-    Function()? onRepositoryInitialized,
+    Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
   }) async {
     try {
       if (!repository.isInitialized) {
-        onRepositoryInitialized?.call();
+        onRepositoryNotInitialized?.call();
         return;
       }
 

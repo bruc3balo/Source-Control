@@ -1,16 +1,25 @@
 import 'dart:io';
 
+import 'package:balo/repository/repository.dart';
+
 class Ignore {
+  final Repository repository;
   final File file;
 
-  Ignore(this.file);
+  Ignore(this.repository, this.file);
 
   Future<void> createIgnoreFile({
     Function()? onAlreadyExists,
     Function()? onSuccessfullyCreated,
+    Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
   }) async {
     try {
+      if (!repository.isInitialized) {
+        onRepositoryNotInitialized?.call();
+        return;
+      }
+
       if (file.existsSync()) {
         onAlreadyExists?.call();
         return;
@@ -26,9 +35,15 @@ class Ignore {
   Future<void> deleteIgnoreFile({
     Function()? onDoesntExists,
     Function()? onSuccessfullyDeleted,
+    Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
   }) async {
     try {
+      if (!repository.isInitialized) {
+        onRepositoryNotInitialized?.call();
+        return;
+      }
+
       if (!file.existsSync()) {
         onDoesntExists?.call();
         return;

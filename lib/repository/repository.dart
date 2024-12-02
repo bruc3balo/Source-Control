@@ -12,14 +12,14 @@ class Repository {
       .any((f) => path.basename(f.path) == repositoryFolderName);
 
   Future<void> unInitializeRepository({
-    Function()? onNotInitialized,
+    Function()? onRepositoryNotInitialized,
     Function()? onSuccessfullyUninitialized,
     Function(FileSystemException)? onFileSystemException,
   }) async {
     try {
       //idempotent
       if (!isInitialized) {
-        onNotInitialized?.call();
+        onRepositoryNotInitialized?.call();
         return;
       }
 

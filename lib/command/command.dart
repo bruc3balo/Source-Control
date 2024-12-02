@@ -1,9 +1,8 @@
-// Command interface
-
 import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/branch.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
+import 'package:balo/repository/state.dart';
 
 abstract class Command {
   Future<void> execute();
@@ -12,38 +11,40 @@ abstract class Command {
 }
 
 abstract class CommandCreator {
-  List<Command> inputToCommands(String input);
+  List<Command> inputToCommands(List<String> input);
 
-  Future<void> runCommand(List<Command> commands);
+  //Run commands and return and exit code
+  Future<int> runCommand(List<Command> commands);
 }
 
 ///Parses user input and creates commands
 ///Runs commands created
 class CommandLineRunner implements CommandCreator {
-
   @override
-  List<Command> inputToCommands(String input) {
+  List<Command> inputToCommands(List<String> input) {
     List<Command> commandsToRun = [];
     return commandsToRun;
   }
 
   @override
-  Future<void> runCommand(List<Command> commands) async {
+  Future<int> runCommand(List<Command> commands) async {
     int i = 0;
     try {
       while (i < commands.length) {
         await commands[i++].execute();
       }
+      return 0;
     } catch (e) {
       while (i > 0) {
         await commands[i--].undo();
       }
+      return 1;
     }
   }
-
 }
 
-///Commands
+//Commands
+
 ///Command to initialize a repository
 class InitializeRepositoryCommand implements Command {
   final Repository repository;
@@ -62,10 +63,27 @@ class InitializeRepositoryCommand implements Command {
   @override
   Future<void> undo() async {
     await repository.unInitializeRepository(
-      onNotInitialized: () => printToConsole(
+      onRepositoryNotInitialized: () => printToConsole(
         "Balo repository is not initialized",
       ),
     );
+  }
+}
+
+///Command to create state file
+class CreateStateFileCommand implements Command {
+  final State state;
+
+  CreateStateFileCommand(this.state);
+
+  @override
+  Future<void> execute() async {
+    await state.createStateFile();
+  }
+
+  @override
+  Future<void> undo() async {
+    await state.deleteStateFile();
   }
 }
 
@@ -87,10 +105,10 @@ class CreateIgnoreFileCommand implements Command {
 }
 
 ///Command to create a branch
-class CreateBranchCommand implements Command {
+class CreateNewBranchCommand implements Command {
   final Branch branch;
 
-  CreateBranchCommand(this.branch);
+  CreateNewBranchCommand(this.branch);
 
   @override
   Future<void> execute() async {
