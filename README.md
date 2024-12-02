@@ -13,35 +13,25 @@ Build a distributed source control system in the style of Git. It should be poss
 
 ## For Windows: 
 ```bash
-
-dart compile exe bin/balo.dart -o build/windows/balo.exe --target-os=windows
-
+  dart compile exe bin/balo.dart -o build/windows/balo.exe --target-os=windows
 ```
 ## For macOS: 
 ```bash
-
-dart compile exe bin/balo.dart -o build/macos/balo --target-os=macos
-
+  dart compile exe bin/balo.dart -o build/macos/balo --target-os=macos
 ```
 ## For Linux:
 ```bash
-
-dart compile exe bin/balo.dart -o build/linux/balo --target-os=linux
-
+  dart compile exe bin/balo.dart -o build/linux/balo --target-os=linux
 ```
 
 # Running
 
 ## With dart
 ```bash
-
-dart run bin/balo.dart
-
+  dart run bin/balo.dart
 ```
 
 ## Binary
 ```bash
-
-dart run bin/balo.dart
-
+  dart run bin/balo.dart
 ```

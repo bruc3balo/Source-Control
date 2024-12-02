@@ -1,3 +1,4 @@
+import 'package:balo/command/command_mapper.dart';
 import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/branch.dart';
 import 'package:balo/repository/ignore.dart';
@@ -10,40 +11,16 @@ abstract class Command {
   Future<void> undo();
 }
 
-abstract class CommandCreator {
-  List<Command> inputToCommands(List<String> input);
-
-  //Run commands and return and exit code
-  Future<int> runCommand(List<Command> commands);
-}
-
-///Parses user input and creates commands
-///Runs commands created
-class CommandLineRunner implements CommandCreator {
+///Command to show help
+class ShowHelpCommand implements Command {
   @override
-  List<Command> inputToCommands(List<String> input) {
-    List<Command> commandsToRun = [];
-    return commandsToRun;
+  Future<void> execute() async {
+    printHelp();
   }
 
   @override
-  Future<int> runCommand(List<Command> commands) async {
-    int i = 0;
-    try {
-      while (i < commands.length) {
-        await commands[i++].execute();
-      }
-      return 0;
-    } catch (e) {
-      while (i > 0) {
-        await commands[i--].undo();
-      }
-      return 1;
-    }
-  }
+  Future<void> undo() async {}
 }
-
-//Commands
 
 ///Command to initialize a repository
 class InitializeRepositoryCommand implements Command {
@@ -55,7 +32,7 @@ class InitializeRepositoryCommand implements Command {
   Future<void> execute() async {
     await repository.initializeRepository(
       onAlreadyInitialized: () => printToConsole(
-        "Balo repository is already initialized",
+        message: "Balo repository is already initialized",
       ),
     );
   }
@@ -64,7 +41,7 @@ class InitializeRepositoryCommand implements Command {
   Future<void> undo() async {
     await repository.unInitializeRepository(
       onRepositoryNotInitialized: () => printToConsole(
-        "Balo repository is not initialized",
+        message: "Balo repository is not initialized",
       ),
     );
   }
