@@ -30,6 +30,11 @@ enum CommandMapperEnum {
     command: ["branch"],
     description: "Get branch info ",
     options: [],
+  ),
+  commit(
+    command: ["commit"],
+    description: "Commit staged files",
+    options: [CommandOptionsMapperEnum.message],
   );
 
   final List<String> command;
@@ -56,6 +61,10 @@ enum CommandOptionsMapperEnum {
   remove(
     option: ["--remove", "rm"],
     description: "Removes an entry",
+  ),
+  message(
+    option: ["-m", "--message"],
+    description: "Adds a message to a commit",
   ),
   path(
     option: ["-p", "--path"],

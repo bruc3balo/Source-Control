@@ -219,10 +219,8 @@ class GetStatusOfCurrentBranch implements Command {
 
   @override
   Future<void> execute() async {
-
     Map<String, dynamic> map = repository.state.stateInfo;
     Branch branch = Branch(map[currentBranchKey], repository);
-
 
     List<dynamic> paths = branch.staging.stagingInfo[filePathsKey];
     printToConsole(
@@ -231,6 +229,43 @@ class GetStatusOfCurrentBranch implements Command {
       alignment: TextAlignment.left,
       color: CliColor.brightGreen,
     );
+  }
+
+  @override
+  Future<void> undo() async {}
+}
+
+///Command to commit staged files
+class CommitStagedFilesCommand implements Command {
+  final Repository repository;
+  final String message;
+
+  CommitStagedFilesCommand(this.repository, this.message);
+
+  @override
+  Future<void> execute() async {
+    Branch? branch = await repository.state.getCurrentBranch();
+    if (branch == null) {
+      printToConsole(
+        message: "Failed to get current branch",
+        style: CliStyle.bold,
+        alignment: TextAlignment.left,
+        color: CliColor.red,
+      );
+      return;
+    }
+
+    late final Staging staging = Staging(branch);
+    if (!staging.isStaged) {
+      printToConsole(
+        message: "Files not staged",
+        style: CliStyle.bold,
+        alignment: TextAlignment.left,
+        color: CliColor.red,
+      );
+      return;
+    }
+    await staging.commitStagedFiles(message: message);
   }
 
   @override

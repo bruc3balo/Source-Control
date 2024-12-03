@@ -33,7 +33,6 @@ extension BranchActions on Branch {
         return;
       }
 
-
       bool branchExists = branchDirectory.existsSync();
       if (branchExists) {
         onBranchAlreadyExists?.call();
@@ -76,14 +75,15 @@ extension BranchActions on Branch {
 }
 
 extension BranchCommons on Branch {
-  Directory get branchDirectory => Directory(
-    joinAll(
-      [
-        repository.repositoryDirectory.path,
-        branchFolderName,
-        name,
-      ],
-    ),
-  );
+  String get branchDirectoryPath => joinAll(
+        [
+          repository.repositoryDirectory.path,
+          branchFolderName,
+          name,
+        ],
+      );
+
+  Directory get branchDirectory => Directory(branchDirectoryPath);
+
   Staging get staging => Staging(this);
 }

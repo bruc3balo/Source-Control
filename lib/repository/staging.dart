@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
+import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/branch.dart';
+import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/utils/utils.dart';
@@ -15,6 +18,41 @@ class Staging {
 }
 
 extension StagingActions on Staging {
+  Future<void> commitStagedFiles({
+    required String message,
+  }) async {
+    Repository r = repository;
+    Branch b = branch;
+    String sha = Random().nextInt(1000000).toString();
+
+    //Create dir
+    Directory commitDir = Directory(
+      join(
+        b.branchDirectoryPath,
+        branchCommitFolder,
+        sha,
+      ),
+    );
+    commitDir.createSync(recursive: true);
+
+    List<File> filesToBeStaged = (stagingInfo[filePathsKey] as List<dynamic>)
+        .map((e) => File(e))
+        .toList();
+
+    for (File f in filesToBeStaged) {
+      String newPath = f.path.replaceAll(r.path, commitDir.path);
+      File(newPath).createSync(recursive: true);
+      f.copySync(newPath);
+      printToConsole(message: "${f.path} -> $newPath");
+    }
+
+
+    Commit commit = Commit(sha, branch);
+
+    //Delete staging
+    stagingFile.deleteSync();
+  }
+
   Future<void> stageFiles({
     required String pattern,
     Function()? onUninitializedRepository,
@@ -25,14 +63,14 @@ extension StagingActions on Staging {
         onUninitializedRepository?.call();
         return;
       }
-      
+
       //Ignore staging these files
       List<String> patternsToIgnore = ignore.patternsToIgnore;
 
-
       //List files for staging
-      List<FileSystemEntity> filesToBeStaged = repository.repositoryDirectory.parent
-              .listSync(recursive: true, followLinks: false)
+      List<FileSystemEntity> filesToBeStaged =
+          await repository.repositoryDirectory.parent
+              .list(recursive: true, followLinks: false)
 
               //Files only
               .where((f) => f.statSync().type == FileSystemEntityType.file)
@@ -89,7 +127,10 @@ extension StagingActions on Staging {
 }
 
 extension StagingCommons on Staging {
-  File get stagingFile => File(join(branch.branchDirectory.path, branchStage));
+  bool get isStaged => stagingFile.existsSync();
+  File get stagingFile => File(stagingFilePath);
+
+  String get stagingFilePath => join(branch.branchDirectory.path, branchStage);
 
   Repository get repository => branch.repository;
 

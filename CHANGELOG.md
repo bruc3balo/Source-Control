@@ -9,3 +9,4 @@
 - Add and Remove from ignore file
 - Get status of current branch
 - Stage files command
+- Commit files to a branch

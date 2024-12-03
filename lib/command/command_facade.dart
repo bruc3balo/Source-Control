@@ -107,15 +107,22 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
 
 class PrintCurrentBranchInitializer implements CommandFacade {
   @override
-  List<Command> initialize() => [
-    PrintCurrentBranchCommand(Repository(Directory.current.path))
-  ];
+  List<Command> initialize() =>
+      [PrintCurrentBranchCommand(Repository(Directory.current.path))];
 }
 
-
-class PrintStatusOfCurrentBranch implements CommandFacade {
+class PrintStatusOfCurrentBranchInitializer implements CommandFacade {
   @override
-  List<Command> initialize() => [
-    GetStatusOfCurrentBranch(Repository(Directory.current.path))
-  ];
+  List<Command> initialize() =>
+      [GetStatusOfCurrentBranch(Repository(Directory.current.path))];
+}
+
+class CommitStagedFilesInitializer implements CommandFacade {
+  final String message;
+
+  CommitStagedFilesInitializer(this.message);
+
+  @override
+  List<Command> initialize() =>
+      [CommitStagedFilesCommand(Repository(Directory.current.path), message)];
 }
