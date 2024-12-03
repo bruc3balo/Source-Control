@@ -1,12 +1,20 @@
 import 'dart:io';
 
 import 'package:balo/repository/repository.dart';
+import 'package:balo/variables.dart';
+import 'package:path/path.dart';
 
 class Ignore {
   final Repository repository;
-  final File file;
 
-  Ignore(this.repository, this.file);
+  File get file => File(
+        join(
+          repository.directory.parent.path,
+          repositoryIgnoreFileName,
+        ),
+      );
+
+  Ignore(this.repository);
 
   Future<void> createIgnoreFile({
     Function()? onAlreadyExists,

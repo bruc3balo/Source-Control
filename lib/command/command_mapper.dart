@@ -26,6 +26,11 @@ enum CommandMapperEnum {
     required this.type,
     required this.options,
   });
+
+  static final Map<String, CommandMapperEnum> commandOptionsMap = {
+    for (var e in CommandMapperEnum.values)
+      for (var a in e.command) a.toLowerCase().trim(): e
+  };
 }
 
 enum CommandOptionsMapperEnum {
@@ -41,6 +46,11 @@ enum CommandOptionsMapperEnum {
     required this.option,
     required this.description,
   });
+
+  static final Map<String, CommandOptionsMapperEnum> commandOptionsMap = {
+    for (var e in CommandOptionsMapperEnum.values)
+      for (var a in e.option) a.toLowerCase().trim(): e
+  };
 }
 
 void printHelp() {

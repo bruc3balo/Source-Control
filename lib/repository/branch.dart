@@ -1,11 +1,22 @@
 import 'dart:io';
 
+import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/variables.dart';
 import 'package:path/path.dart';
 
 class Branch {
   final Repository repository;
+
+  Directory get directory => Directory(
+        joinAll(
+          [
+            repository.directory.path,
+            branchFolderName,
+            name,
+          ],
+        ),
+      );
   final String name;
 
   Branch(this.name, this.repository);
@@ -24,35 +35,25 @@ class Branch {
         return;
       }
 
-      String repositoryPath = repository.directory.path;
-      String branchesPath = join(repositoryPath, branchFolderName);
-
-      Directory branches = Directory(branchesPath);
-      if (!branches.existsSync()) {
-        branches = await branches.create(recursive: true);
-      }
-      assert(branches.existsSync());
-
       bool valid = isValidBranchName?.call(name) ?? true;
       if (!valid) {
         onInvalidBranchName?.call(name);
         return;
       }
 
-      bool branchExists = branches
-          .listSync(recursive: false)
-          .any((b) => basename(b.path) == name);
+      printToConsole(message: "Branch : ${repository.path}");
 
+      bool branchExists = directory.existsSync();
       if (branchExists) {
         onBranchAlreadyExists?.call();
         return;
       }
 
-      Directory newBranch = await Directory(join(branchesPath, name)).create(
+      await directory.create(
         recursive: true,
       );
 
-      onBranchCreated?.call(newBranch);
+      onBranchCreated?.call(directory);
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
@@ -70,16 +71,12 @@ class Branch {
         return;
       }
 
-      String repositoryPath = repository.directory.path;
-      String branchPath = joinAll([repositoryPath, branchFolderName, name]);
-
-      Directory branches = Directory(branchPath);
-      if (!branches.existsSync()) {
+      if (!directory.existsSync()) {
         onBranchDoesntExist?.call();
         return;
       }
 
-      branches.deleteSync();
+      directory.deleteSync(recursive: true);
       onBranchDeleted?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);

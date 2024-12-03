@@ -1,15 +1,15 @@
 import 'dart:io';
 import 'package:balo/variables.dart';
-import 'package:path/path.dart' as path;
+import 'package:path/path.dart';
 
 class Repository {
-  final Directory directory;
+  final String path;
 
-  Repository(this.directory);
+  Directory get directory => Directory(join(path, repositoryFolderName));
 
-  bool get isInitialized => directory
-      .listSync(recursive: false)
-      .any((f) => path.basename(f.path) == repositoryFolderName);
+  Repository(this.path);
+
+  bool get isInitialized => directory.existsSync();
 
   Future<void> unInitializeRepository({
     Function()? onRepositoryNotInitialized,
@@ -23,14 +23,8 @@ class Repository {
         return;
       }
 
-      //Delete directory
-      String repositoryFolderPath = path.join(
-        directory.path,
-        repositoryFolderName,
-      );
 
-      await Directory(repositoryFolderPath).delete(recursive: true);
-
+      directory.deleteSync(recursive: true);
       onSuccessfullyUninitialized?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
@@ -49,21 +43,10 @@ class Repository {
         return;
       }
 
-      //Create directory
-      String repositoryFolderPath = path.join(
-        directory.path,
-        repositoryFolderName,
-      );
-
-      await Directory(repositoryFolderPath).create();
-
+      directory.createSync(recursive: true);
       onSuccessfullyInitialized?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
   }
 }
-
-
-
-

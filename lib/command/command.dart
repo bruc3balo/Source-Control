@@ -4,6 +4,7 @@ import 'package:balo/repository/branch.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/state.dart';
+import 'package:dart_console/dart_console.dart';
 
 abstract class Command {
   Future<void> execute();
@@ -22,6 +23,27 @@ class ShowHelpCommand implements Command {
   Future<void> undo() async {}
 }
 
+///Command to show help
+class ShowErrorCommand implements Command {
+  final String error;
+
+  ShowErrorCommand(this.error);
+
+  @override
+  Future<void> execute() async {
+    printToConsole(
+      message: error,
+      color: CliColor.red,
+      newLine: true,
+      alignment: TextAlignment.center,
+      style: CliStyle.bold,
+    );
+  }
+
+  @override
+  Future<void> undo() async {}
+}
+
 ///Command to initialize a repository
 class InitializeRepositoryCommand implements Command {
   final Repository repository;
@@ -33,6 +55,9 @@ class InitializeRepositoryCommand implements Command {
     await repository.initializeRepository(
       onAlreadyInitialized: () => printToConsole(
         message: "Balo repository is already initialized",
+      ),
+      onSuccessfullyInitialized: () => printToConsole(
+        message: "Repository initialized",
       ),
     );
   }

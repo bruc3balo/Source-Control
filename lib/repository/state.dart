@@ -1,19 +1,29 @@
 import 'dart:io';
 
+import 'package:balo/repository/branch.dart';
 import 'package:balo/repository/repository.dart';
+import 'package:balo/variables.dart';
+import 'package:path/path.dart';
 
 class State {
   final Repository repository;
-  final File file;
+  String currentBranch;
 
-  State(this.repository, this.file);
+  File get file => File(
+        joinAll([
+          repository.directory.path,
+          stateFileName,
+        ]),
+      );
+
+  State(this.repository, this.currentBranch);
 
   Future<void> createStateFile({
     Function()? onAlreadyExists,
     Function()? onSuccessfullyCreated,
     Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
-}) async {
+  }) async {
     try {
       if (!repository.isInitialized) {
         onRepositoryNotInitialized?.call();
@@ -55,5 +65,4 @@ class State {
       onFileSystemException?.call(e);
     }
   }
-
 }

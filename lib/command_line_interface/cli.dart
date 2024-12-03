@@ -1,7 +1,14 @@
 import 'dart:io';
 
 import 'package:balo/command/command.dart';
+import 'package:balo/command/command_facade.dart';
+import 'package:balo/command/command_mapper.dart';
+import 'package:balo/repository/ignore.dart';
+import 'package:balo/repository/repository.dart';
+import 'package:balo/user_input.dart';
+import 'package:balo/variables.dart';
 import 'package:dart_console/dart_console.dart';
+import 'package:path/path.dart';
 
 final Console console = Console();
 
@@ -53,7 +60,6 @@ enum CliColor {
 }
 
 enum CliStyle {
-
   bold('\x1B[1m'),
   underline('\x1B[4m'),
   reversed('\x1B[7m');
@@ -62,7 +68,6 @@ enum CliStyle {
 
   const CliStyle(this.style);
 }
-
 
 String? listenForInput({String? title}) {
   //Write title
@@ -82,13 +87,14 @@ void printToConsole({
   CliStyle? style,
   TextAlignment alignment = TextAlignment.left,
 }) {
-  String data = '${newLine ? '\n' : ''}${color.color}${style?.style ?? ''}$message${CliColor.defaultColor.color}';
+  String data =
+      '${newLine ? '\n' : ''}${color.color}${style?.style ?? ''}$message${CliColor.defaultColor.color}';
   console.writeLine(data, alignment);
 }
 
 /// CommandExecutor
 abstract class CommandExecutor {
-  List<Command> inputToCommands(List<String> input);
+  List<Command> inputToCommands(UserInput userInput);
 
   //Run commands and return and exit code
   Future<int> runCommand(List<Command> commands);
@@ -98,14 +104,23 @@ abstract class CommandExecutor {
 ///Runs commands created
 class CommandLineRunner implements CommandExecutor {
   @override
-  List<Command> inputToCommands(List<String> input) {
-    if (input.isEmpty) {
-      //Show help
-      return [ShowHelpCommand()];
-    }
+  List<Command> inputToCommands(UserInput userInput) {
+    if (userInput.isEmpty) return [ShowHelpCommand()];
 
-    List<Command> commandsToRun = [];
-    return commandsToRun;
+    CommandMapperEnum? commandEnum = userInput.commandEnum;
+    Map<CommandOptionsMapperEnum, String?> optionMapEnum =
+        userInput.mapOptionsEnum;
+
+    switch (commandEnum) {
+      case CommandMapperEnum.help:
+        return [ShowHelpCommand()];
+      case CommandMapperEnum.init:
+        String? path = optionMapEnum[CommandOptionsMapperEnum.path];
+        if (path == "." || path == null) path = Directory.current.path;
+        return RepositoryInitializer(path).initialize();
+      default:
+        return [ShowErrorCommand("Unknown command ${userInput.command}")];
+    }
   }
 
   @override
