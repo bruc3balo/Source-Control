@@ -119,8 +119,9 @@ class CommandLineRunner implements CommandExecutor {
 
       case CommandMapperEnum.add:
         //Path
-        String? path = optionMapEnum[CommandOptionsMapperEnum.path];
-        if (path == "." || path == null) path = "*";
+        String? path = optionMapEnum[CommandOptionsMapperEnum.pattern];
+        if("." == path) path = "*";
+        path ??= "*";
 
         return StageFilesInitializer(path);
 
@@ -134,6 +135,16 @@ class CommandLineRunner implements CommandExecutor {
           patternToAdd: patternToAdd,
           patternToRemove: patternToRemove,
         );
+      case CommandMapperEnum.branch:
+
+        if(optionMapEnum.isEmpty) {
+          return PrintCurrentBranchInitializer();
+        }
+
+        return PrintCurrentBranchInitializer();
+      case CommandMapperEnum.status:
+
+        return PrintStatusOfCurrentBranch();
       default:
         return ErrorInitializer("Unknown command ${userInput.command}");
     }

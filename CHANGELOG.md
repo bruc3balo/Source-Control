@@ -7,4 +7,5 @@
 - Empty input handler
 - Initialize repository with init command
 - Add and Remove from ignore file
+- Get status of current branch
 - Stage files command

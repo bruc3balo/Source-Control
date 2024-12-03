@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:balo/repository/repository.dart';
+import 'package:balo/repository/staging.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
@@ -84,4 +85,5 @@ extension BranchCommons on Branch {
       ],
     ),
   );
+  Staging get staging => Staging(this);
 }

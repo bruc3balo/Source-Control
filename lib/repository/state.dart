@@ -38,6 +38,19 @@ extension StateCommons on State {
 }
 
 extension StateActions on State {
+
+  Future<Branch?> getCurrentBranch({
+    Function()? onRepositoryNotInitialized,
+  }) async {
+    if (!repository.isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return null;
+    }
+
+    String branch = stateInfo[currentBranchKey];
+    return Branch(branch, repository);
+  }
+
   Future<void> createStateFile({
     required String currentBranch,
     Function()? onAlreadyExists,

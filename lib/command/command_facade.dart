@@ -11,7 +11,6 @@ abstract class CommandFacade {
 }
 
 class ErrorInitializer implements CommandFacade {
-
   final String error;
 
   ErrorInitializer(this.error);
@@ -21,7 +20,6 @@ class ErrorInitializer implements CommandFacade {
 }
 
 class HelpInitializer implements CommandFacade {
-
   @override
   List<Command> initialize() => [ShowHelpCommand()];
 }
@@ -74,7 +72,6 @@ class StageFilesInitializer implements CommandFacade {
 }
 
 class ModifyIgnoreFileInitializer implements CommandFacade {
-
   final String? patternToAdd;
   final String? patternToRemove;
 
@@ -82,26 +79,43 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
 
   @override
   List<Command> initialize() {
-    if ((patternToAdd == null || patternToAdd!.isEmpty) && (patternToRemove == null || patternToRemove!.isEmpty)) {
+    if ((patternToAdd == null || patternToAdd!.isEmpty) &&
+        (patternToRemove == null || patternToRemove!.isEmpty)) {
       return [ShowErrorCommand("Pattern to add or remove required")];
     }
 
-    if(patternToAdd == patternToRemove) {
-      return [ShowErrorCommand("Pattern to add and remove should not be the same")];
+    if (patternToAdd == patternToRemove) {
+      return [
+        ShowErrorCommand("Pattern to add and remove should not be the same")
+      ];
     }
 
     Repository repository = Repository(Directory.current.path);
     List<Command> commands = [];
 
-    if(patternToAdd != null && patternToAdd!.isNotEmpty) {
+    if (patternToAdd != null && patternToAdd!.isNotEmpty) {
       commands.add(AddIgnorePatternCommand(repository, patternToAdd!));
     }
 
-    if(patternToRemove != null && patternToRemove!.isNotEmpty) {
+    if (patternToRemove != null && patternToRemove!.isNotEmpty) {
       commands.add(RemoveIgnorePatternCommand(repository, patternToRemove!));
     }
 
     return commands;
   }
+}
 
+class PrintCurrentBranchInitializer implements CommandFacade {
+  @override
+  List<Command> initialize() => [
+    PrintCurrentBranchCommand(Repository(Directory.current.path))
+  ];
+}
+
+
+class PrintStatusOfCurrentBranch implements CommandFacade {
+  @override
+  List<Command> initialize() => [
+    GetStatusOfCurrentBranch(Repository(Directory.current.path))
+  ];
 }

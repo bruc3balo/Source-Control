@@ -1,18 +1,55 @@
-String convertPatternToRegExp(String pattern) {
-// Escape special regex characters
-  pattern = pattern.replaceAllMapped(
-    RegExp(r'[.\\^$+(){}|[\]]'),
-    (match) => '\\${match[0]}',
-  );
+// bool shouldIgnorePath(String path, List<String> ignoredPatterns) {
+//   // Get the basename of the file
+//   String basename = path.split('/').last;
+//
+//   for (String pattern in ignoredPatterns) {
+//     // Check for exact file extension match
+//     if (pattern.startsWith('.')) {
+//       if (basename.endsWith(pattern)) return true;
+//     }
+//
+//     // Check for exact filename match
+//     if (basename == pattern) return true;
+//
+//     // Check for nested path match
+//     if (path.contains('/$pattern/') || path.contains('/$pattern')) return true;
+//   }
+//
+//   return false;
+// }
+//
+// bool shouldAddPath(String path, String pattern) {
+//   // Get the basename of the file
+//   String basename = path.split('/').last;
+//
+//   // Check if pattern starts with a dot (file extension)
+//   if (pattern.startsWith('.')) {
+//     return basename.endsWith(pattern);
+//   }
+//
+//   // Check for exact filename match
+//   if (basename == pattern) return true;
+//
+//   // Check for path containing the pattern
+//   return path.contains('/$pattern/') || path.contains('/$pattern');
+// }
 
-// Convert '*' to '.*' for wildcard matching
-  pattern = pattern.replaceAll('*', '.*');
+bool shouldIgnorePath(String path, List<String> ignoredPatterns) {
+  return ignoredPatterns.any((pattern) {
+    // Convert pattern to a regex that matches file extensions, exact filenames, and nested paths
+    String regexPattern = pattern.startsWith('.')
+        ? r'(^|/)' + pattern.replaceFirst('.', r'\.')  + r'(/|$)'
+        : r'(^|/)' + pattern + r'(/|$)';
 
-// Anchor the pattern to the start of the string
-  if (!pattern.startsWith('^')) pattern = '^$pattern';
+    return RegExp(regexPattern).hasMatch(path);
+  });
+}
 
-// Anchor the pattern to the end of the string if it doesn't end with '.*'
-  if (!pattern.endsWith('.*')) pattern += r'$';
+bool shouldAddPath(String path, String pattern) {
+  // Convert pattern to a regex that matches file extensions, exact filenames, and nested paths
+  String regexPattern = pattern.startsWith('.')
+      ? r'(^|/)' + pattern.replaceFirst('.', r'\.')  + r'(/|$)'
+      : r'(^|/)' + pattern + r'(/|$)';
 
-  return pattern;
+  return RegExp(regexPattern).hasMatch(path);
 }

@@ -1,4 +1,3 @@
-import 'package:balo/command/command.dart';
 import 'package:balo/command_line_interface/cli.dart';
 
 enum CommandMapperEnum {
@@ -21,6 +20,16 @@ enum CommandMapperEnum {
     command: ["ignore"],
     description: "Modify ignore file",
     options: [CommandOptionsMapperEnum.add, CommandOptionsMapperEnum.remove],
+  ),
+  status(
+    command: ["status"],
+    description: "Get status of stage",
+    options: [],
+  ),
+  branch(
+    command: ["branch"],
+    description: "Get branch info ",
+    options: [],
   );
 
   final List<String> command;

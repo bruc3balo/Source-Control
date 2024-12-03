@@ -25,31 +25,26 @@ extension StagingActions on Staging {
         onUninitializedRepository?.call();
         return;
       }
-
-      //Looking for this pattern
-      RegExp expectedReg = RegExp(convertPatternToRegExp(pattern));
-
+      
       //Ignore staging these files
       List<String> patternsToIgnore = ignore.patternsToIgnore;
-      List<RegExp> regToIgnore = patternsToIgnore
-          .map((p) => RegExp(convertPatternToRegExp(p)))
-          .toList();
+
 
       //List files for staging
-      List<FileSystemEntity> filesToBeStaged = repository
-          .repositoryDirectory.parent
-          .listSync(recursive: true, followLinks: false)
+      List<FileSystemEntity> filesToBeStaged = repository.repositoryDirectory.parent
+              .listSync(recursive: true, followLinks: false)
 
-          //Files only
-          .where((f) => f.statSync().type == FileSystemEntityType.file)
+              //Files only
+              .where((f) => f.statSync().type == FileSystemEntityType.file)
 
-          //Pattern match
-          .where((f) => expectedReg.hasMatch(basename(f.path)))
+              //Pattern match
+              .where((f) => shouldAddPath(f.path, pattern))
 
-          //Ignore
-          .where(
-              (f) => !regToIgnore.any((reg) => reg.hasMatch(basename(f.path))))
-          .toList();
+              //Ignore
+              .where(
+                (f) => !shouldIgnorePath(f.path, patternsToIgnore),
+              )
+              .toList();
 
       //Clear previous staging
       if (stagingFile.existsSync()) {

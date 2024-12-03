@@ -125,7 +125,6 @@ extension IgnoreCommons on Ignore {
       ? ignoreFile
           .readAsLinesSync()
           .where((p) => p.isNotEmpty && !p.startsWith("#"))
-          .map((p) => convertPatternToRegExp(p))
           .toList()
       : [];
 }

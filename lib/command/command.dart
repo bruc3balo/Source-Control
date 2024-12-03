@@ -5,6 +5,7 @@ import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging.dart';
 import 'package:balo/repository/state.dart';
+import 'package:balo/utils/variables.dart';
 import 'package:dart_console/dart_console.dart';
 
 abstract class Command {
@@ -181,4 +182,57 @@ class RemoveIgnorePatternCommand implements Command {
   Future<void> undo() async {
     repository.ignore.addIgnore(pattern: pattern);
   }
+}
+
+///Command to print the current branch
+class PrintCurrentBranchCommand implements Command {
+  final Repository repository;
+
+  PrintCurrentBranchCommand(this.repository);
+
+  @override
+  Future<void> execute() async {
+    Branch? branch = await repository.state.getCurrentBranch(
+      onRepositoryNotInitialized: () =>
+          printToConsole(message: "Repository not initialized"),
+    );
+
+    if (branch == null) return;
+
+    printToConsole(
+      message: "${branch.name}*",
+      style: CliStyle.bold,
+      alignment: TextAlignment.left,
+      color: CliColor.brightCyan,
+    );
+  }
+
+  @override
+  Future<void> undo() async {}
+}
+
+///Command to get status of current branch
+class GetStatusOfCurrentBranch implements Command {
+  final Repository repository;
+
+  GetStatusOfCurrentBranch(this.repository);
+
+  @override
+  Future<void> execute() async {
+
+    Map<String, dynamic> map = repository.state.stateInfo;
+    Branch branch = Branch(map[currentBranchKey], repository);
+
+
+    List<dynamic> paths = branch.staging.stagingInfo[filePathsKey];
+    printToConsole(
+      message: paths.join("\n"),
+      style: CliStyle.bold,
+      alignment: TextAlignment.left,
+      color: CliColor.brightGreen,
+    );
+  }
+
+  @override
+  Future<void> undo() async {}
 }
