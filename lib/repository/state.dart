@@ -1,24 +1,45 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:balo/repository/branch.dart';
 import 'package:balo/repository/repository.dart';
-import 'package:balo/variables.dart';
+import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
 class State {
   final Repository repository;
-  String currentBranch;
 
-  File get file => File(
+  State(this.repository);
+}
+
+extension StateCommons on State {
+
+  File get stateFile => File(
         joinAll([
-          repository.directory.path,
+          repository.repositoryDirectory.path,
           stateFileName,
         ]),
       );
 
-  State(this.repository, this.currentBranch);
+  Map<String, dynamic> get stateInfo {
+    //Read file
+    String fileData = stateFile.readAsStringSync();
+    if (fileData.isEmpty) return {};
 
+    Map<String, dynamic> stateInfo = jsonDecode(fileData);
+    return stateInfo;
+  }
+
+  Branch get currentBranch {
+    String currentBranchName = stateInfo[currentBranchKey];
+    return Branch(currentBranchName, repository);
+  }
+
+}
+
+extension StateActions on State {
   Future<void> createStateFile({
+    required String currentBranch,
     Function()? onAlreadyExists,
     Function()? onSuccessfullyCreated,
     Function()? onRepositoryNotInitialized,
@@ -30,12 +51,18 @@ class State {
         return;
       }
 
-      if (file.existsSync()) {
+      if (stateFile.existsSync()) {
         onAlreadyExists?.call();
         return;
       }
 
-      await file.create(recursive: true, exclusive: true);
+      await stateFile.create(recursive: true, exclusive: true);
+
+      Map<String, dynamic> info = {currentBranchKey: currentBranch};
+
+      //Write state to file
+      stateFile.writeAsStringSync(jsonEncode(info));
+
       onSuccessfullyCreated?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
@@ -54,12 +81,12 @@ class State {
         return;
       }
 
-      if (!file.existsSync()) {
+      if (!stateFile.existsSync()) {
         onDoesntExists?.call();
         return;
       }
 
-      await file.delete(recursive: true);
+      await stateFile.delete(recursive: true);
       onSuccessfullyDeleted?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);

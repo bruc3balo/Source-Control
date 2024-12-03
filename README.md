@@ -7,31 +7,70 @@ Build a distributed source control system in the style of Git. It should be poss
 - Commands have been done with the **Command Design Pattern**
 - The inputs parsed into a list commands with the **Facade** pattern
 
-
-
 # Build
-
-## For Windows: 
+#### For Windows: 
 ```bash
   dart compile exe bin/balo.dart -o build/windows/balo.exe --target-os=windows
 ```
-## For macOS: 
+#### For macOS: 
 ```bash
   dart compile exe bin/balo.dart -o build/macos/balo --target-os=macos
 ```
-## For Linux:
+#### For Linux:
 ```bash
   dart compile exe bin/balo.dart -o build/linux/balo --target-os=linux
 ```
 
 # Running
 
-## With dart
+### Dart
 ```bash
   dart run bin/balo.dart
 ```
 
-## Binary
+### Binary
+#### For Windows:
 ```bash
-  dart run bin/balo.dart
+  ./build/windows/balo
+```
+### For macOS:
+```bash
+  ./build/macos/balo
+```
+### For Linux:
+```bash
+   ./build/linux/balo
+```
+
+# Installing Options
+#### For Windows:
+- Copy to System32
+```bash
+  copy .build\windows\balo.exe C:\Windows\System32\balo.exe
+```
+
+- Create symlink to System32
+```bash
+  mklink C:\Windows\System32\balo.exe .\build\windows\balo.exe 
+```
+
+#### For macOS:
+- Copy to local bin directory
+```bash
+  sudo cp .build/macos/balo /usr/local/bin/balo && sudo chmod +x /usr/local/bin/balo
+```
+- Create symlink to local bin directory
+```bash
+  sudo ln -s .build/macos/balo /usr/local/bin/balo 
+```
+
+#### For Linux:
+- Copy to local bin directory
+```bash
+   sudo cp .build/macos/balo /usr/local/bin
+```
+
+- Create symlink to local bin directory
+```bash
+    sudo ln -s .build/macos/balo /usr/local/bin/balo
 ```

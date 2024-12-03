@@ -3,12 +3,8 @@ import 'dart:io';
 import 'package:balo/command/command.dart';
 import 'package:balo/command/command_facade.dart';
 import 'package:balo/command/command_mapper.dart';
-import 'package:balo/repository/ignore.dart';
-import 'package:balo/repository/repository.dart';
-import 'package:balo/user_input.dart';
-import 'package:balo/variables.dart';
+import 'package:balo/user_input/user_input.dart';
 import 'package:dart_console/dart_console.dart';
-import 'package:path/path.dart';
 
 final Console console = Console();
 
@@ -94,7 +90,7 @@ void printToConsole({
 
 /// CommandExecutor
 abstract class CommandExecutor {
-  List<Command> inputToCommands(UserInput userInput);
+  CommandFacade inputToCommands(UserInput userInput);
 
   //Run commands and return and exit code
   Future<int> runCommand(List<Command> commands);
@@ -104,8 +100,8 @@ abstract class CommandExecutor {
 ///Runs commands created
 class CommandLineRunner implements CommandExecutor {
   @override
-  List<Command> inputToCommands(UserInput userInput) {
-    if (userInput.isEmpty) return [ShowHelpCommand()];
+  CommandFacade inputToCommands(UserInput userInput) {
+    if (userInput.isEmpty) return HelpInitializer();
 
     CommandMapperEnum? commandEnum = userInput.commandEnum;
     Map<CommandOptionsMapperEnum, String?> optionMapEnum =
@@ -113,13 +109,33 @@ class CommandLineRunner implements CommandExecutor {
 
     switch (commandEnum) {
       case CommandMapperEnum.help:
-        return [ShowHelpCommand()];
+        return HelpInitializer();
       case CommandMapperEnum.init:
+        //Path
         String? path = optionMapEnum[CommandOptionsMapperEnum.path];
         if (path == "." || path == null) path = Directory.current.path;
-        return RepositoryInitializer(path).initialize();
+
+        return RepositoryInitializer(path);
+
+      case CommandMapperEnum.add:
+        //Path
+        String? path = optionMapEnum[CommandOptionsMapperEnum.path];
+        if (path == "." || path == null) path = "*";
+
+        return StageFilesInitializer(path);
+
+      case CommandMapperEnum.ignore:
+        //Path
+        String? patternToAdd = optionMapEnum[CommandOptionsMapperEnum.add];
+        String? patternToRemove =
+            optionMapEnum[CommandOptionsMapperEnum.remove];
+
+        return ModifyIgnoreFileInitializer(
+          patternToAdd: patternToAdd,
+          patternToRemove: patternToRemove,
+        );
       default:
-        return [ShowErrorCommand("Unknown command ${userInput.command}")];
+        return ErrorInitializer("Unknown command ${userInput.command}");
     }
   }
 
@@ -133,7 +149,7 @@ class CommandLineRunner implements CommandExecutor {
       return 0;
     } catch (e) {
       while (i > 0) {
-        await commands[i--].undo();
+        await commands[--i].undo();
       }
       return 1;
     }

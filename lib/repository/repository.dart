@@ -1,16 +1,17 @@
 import 'dart:io';
-import 'package:balo/variables.dart';
+import 'package:balo/repository/branch.dart';
+import 'package:balo/repository/ignore.dart';
+import 'package:balo/repository/state.dart';
+import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
 class Repository {
   final String path;
 
-  Directory get directory => Directory(join(path, repositoryFolderName));
-
   Repository(this.path);
+}
 
-  bool get isInitialized => directory.existsSync();
-
+extension RepositoryActions on Repository {
   Future<void> unInitializeRepository({
     Function()? onRepositoryNotInitialized,
     Function()? onSuccessfullyUninitialized,
@@ -23,8 +24,7 @@ class Repository {
         return;
       }
 
-
-      directory.deleteSync(recursive: true);
+      repositoryDirectory.deleteSync(recursive: true);
       onSuccessfullyUninitialized?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
@@ -43,10 +43,29 @@ class Repository {
         return;
       }
 
-      directory.createSync(recursive: true);
+      repositoryDirectory.createSync(recursive: true);
       onSuccessfullyInitialized?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
   }
+}
+
+extension RepositoryCommons on Repository {
+  String get repositoryPath => join(path, repositoryFolderName);
+  Directory get repositoryDirectory => Directory(repositoryPath);
+  bool get isInitialized => repositoryDirectory.existsSync();
+}
+
+extension RepositoryEnvironment on Repository {
+
+  List<Branch> get allBranches =>
+      Directory(join(repositoryPath, branchFolderName))
+          .listSync(recursive: false, followLinks: false)
+          .where((f) => f.statSync().type == FileSystemEntityType.directory)
+          .map((f) => Branch(basename(f.path), this))
+          .toList();
+
+  Ignore get ignore => Ignore(this);
+  State get state => State(this);
 }

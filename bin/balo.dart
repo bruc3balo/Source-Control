@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:balo/command/command.dart';
+import 'package:balo/command/command_facade.dart';
 import 'package:balo/command_line_interface/cli.dart';
-import 'package:balo/user_input.dart';
+import 'package:balo/user_input/user_input.dart';
 
 Future<void> main(List<String> arguments) async {
   UserInput userInput = UserInput(arguments);
@@ -16,8 +16,8 @@ Future<void> main(List<String> arguments) async {
   );
 
   //Interface to run commands
-  List<Command> commandSeries = runner.inputToCommands(userInput);
-  int code = await runner.runCommand(commandSeries);
+  CommandFacade commandFacade = runner.inputToCommands(userInput);
+  int code = await runner.runCommand(commandFacade.initialize());
 
   printToConsole(
     message: "Finished with exit code: $code",

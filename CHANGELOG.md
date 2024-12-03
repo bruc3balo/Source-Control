@@ -5,3 +5,6 @@
 - Command execution
 - Show help command
 - Empty input handler
+- Initialize repository with init command
+- Add and Remove from ignore file
+- Stage files command

@@ -1,26 +1,17 @@
 import 'dart:io';
 
-import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/repository.dart';
-import 'package:balo/variables.dart';
+import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
 class Branch {
   final Repository repository;
-
-  Directory get directory => Directory(
-        joinAll(
-          [
-            repository.directory.path,
-            branchFolderName,
-            name,
-          ],
-        ),
-      );
   final String name;
 
   Branch(this.name, this.repository);
+}
 
+extension BranchActions on Branch {
   Future<void> createBranch({
     bool Function(String name)? isValidBranchName,
     Function(String name)? onInvalidBranchName,
@@ -41,19 +32,18 @@ class Branch {
         return;
       }
 
-      printToConsole(message: "Branch : ${repository.path}");
 
-      bool branchExists = directory.existsSync();
+      bool branchExists = branchDirectory.existsSync();
       if (branchExists) {
         onBranchAlreadyExists?.call();
         return;
       }
 
-      await directory.create(
+      await branchDirectory.create(
         recursive: true,
       );
 
-      onBranchCreated?.call(directory);
+      onBranchCreated?.call(branchDirectory);
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
@@ -71,15 +61,27 @@ class Branch {
         return;
       }
 
-      if (!directory.existsSync()) {
+      if (!branchDirectory.existsSync()) {
         onBranchDoesntExist?.call();
         return;
       }
 
-      directory.deleteSync(recursive: true);
+      branchDirectory.deleteSync(recursive: true);
       onBranchDeleted?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
   }
+}
+
+extension BranchCommons on Branch {
+  Directory get branchDirectory => Directory(
+    joinAll(
+      [
+        repository.repositoryDirectory.path,
+        branchFolderName,
+        name,
+      ],
+    ),
+  );
 }

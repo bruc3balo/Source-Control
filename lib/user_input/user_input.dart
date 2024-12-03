@@ -1,19 +1,21 @@
-import 'command/command_mapper.dart';
+import '../command/command_mapper.dart';
 
 class UserInput {
   final List<String> originalUserInput;
+  late final String? command = _command;
+  late final Map<String, String?> optionsMap = _optionsMap;
 
   UserInput(this.originalUserInput);
 
   bool get isEmpty => originalUserInput.isEmpty;
 
-  String? get command =>
+  String? get _command =>
       originalUserInput.isEmpty ? null : originalUserInput.first;
 
-  Map<String, String?> get optionsMap {
+  Map<String, String?> get _optionsMap {
     Map<String, String?> optionsMap = {};
 
-    for (int i = 1; i < originalUserInput.length; i + 2) {
+    for (int i = 1; i < originalUserInput.length; i = i + 2) {
       String optionKey = originalUserInput[i];
       int optionValueIndex = i + 1;
 
@@ -33,7 +35,7 @@ class UserInput {
   @override
   String toString() => """
   \nCommand: $command
-  \nOptions: $optionsMap
+    Options: $optionsMap
   """;
 }
 

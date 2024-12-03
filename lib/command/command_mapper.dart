@@ -3,27 +3,33 @@ import 'package:balo/command_line_interface/cli.dart';
 
 enum CommandMapperEnum {
   help(
-    command: ["--help", "-h"],
+    command: ["help", "-h"],
     description: "Print usage information",
-    type: InitializeRepositoryCommand,
     options: [CommandOptionsMapperEnum.path],
   ),
   init(
     command: ["init"],
     description: "Initialized a new repository",
-    type: InitializeRepositoryCommand,
     options: [CommandOptionsMapperEnum.path],
+  ),
+  add(
+    command: ["add"],
+    description: "Stage files for commit",
+    options: [CommandOptionsMapperEnum.pattern],
+  ),
+  ignore(
+    command: ["ignore"],
+    description: "Modify ignore file",
+    options: [CommandOptionsMapperEnum.add, CommandOptionsMapperEnum.remove],
   );
 
   final List<String> command;
   final String description;
-  final Type type;
   final List<CommandOptionsMapperEnum> options;
 
   const CommandMapperEnum({
     required this.command,
     required this.description,
-    required this.type,
     required this.options,
   });
 
@@ -34,9 +40,21 @@ enum CommandMapperEnum {
 }
 
 enum CommandOptionsMapperEnum {
+  add(
+    option: ["--add"],
+    description: "Adds an entry",
+  ),
+  remove(
+    option: ["--remove", "rm"],
+    description: "Removes an entry",
+  ),
   path(
     option: ["-p", "--path"],
     description: "Describes path to execute command",
+  ),
+  pattern(
+    option: ["-f", "--file"],
+    description: "Describes the file pattern to search for",
   );
 
   final List<String> option;
@@ -78,7 +96,7 @@ void printHelp() {
     );
     printToConsole(
       message:
-          "   Options: ${c.options.map((o) => "${o.option.join(", ")}   ${o.description}").join("\n")}",
+          "   Options: \n   ${c.options.map((o) => "${o.option.join(", ")}   ${o.description}").join("\n   ")}",
       color: CliColor.defaultColor,
     );
   }
