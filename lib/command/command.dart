@@ -122,6 +122,7 @@ class CreateNewBranchCommand implements Command {
   @override
   Future<void> execute() async {
     await branch.createBranch();
+    await branch.createManagerFile();
   }
 
   @override
@@ -200,7 +201,7 @@ class PrintCurrentBranchCommand implements Command {
     if (branch == null) return;
 
     printToConsole(
-      message: "${branch.name}*",
+      message: "${branch.branchName}*",
       style: CliStyle.bold,
       alignment: TextAlignment.left,
       color: CliColor.brightCyan,

@@ -46,8 +46,9 @@ extension StagingActions on Staging {
       printToConsole(message: "${f.path} -> $newPath");
     }
 
-
-    Commit commit = Commit(sha, branch);
+    //Save Commit
+    Commit commit = Commit(sha, branch, message, DateTime.now());
+    b.addCommit(commit: commit);
 
     //Delete staging
     stagingFile.deleteSync();
