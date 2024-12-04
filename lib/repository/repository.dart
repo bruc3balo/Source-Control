@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:balo/repository/branch.dart';
+import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/ignore.dart';
-import 'package:balo/repository/state.dart';
+import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 

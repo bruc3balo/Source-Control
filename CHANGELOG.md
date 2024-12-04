@@ -10,3 +10,4 @@
 - Get status of current branch
 - Stage files command
 - Commit files to a branch
+- View commit history

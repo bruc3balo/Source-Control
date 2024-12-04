@@ -1,10 +1,10 @@
 import 'package:balo/command/command_mapper.dart';
 import 'package:balo/command_line_interface/cli.dart';
-import 'package:balo/repository/branch.dart';
+import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
-import 'package:balo/repository/staging.dart';
-import 'package:balo/repository/state.dart';
+import 'package:balo/repository/staging/staging.dart';
+import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:dart_console/dart_console.dart';
 
@@ -220,10 +220,20 @@ class GetStatusOfCurrentBranch implements Command {
 
   @override
   Future<void> execute() async {
-    Map<String, dynamic> map = repository.state.stateInfo;
-    Branch branch = Branch(map[currentBranchKey], repository);
+    StateData? stateData = repository.state.stateInfo;
+    if(stateData == null) {
+      printToConsole(
+        message: "Unable to get branch info",
+        style: CliStyle.bold,
+        alignment: TextAlignment.left,
+        color: CliColor.red,
+      );
+      return;
+    }
 
-    List<dynamic> paths = branch.staging.stagingInfo[filePathsKey];
+    Branch branch = Branch(stateData.currentBranch, repository);
+
+    List<String> paths = branch.staging.stagingData?.filesToBeStaged ?? [];
     printToConsole(
       message: paths.join("\n"),
       style: CliStyle.bold,
@@ -234,6 +244,7 @@ class GetStatusOfCurrentBranch implements Command {
 
   @override
   Future<void> undo() async {}
+
 }
 
 ///Command to commit staged files
@@ -245,7 +256,7 @@ class CommitStagedFilesCommand implements Command {
 
   @override
   Future<void> execute() async {
-    Branch? branch = await repository.state.getCurrentBranch();
+    Branch? branch = repository.state.getCurrentBranch();
     if (branch == null) {
       printToConsole(
         message: "Failed to get current branch",
@@ -267,6 +278,36 @@ class CommitStagedFilesCommand implements Command {
       return;
     }
     await staging.commitStagedFiles(message: message);
+  }
+
+  @override
+  Future<void> undo() async {}
+}
+
+///Command to get branch commits
+class GetBranchCommitHistory implements Command {
+  final Repository repository;
+  final String branchName;
+
+  GetBranchCommitHistory(this.repository, this.branchName);
+
+  @override
+  Future<void> execute() async {
+    Branch branch = Branch(branchName, repository);
+    BranchMetaData? metaData = branch.branchMetaData;
+    if(metaData == null) {
+      printToConsole(message: "Branch out of sync", color: CliColor.brightRed);
+      return;
+    }
+
+    String history = metaData.commits.values
+        .map((c) => "Commit: ${c.sha} \nMessage: ${c.message} \nDate: ${c.commitedAt.toLocal().toIso8601String()}")
+        .join("\n");
+
+    printToConsole(
+      message: history,
+      color: CliColor.cyan
+    );
   }
 
   @override

@@ -7,6 +7,11 @@ Build a distributed source control system in the style of Git. It should be poss
 - Commands have been done with the **Command Design Pattern**
 - The inputs parsed into a list commands with the **Facade** pattern
 
+# Code generation
+```bash
+  dart run build_runner build --delete-conflicting-outputs
+```
+
 # Build
 #### For Windows: 
 ```bash

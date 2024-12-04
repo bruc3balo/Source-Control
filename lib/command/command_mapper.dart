@@ -21,6 +21,11 @@ enum CommandMapperEnum {
     description: "Modify ignore file",
     options: [CommandOptionsMapperEnum.add, CommandOptionsMapperEnum.remove],
   ),
+  log(
+    command: ["log"],
+    description: "Shows commit history for a specific branch",
+    options: [CommandOptionsMapperEnum.branch],
+  ),
   status(
     command: ["status"],
     description: "Get status of stage",
@@ -61,6 +66,10 @@ enum CommandOptionsMapperEnum {
   remove(
     option: ["--remove", "rm"],
     description: "Removes an entry",
+  ),
+  branch(
+    option: ["-b"],
+    description: "Refers to a specific branch",
   ),
   message(
     option: ["-m", "--message"],

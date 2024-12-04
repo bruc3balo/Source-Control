@@ -3,13 +3,19 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:balo/command_line_interface/cli.dart';
-import 'package:balo/repository/branch.dart';
+import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
+
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'staging.freezed.dart';
+
+part 'staging.g.dart';
 
 class Staging {
   final Branch branch;
@@ -20,6 +26,7 @@ class Staging {
 extension StagingActions on Staging {
   Future<void> commitStagedFiles({
     required String message,
+    Function()? onNoStagingData,
   }) async {
     Repository r = repository;
     Branch b = branch;
@@ -35,9 +42,14 @@ extension StagingActions on Staging {
     );
     commitDir.createSync(recursive: true);
 
-    List<File> filesToBeStaged = (stagingInfo[filePathsKey] as List<dynamic>)
-        .map((e) => File(e))
-        .toList();
+    StagingData? data = stagingData;
+    if (data == null) {
+      onNoStagingData?.call();
+      return;
+    }
+
+    List<File> filesToBeStaged =
+        data.filesToBeStaged.map((e) => File(e)).toList();
 
     for (File f in filesToBeStaged) {
       String newPath = f.path.replaceAll(r.path, commitDir.path);
@@ -51,7 +63,7 @@ extension StagingActions on Staging {
     b.addCommit(commit: commit);
 
     //Delete staging
-    stagingFile.deleteSync();
+    deleteStagingData();
   }
 
   Future<void> stageFiles({
@@ -70,8 +82,8 @@ extension StagingActions on Staging {
 
       //List files for staging
       List<FileSystemEntity> filesToBeStaged =
-          await repository.repositoryDirectory.parent
-              .list(recursive: true, followLinks: false)
+          repository.repositoryDirectory.parent
+              .listSync(recursive: true, followLinks: false)
 
               //Files only
               .where((f) => f.statSync().type == FileSystemEntityType.file)
@@ -80,9 +92,7 @@ extension StagingActions on Staging {
               .where((f) => shouldAddPath(f.path, pattern))
 
               //Ignore
-              .where(
-                (f) => !shouldIgnorePath(f.path, patternsToIgnore),
-              )
+              .where((f) => !shouldIgnorePath(f.path, patternsToIgnore))
               .toList();
 
       //Clear previous staging
@@ -92,13 +102,13 @@ extension StagingActions on Staging {
       }
 
       //Fresh file
-      Map<String, dynamic> info = {
-        stagedAtKey: DateTime.now().toString(),
-        filePathsKey: filesToBeStaged.map((f) => f.path).toList(),
-      };
+      StagingData data = StagingData(
+        stagedAt: DateTime.now(),
+        filesToBeStaged: filesToBeStaged.map((f) => f.path).toList(),
+      );
 
       //Write staging info
-      stagingFile.writeAsStringSync(jsonEncode(info), flush: true);
+      stagingFile.writeAsStringSync(jsonEncode(data), flush: true);
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
@@ -120,28 +130,50 @@ extension StagingActions on Staging {
         return;
       }
 
-      stagingFile.deleteSync(recursive: true);
+      deleteStagingData();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
   }
 }
 
-extension StagingCommons on Staging {
-  bool get isStaged => stagingFile.existsSync();
-  File get stagingFile => File(stagingFilePath);
-
+extension StagingStorage on Staging {
   String get stagingFilePath => join(branch.branchDirectory.path, branchStage);
 
+  bool get isStaged => stagingFile.existsSync();
+
+  File get stagingFile => File(stagingFilePath);
+
+  StagingData? get stagingData {
+    String fileData = stagingFile.readAsStringSync();
+    if (fileData.isEmpty) return null;
+
+    Map<String, dynamic> info = jsonDecode(fileData);
+    return StagingData.fromJson(info);
+  }
+
+  void saveStagingData(StagingData data) {
+    stagingFile.writeAsStringSync(jsonEncode(data), flush: true);
+  }
+
+  void deleteStagingData() {
+    stagingFile.deleteSync();
+  }
+}
+
+extension StagingCommons on Staging {
   Repository get repository => branch.repository;
 
   Ignore get ignore => repository.ignore;
+}
 
-  Map<String, dynamic> get stagingInfo {
-    String fileData = stagingFile.readAsStringSync();
-    if (fileData.isEmpty) return {};
+@freezed
+class StagingData with _$StagingData {
+  factory StagingData({
+    required DateTime stagedAt,
+    required List<String> filesToBeStaged,
+  }) = _StagingData;
 
-    Map<String, dynamic> info = jsonDecode(fileData);
-    return info;
-  }
+  factory StagingData.fromJson(Map<String, Object?> json) =>
+      _$StagingDataFromJson(json);
 }

@@ -1,9 +1,10 @@
 import 'dart:io';
 
 import 'package:balo/command/command.dart';
+import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/repository.dart';
-import 'package:balo/repository/staging.dart';
-import 'package:balo/repository/state.dart';
+import 'package:balo/repository/staging/staging.dart';
+import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/variables.dart';
 
 abstract class CommandFacade {
@@ -63,7 +64,14 @@ class StageFilesInitializer implements CommandFacade {
     //Read current state
     Repository repository = Repository(Directory.current.path);
     State state = State(repository);
-    Staging staging = Staging(state.currentBranch);
+    Branch? currentBranch = state.getCurrentBranch();
+    if(currentBranch == null) {
+      return [
+        ShowErrorCommand("Unable to get current branch info"),
+      ];
+    }
+
+    Staging staging = Staging(currentBranch);
 
     return [
       StageFilesCommand(staging, pattern),
@@ -125,4 +133,26 @@ class CommitStagedFilesInitializer implements CommandFacade {
   @override
   List<Command> initialize() =>
       [CommitStagedFilesCommand(Repository(Directory.current.path), message)];
+}
+
+class GetCommitHistoryInitializer implements CommandFacade {
+  final String? branchName;
+
+  GetCommitHistoryInitializer(this.branchName);
+
+  @override
+  List<Command> initialize() {
+    Repository repository = Repository(Directory.current.path);
+    String? branch = branchName ?? repository.state.getCurrentBranch()?.branchName;
+
+    if(branch == null) {
+      return [
+        ShowErrorCommand("Provide a branch name")
+      ];
+    }
+
+    return [
+      GetBranchCommitHistory(repository, branch),
+    ];
+  }
 }

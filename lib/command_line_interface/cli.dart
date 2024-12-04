@@ -99,6 +99,7 @@ abstract class CommandExecutor {
 ///Parses user input and creates commands
 ///Runs commands created
 class CommandLineRunner implements CommandExecutor {
+
   @override
   CommandFacade inputToCommands(UserInput userInput) {
     if (userInput.isEmpty) return HelpInitializer();
@@ -150,6 +151,9 @@ class CommandLineRunner implements CommandExecutor {
         }
 
         return CommitStagedFilesInitializer(message);
+      case CommandMapperEnum.log:
+        String? branch = optionMapEnum[CommandOptionsMapperEnum.branch];
+        return GetCommitHistoryInitializer(branch);
       default:
         return ErrorInitializer("Unknown command ${userInput.command}");
     }
@@ -163,7 +167,9 @@ class CommandLineRunner implements CommandExecutor {
         await commands[i++].execute();
       }
       return 0;
-    } catch (e) {
+    } catch (e, trace) {
+      printToConsole(message: e.toString(), color: CliColor.red);
+      printToConsole(message: trace.toString(), color: CliColor.red);
       while (i > 0) {
         await commands[--i].undo();
       }

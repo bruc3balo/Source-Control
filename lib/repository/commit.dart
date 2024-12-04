@@ -1,4 +1,4 @@
-import 'package:balo/repository/branch.dart';
+import 'package:balo/repository/branch/branch.dart';
 
 class Commit {
   final Branch branch;

@@ -1,10 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:balo/repository/branch.dart';
+import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
+
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'state.g.dart';
+
+part 'state.freezed.dart';
 
 class State {
   final Repository repository;
@@ -14,41 +20,28 @@ class State {
 
 extension StateCommons on State {
 
-  File get stateFile => File(
-        joinAll([
-          repository.repositoryDirectory.path,
-          stateFileName,
-        ]),
-      );
-
-  Map<String, dynamic> get stateInfo {
-    //Read file
-    String fileData = stateFile.readAsStringSync();
-    if (fileData.isEmpty) return {};
-
-    Map<String, dynamic> stateInfo = jsonDecode(fileData);
-    return stateInfo;
-  }
-
-  Branch get currentBranch {
-    String currentBranchName = stateInfo[currentBranchKey];
-    return Branch(currentBranchName, repository);
-  }
-
 }
 
-extension StateActions on State {
+extension StateStorage on State {
+  String get stateFilePath => join(
+        repository.repositoryDirectory.path,
+        stateFileName,
+      );
 
-  Future<Branch?> getCurrentBranch({
-    Function()? onRepositoryNotInitialized,
-  }) async {
-    if (!repository.isInitialized) {
-      onRepositoryNotInitialized?.call();
-      return null;
-    }
+  File get stateFile => File(stateFilePath);
 
-    String branch = stateInfo[currentBranchKey];
-    return Branch(branch, repository);
+  bool get exists => stateFile.existsSync();
+
+
+  StateData? get stateInfo {
+    if(!exists) return null;
+
+    //Read file
+    String fileData = stateFile.readAsStringSync();
+    if (fileData.isEmpty) return null;
+
+    Map<String, dynamic> stateInfo = jsonDecode(fileData);
+    return StateData.fromJson(stateInfo);
   }
 
   Future<void> createStateFile({
@@ -64,17 +57,17 @@ extension StateActions on State {
         return;
       }
 
-      if (stateFile.existsSync()) {
+      if (exists) {
         onAlreadyExists?.call();
         return;
       }
 
       await stateFile.create(recursive: true, exclusive: true);
 
-      Map<String, dynamic> info = {currentBranchKey: currentBranch};
+      StateData data = StateData(currentBranch: currentBranch);
 
       //Write state to file
-      stateFile.writeAsStringSync(jsonEncode(info));
+      stateFile.writeAsStringSync(jsonEncode(data));
 
       onSuccessfullyCreated?.call();
     } on FileSystemException catch (e, trace) {
@@ -105,4 +98,38 @@ extension StateActions on State {
       onFileSystemException?.call(e);
     }
   }
+
+}
+
+extension StateActions on State {
+
+  Branch? getCurrentBranch({
+    Function()? onRepositoryNotInitialized,
+    Function()? onNoStateFile,
+  })  {
+    if (!repository.isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return null;
+    }
+
+    if(!exists) {
+      onNoStateFile?.call();
+      return null;
+    }
+
+    String? branch = stateInfo?.currentBranch;
+    if (branch == null) return null;
+
+    return Branch(branch, repository);
+  }
+}
+
+@freezed
+class StateData with _$StateData {
+  factory StateData({
+    required String currentBranch,
+  }) = _StateData;
+
+  factory StateData.fromJson(Map<String, Object?> json) =>
+      _$StateDataFromJson(json);
 }

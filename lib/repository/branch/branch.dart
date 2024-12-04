@@ -1,11 +1,17 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repository.dart';
-import 'package:balo/repository/staging.dart';
+import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
+
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'branch.freezed.dart';
+part 'branch.g.dart';
 
 class Branch {
   final Repository repository;
@@ -90,14 +96,14 @@ extension BranchCommons on Branch {
   Staging get staging => Staging(this);
 }
 
-extension BranchManager on Branch {
-  String get managerPath => join(branchDirectoryPath, branchMetaData);
+extension BranchManagerStorage on Branch {
+  String get managerPath => join(branchDirectoryPath, branchMetaDataFileName);
 
   File get managerFile => File(managerPath);
 
   bool get exists => managerFile.existsSync();
 
-  BranchMetaData? get branchMetaDataFromManagerFile {
+  BranchMetaData? get branchMetaData {
     if (!exists) return null;
 
     String fileData = managerFile.readAsStringSync();
@@ -106,16 +112,6 @@ extension BranchManager on Branch {
     Map<String, dynamic> json = jsonDecode(fileData);
     return BranchMetaData.fromJson(json);
   }
-
-  void saveBranchMetaData(BranchMetaData metaData) {
-    if (!exists) createManagerFile();
-
-    managerFile.writeAsStringSync(
-      jsonEncode(metaData.toJson()),
-      flush: true,
-    );
-  }
-
 
   Future<void> createManagerFile({
     Function()? onDuplicateFile,
@@ -127,10 +123,22 @@ extension BranchManager on Branch {
     }
 
     managerFile.createSync(recursive: true);
-    managerFile.writeAsStringSync(jsonEncode(BranchMetaData(branchName, {}).toJson()));
+    managerFile.writeAsStringSync(jsonEncode(BranchMetaData(name: branchName, commits: HashMap())));
 
     onCreateFile?.call();
   }
+
+  void saveBranchMetaData(BranchMetaData metaData) {
+    if (!exists) createManagerFile();
+
+    managerFile.writeAsStringSync(
+      jsonEncode(metaData.toJson()),
+      flush: true,
+    );
+  }
+}
+
+extension BranchManager on Branch {
 
   Future<void> addCommit({
     required Commit commit,
@@ -143,18 +151,21 @@ extension BranchManager on Branch {
       return;
     }
 
-    BranchMetaData? metaData = branchMetaDataFromManagerFile;
+    BranchMetaData? metaData = branchMetaData;
     if (metaData == null) {
       onNoMetaData?.call();
       return;
     }
 
     CommitMetaData commitMetaData = CommitMetaData(
-      commit.sha,
-      commit.message,
-      commit.commitedAt,
+      sha: commit.sha,
+      message: commit.message,
+      commitedAt: commit.commitedAt,
     );
-    metaData.commits.putIfAbsent(commitMetaData.sha, () => commitMetaData);
+
+    final mutableCommits = Map<String, CommitMetaData>.from(metaData.commits);
+    mutableCommits.putIfAbsent(commitMetaData.sha, () => commitMetaData);
+    metaData = metaData.copyWith(commits: mutableCommits);
 
     saveBranchMetaData(metaData);
 
@@ -162,50 +173,26 @@ extension BranchManager on Branch {
   }
 }
 
+@freezed
+class BranchMetaData with _$BranchMetaData {
+  factory BranchMetaData({
+    required String name,
+    required Map<String, CommitMetaData> commits,
+  }) = _BranchMetaData;
 
-///Stored in file
-class BranchMetaData {
-  final String name;
-  final Map<String, CommitMetaData> commits;
+  factory BranchMetaData.fromJson(Map<String, Object?> json) => _$BranchMetaDataFromJson(json);
 
-  BranchMetaData(this.name, this.commits);
-
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'commits': commits,
-    };
-  }
-
-  static BranchMetaData fromJson(Map<String, dynamic> json) {
-    return BranchMetaData(
-      json['name'],
-      {
-        for (var e in (json['commits'] as List<dynamic>)
-            .map((e) => CommitMetaData.fromJson(e)))
-          e.sha: e
-      },
-    );
-  }
 }
 
-class CommitMetaData {
-  final String sha;
-  final String message;
-  final DateTime commitedAt;
+@freezed
+class CommitMetaData with _$CommitMetaData{
 
-  CommitMetaData(this.sha, this.message, this.commitedAt);
+  factory CommitMetaData({
+    required String sha,
+    required String message,
+    required DateTime commitedAt
+  }) = _CommitMetaData;
 
-  static CommitMetaData fromJson(Map<String, dynamic> json) {
-    return CommitMetaData(
-        json['sha'], json['message'], DateTime.parse(json['commited_at']));
-  }
+  factory CommitMetaData.fromJson(Map<String, Object?> json) => _$CommitMetaDataFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'sha': sha,
-      'message': message,
-      'commited_at': commitedAt,
-    };
-  }
 }
