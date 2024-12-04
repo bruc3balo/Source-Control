@@ -2,15 +2,19 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
+import 'package:balo/repository/state/state.dart';
+import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'branch.freezed.dart';
+
 part 'branch.g.dart';
 
 class Branch {
@@ -47,11 +51,94 @@ extension BranchCreation on Branch {
         return;
       }
 
-      await branchDirectory.create(
+      branchDirectory.createSync(
         recursive: true,
       );
 
+      createMetaDataFile();
+
       onBranchCreated?.call(branchDirectory);
+    } on FileSystemException catch (e, trace) {
+      onFileSystemException?.call(e);
+    }
+  }
+
+  Future<void> checkoutToBranch({
+    Function()? onSameBranch,
+    Function()? onBranchMetaDataDoesntExists,
+    Function()? onStateDoesntExists,
+    Function()? onRepositoryNotInitialized,
+    Function(FileSystemException)? onFileSystemException,
+  }) async {
+    try {
+      if (!exists) {
+        await createBranch(
+          onFileSystemException: (e) => debugPrintToConsole(
+            message: e.message,
+            color: CliColor.red,
+          ),
+          onRepositoryNotInitialized: () => debugPrintToConsole(
+            message: "Repository not initialized",
+          ),
+          onBranchAlreadyExists: () => debugPrintToConsole(
+            message: "Branch exists",
+          ),
+          onInvalidBranchName: (s) => printToConsole(
+            message: "Invalid branch name $s",
+          ),
+          onBranchCreated: (d) => debugPrintToConsole(
+            message: "Branch has been created on ${d.path}",
+          ),
+        );
+      }
+
+      State state = State(repository);
+      StateData? stateData = state.stateInfo;
+
+      if (stateData == null) {
+        onStateDoesntExists?.call();
+        return;
+      }
+
+      if (branchName == stateData.currentBranch) {
+        onSameBranch?.call();
+        return;
+      }
+
+      stateData = stateData.copyWith(currentBranch: branchName);
+
+      BranchMetaData? branchData = branchMetaData;
+      if (branchData == null) {
+        onBranchMetaDataDoesntExists?.call();
+        return;
+      }
+
+      CommitMetaData? commitMetaData = branchData.commits.values.firstOrNull;
+      if (commitMetaData != null) {
+        String latestCommitDirPath =
+            join(branchDirectoryPath, commitMetaData.sha);
+        Directory latestCommitDir = Directory(latestCommitDirPath);
+
+        List<File> files = latestCommitDir
+            .listSync(recursive: true)
+            .map((e) => File(e.path))
+            .toList();
+
+        moveFiles(
+          files: files,
+          destinationDir: repository.repositoryDirectory.parent,
+          sourceDir: latestCommitDir,
+        );
+      }
+
+      state.saveStateData(
+        stateData: stateData,
+        onFileSystemException: (e) =>
+            debugPrintToConsole(message: e.message, color: CliColor.red),
+        onRepositoryNotInitialized: () =>
+            debugPrintToConsole(message: "Repository not initialized"),
+        onSuccessfullySaved: () => debugPrintToConsole(message: "State saved"),
+      );
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
@@ -96,7 +183,7 @@ extension BranchCommons on Branch {
   Staging get staging => Staging(this);
 }
 
-extension BranchManagerStorage on Branch {
+extension BranchMetaDataStorage on Branch {
   String get managerPath => join(branchDirectoryPath, branchMetaDataFileName);
 
   File get managerFile => File(managerPath);
@@ -113,7 +200,7 @@ extension BranchManagerStorage on Branch {
     return BranchMetaData.fromJson(json);
   }
 
-  Future<void> createManagerFile({
+  Future<void> createMetaDataFile({
     Function()? onDuplicateFile,
     Function()? onCreateFile,
   }) async {
@@ -123,13 +210,14 @@ extension BranchManagerStorage on Branch {
     }
 
     managerFile.createSync(recursive: true);
-    managerFile.writeAsStringSync(jsonEncode(BranchMetaData(name: branchName, commits: HashMap())));
+    managerFile.writeAsStringSync(
+        jsonEncode(BranchMetaData(name: branchName, commits: HashMap())));
 
     onCreateFile?.call();
   }
 
   void saveBranchMetaData(BranchMetaData metaData) {
-    if (!exists) createManagerFile();
+    if (!exists) createMetaDataFile();
 
     managerFile.writeAsStringSync(
       jsonEncode(metaData.toJson()),
@@ -139,7 +227,6 @@ extension BranchManagerStorage on Branch {
 }
 
 extension BranchManager on Branch {
-
   Future<void> addCommit({
     required Commit commit,
     Function()? onMissingManager,
@@ -180,19 +267,17 @@ class BranchMetaData with _$BranchMetaData {
     required Map<String, CommitMetaData> commits,
   }) = _BranchMetaData;
 
-  factory BranchMetaData.fromJson(Map<String, Object?> json) => _$BranchMetaDataFromJson(json);
-
+  factory BranchMetaData.fromJson(Map<String, Object?> json) =>
+      _$BranchMetaDataFromJson(json);
 }
 
 @freezed
-class CommitMetaData with _$CommitMetaData{
+class CommitMetaData with _$CommitMetaData {
+  factory CommitMetaData(
+      {required String sha,
+      required String message,
+      required DateTime commitedAt}) = _CommitMetaData;
 
-  factory CommitMetaData({
-    required String sha,
-    required String message,
-    required DateTime commitedAt
-  }) = _CommitMetaData;
-
-  factory CommitMetaData.fromJson(Map<String, Object?> json) => _$CommitMetaDataFromJson(json);
-
+  factory CommitMetaData.fromJson(Map<String, Object?> json) =>
+      _$CommitMetaDataFromJson(json);
 }

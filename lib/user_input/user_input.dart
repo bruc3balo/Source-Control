@@ -34,8 +34,8 @@ class UserInput {
 
   @override
   String toString() => """
-  \nCommand: $command
-    Options: $optionsMap
+  Command: $command
+  Options: $optionsMap
   """;
 }
 

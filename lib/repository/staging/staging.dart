@@ -51,12 +51,11 @@ extension StagingActions on Staging {
     List<File> filesToBeStaged =
         data.filesToBeStaged.map((e) => File(e)).toList();
 
-    for (File f in filesToBeStaged) {
-      String newPath = f.path.replaceAll(r.path, commitDir.path);
-      File(newPath).createSync(recursive: true);
-      f.copySync(newPath);
-      printToConsole(message: "${f.path} -> $newPath");
-    }
+    moveFiles(
+      files: filesToBeStaged,
+      sourceDir: r.repositoryDirectory.parent,
+      destinationDir: commitDir,
+    );
 
     //Save Commit
     Commit commit = Commit(sha, branch, message, DateTime.now());

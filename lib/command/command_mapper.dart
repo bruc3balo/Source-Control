@@ -36,6 +36,11 @@ enum CommandMapperEnum {
     description: "Get branch info ",
     options: [],
   ),
+  checkout(
+    command: ["checkout"],
+    description: "Switch branches",
+    options: [CommandOptionsMapperEnum.branch],
+  ),
   commit(
     command: ["commit"],
     description: "Commit staged files",

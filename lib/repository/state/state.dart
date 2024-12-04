@@ -18,9 +18,7 @@ class State {
   State(this.repository);
 }
 
-extension StateCommons on State {
-
-}
+extension StateCommons on State {}
 
 extension StateStorage on State {
   String get stateFilePath => join(
@@ -32,9 +30,8 @@ extension StateStorage on State {
 
   bool get exists => stateFile.existsSync();
 
-
   StateData? get stateInfo {
-    if(!exists) return null;
+    if (!exists) return null;
 
     //Read file
     String fileData = stateFile.readAsStringSync();
@@ -42,6 +39,30 @@ extension StateStorage on State {
 
     Map<String, dynamic> stateInfo = jsonDecode(fileData);
     return StateData.fromJson(stateInfo);
+  }
+
+  Future<void> saveStateData({
+    required StateData stateData,
+    Function()? onSuccessfullySaved,
+    Function()? onRepositoryNotInitialized,
+    Function(FileSystemException)? onFileSystemException,
+  }) async {
+    try {
+      if (!repository.isInitialized) {
+        onRepositoryNotInitialized?.call();
+        return;
+      }
+
+      if (!exists) {
+        stateFile.createSync(recursive: true, exclusive: true);
+      }
+
+      //Write state to file
+      stateFile.writeAsStringSync(jsonEncode(stateData));
+      onSuccessfullySaved?.call();
+    } on FileSystemException catch (e, trace) {
+      onFileSystemException?.call(e);
+    }
   }
 
   Future<void> createStateFile({
@@ -98,21 +119,19 @@ extension StateStorage on State {
       onFileSystemException?.call(e);
     }
   }
-
 }
 
 extension StateActions on State {
-
   Branch? getCurrentBranch({
     Function()? onRepositoryNotInitialized,
     Function()? onNoStateFile,
-  })  {
+  }) {
     if (!repository.isInitialized) {
       onRepositoryNotInitialized?.call();
       return null;
     }
 
-    if(!exists) {
+    if (!exists) {
       onNoStateFile?.call();
       return null;
     }

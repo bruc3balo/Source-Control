@@ -8,9 +8,8 @@ Future<void> main(List<String> arguments) async {
   UserInput userInput = UserInput(arguments);
   final CommandLineRunner runner = CommandLineRunner();
 
-  printToConsole(
+  debugPrintToConsole(
     message: "Arguments: ${userInput.toString()} \n",
-    color: CliColor.brightMagenta,
     style: CliStyle.bold,
     newLine: true,
   );

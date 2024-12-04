@@ -76,6 +76,24 @@ String? listenForInput({String? title}) {
   return stdin.readLineSync(retainNewlines: true);
 }
 
+void debugPrintToConsole({
+  required String message,
+  bool newLine = false,
+  bool isDebugMode = true,
+  CliColor color = CliColor.magenta,
+  CliStyle? style,
+  TextAlignment alignment = TextAlignment.left,
+}) {
+  if (!isDebugMode) return;
+  printToConsole(
+    message: message,
+    newLine: newLine,
+    color: color,
+    style: style,
+    alignment: alignment,
+  );
+}
+
 void printToConsole({
   required String message,
   bool newLine = false,
@@ -99,7 +117,6 @@ abstract class CommandExecutor {
 ///Parses user input and creates commands
 ///Runs commands created
 class CommandLineRunner implements CommandExecutor {
-
   @override
   CommandFacade inputToCommands(UserInput userInput) {
     if (userInput.isEmpty) return HelpInitializer();
@@ -154,6 +171,14 @@ class CommandLineRunner implements CommandExecutor {
       case CommandMapperEnum.log:
         String? branch = optionMapEnum[CommandOptionsMapperEnum.branch];
         return GetCommitHistoryInitializer(branch);
+      case CommandMapperEnum.checkout:
+        String? branch = optionMapEnum[CommandOptionsMapperEnum.branch];
+        if (branch == null) {
+          debugPrintToConsole(message: "No branch name");
+          return ErrorInitializer("Branch required");
+        }
+
+        return CheckoutToBranchInitializer(branch);
       default:
         return ErrorInitializer("Unknown command ${userInput.command}");
     }
@@ -161,6 +186,8 @@ class CommandLineRunner implements CommandExecutor {
 
   @override
   Future<int> runCommand(List<Command> commands) async {
+    debugPrintToConsole(message: "Executing ${commands.length} commands");
+
     int i = 0;
     try {
       while (i < commands.length) {
@@ -168,8 +195,9 @@ class CommandLineRunner implements CommandExecutor {
       }
       return 0;
     } catch (e, trace) {
-      printToConsole(message: e.toString(), color: CliColor.red);
-      printToConsole(message: trace.toString(), color: CliColor.red);
+      debugPrintToConsole(message: e.toString(), color: CliColor.red);
+      debugPrintToConsole(message: trace.toString(), color: CliColor.red);
+
       while (i > 0) {
         await commands[--i].undo();
       }
