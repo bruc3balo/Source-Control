@@ -116,7 +116,7 @@ extension BranchCreation on Branch {
       CommitMetaData? commitMetaData = branchData.commits.values.firstOrNull;
       if (commitMetaData != null) {
         String latestCommitDirPath =
-            join(branchDirectoryPath, commitMetaData.sha);
+            join(branchDirectoryPath, branchCommitFolder, commitMetaData.sha);
         Directory latestCommitDir = Directory(latestCommitDirPath);
 
         List<File> files = latestCommitDir
