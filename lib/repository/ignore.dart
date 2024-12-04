@@ -114,6 +114,8 @@ extension IgnoreActions on Ignore {
 }
 
 extension IgnoreCommons on Ignore {
+
+  //TODO: Move ignore file to root dir
   File get ignoreFile => File(
         join(
           repository.repositoryDirectory.path,
