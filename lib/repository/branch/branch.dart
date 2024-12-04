@@ -121,6 +121,7 @@ extension BranchCreation on Branch {
 
         List<File> files = latestCommitDir
             .listSync(recursive: true)
+            .where((e) => e.statSync().type == FileSystemEntityType.file)
             .map((e) => File(e.path))
             .toList();
 
