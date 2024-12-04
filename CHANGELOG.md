@@ -11,3 +11,4 @@
 - Stage files command
 - Commit files to a branch
 - View commit history
+- Git diff on branches

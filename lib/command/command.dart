@@ -2,6 +2,7 @@ import 'package:balo/command/command_mapper.dart';
 import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
+import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
@@ -421,7 +422,7 @@ class ShowCommitDiffCommand implements Command {
     debugPrintToConsole(message: "Executing compare commit diff command");
     await a.compareCommitDiff(
       other: b,
-      onDiffCalculated: (d) => debugPrintToConsole(message: d.toString(), color: CliColor.cyan),
+      onDiffCalculated: (d) => d.fullPrint(),
       onNoOtherCommitMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no commit meta data"),
       onNoOtherCommitBranchMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no branch data"),
       onNoThisCommitMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no commit meta data"),
