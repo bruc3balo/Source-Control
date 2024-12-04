@@ -113,8 +113,14 @@ extension BranchCreation on Branch {
         return;
       }
 
-      CommitMetaData? commitMetaData = branchData.commits.values.firstOrNull;
-      if (commitMetaData != null) {
+      if (branchData.commits.isNotEmpty) {
+        List<CommitMetaData> allBranchCommits =
+            branchData.commits.values.toList()
+              ..sort(
+                (a, b) => -a.commitedAt.compareTo(b.commitedAt),
+              );
+
+        CommitMetaData commitMetaData = allBranchCommits.first;
         String latestCommitDirPath =
             join(branchDirectoryPath, branchCommitFolder, commitMetaData.sha);
         Directory latestCommitDir = Directory(latestCommitDirPath);
@@ -134,11 +140,16 @@ extension BranchCreation on Branch {
 
       state.saveStateData(
         stateData: stateData,
-        onFileSystemException: (e) =>
-            debugPrintToConsole(message: e.message, color: CliColor.red),
-        onRepositoryNotInitialized: () =>
-            debugPrintToConsole(message: "Repository not initialized"),
-        onSuccessfullySaved: () => debugPrintToConsole(message: "State saved"),
+        onFileSystemException: (e) => debugPrintToConsole(
+          message: e.message,
+          color: CliColor.red,
+        ),
+        onRepositoryNotInitialized: () => debugPrintToConsole(
+          message: "Repository not initialized",
+        ),
+        onSuccessfullySaved: () => debugPrintToConsole(
+          message: "State saved",
+        ),
       );
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
@@ -274,10 +285,11 @@ class BranchMetaData with _$BranchMetaData {
 
 @freezed
 class CommitMetaData with _$CommitMetaData {
-  factory CommitMetaData(
-      {required String sha,
-      required String message,
-      required DateTime commitedAt}) = _CommitMetaData;
+  factory CommitMetaData({
+    required String sha,
+    required String message,
+    required DateTime commitedAt,
+  }) = _CommitMetaData;
 
   factory CommitMetaData.fromJson(Map<String, Object?> json) =>
       _$CommitMetaDataFromJson(json);

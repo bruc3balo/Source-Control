@@ -45,6 +45,11 @@ enum CommandMapperEnum {
     command: ["commit"],
     description: "Commit staged files",
     options: [CommandOptionsMapperEnum.message],
+  ),
+  diff(
+    command: ["diff"],
+    description: "Show differences between 2 commits",
+    options: [CommandOptionsMapperEnum.branchA, CommandOptionsMapperEnum.shaA, CommandOptionsMapperEnum.branchB, CommandOptionsMapperEnum.shaB],
   );
 
   final List<String> command;
@@ -87,6 +92,22 @@ enum CommandOptionsMapperEnum {
   pattern(
     option: ["-f", "--file"],
     description: "Describes the file pattern to search for",
+  ),
+  branchA(
+    option: ["--b-a"],
+    description: "Selects branch a name",
+  ),
+  shaA(
+    option: ["--sha-a"],
+    description: "Selects commit b sha",
+  ),
+  shaB(
+    option: ["--sha-b"],
+    description: "Selects commit a sha",
+  ),
+  branchB(
+    option: ["--b-b"],
+    description: "Selects branch b name",
   );
 
   final List<String> option;

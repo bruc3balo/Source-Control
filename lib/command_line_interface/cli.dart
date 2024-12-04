@@ -179,6 +179,37 @@ class CommandLineRunner implements CommandExecutor {
         }
 
         return CheckoutToBranchInitializer(branch);
+      case CommandMapperEnum.diff:
+        String? branchAName = optionMapEnum[CommandOptionsMapperEnum.branchA];
+        if (branchAName == null) {
+          debugPrintToConsole(message: "No branch a name");
+          return ErrorInitializer("Branch a required");
+        }
+
+        String? shaAName = optionMapEnum[CommandOptionsMapperEnum.shaA];
+        if (shaAName == null) {
+          debugPrintToConsole(message: "No commit a sha");
+          return ErrorInitializer("Sha a required");
+        }
+
+        String? branchBName = optionMapEnum[CommandOptionsMapperEnum.branchB];
+        if (branchBName == null) {
+          debugPrintToConsole(message: "No branch b name");
+          return ErrorInitializer("Branch b required");
+        }
+
+        String? shaBName = optionMapEnum[CommandOptionsMapperEnum.shaB];
+        if (shaBName == null) {
+          debugPrintToConsole(message: "No commit b sha");
+          return ErrorInitializer("Sha b required");
+        }
+
+        return ShowDiffBetweenCommitsInitializer(
+          branchAName: branchAName,
+          branchBName: branchBName,
+          commitASha: shaAName,
+          commitBSha: shaBName,
+        );
       default:
         return ErrorInitializer("Unknown command ${userInput.command}");
     }

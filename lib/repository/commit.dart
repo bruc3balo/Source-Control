@@ -1,4 +1,10 @@
+import 'dart:io';
+
+import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/branch/branch.dart';
+import 'package:balo/repository/diff/diff.dart';
+import 'package:balo/utils/variables.dart';
+import 'package:path/path.dart';
 
 class Commit {
   final Branch branch;
@@ -15,5 +21,54 @@ class Commit {
 }
 
 extension CommitActions on Commit {
+  List<File>? getCommitFiles({
+    Function()? onNoCommitBranchMetaData,
+    Function()? onNoCommitMetaData,
+  }) {
+    Branch commitBranch = branch;
 
+    BranchMetaData? branchCommitMetaData = commitBranch.branchMetaData;
+    if (branchCommitMetaData == null) {
+      onNoCommitBranchMetaData?.call();
+      return null;
+    }
+
+    CommitMetaData? commitMetaData = branchCommitMetaData.commits[sha];
+    if (commitMetaData == null) {
+      onNoCommitMetaData?.call();
+      return null;
+    }
+
+    String commitDirPath = join(
+      commitBranch.branchDirectoryPath,
+      branchCommitFolder,
+      sha,
+    );
+    Directory commitDir = Directory(commitDirPath);
+
+    return commitDir
+        .listSync(recursive: true)
+        .where((e) => e.statSync().type == FileSystemEntityType.file)
+        .map((e) => File(e.path))
+        .toList();
+  }
+
+  Future<void> compareCommitDiff({
+    required Commit other,
+    Function()? onNoOtherCommitBranchMetaData,
+    Function()? onNoOtherCommitMetaData,
+    Function()? onNoThisCommitBranchMetaData,
+    Function()? onNoThisCommitMetaData,
+    Function(CommitDiff)? onDiffCalculated,
+  }) async {
+    CommitDiff commitDiff = await CommitDiff.calculateDiff(
+      a: this,
+      b: other,
+      onNoACommitBranchMetaData: onNoThisCommitBranchMetaData,
+      onNoACommitMetaData: onNoThisCommitMetaData,
+      onNoBCommitBranchMetaData: onNoOtherCommitBranchMetaData,
+      onNoBCommitMetaData: onNoOtherCommitMetaData,
+    );
+    onDiffCalculated?.call(commitDiff);
+  }
 }

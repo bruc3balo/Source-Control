@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:balo/command/command.dart';
 import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/branch/branch.dart';
+import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
@@ -204,5 +205,68 @@ class CheckoutToBranchInitializer implements CommandFacade {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
     return [CheckoutToBranchCommand(repository, branchName)];
+  }
+}
+
+class ShowDiffBetweenCommitsInitializer implements CommandFacade {
+  final String branchAName;
+  final String commitASha;
+  final String branchBName;
+  final String commitBSha;
+
+  ShowDiffBetweenCommitsInitializer({
+    required this.branchAName,
+    required this.commitASha,
+    required this.branchBName,
+    required this.commitBSha,
+  });
+
+  @override
+  List<Command> initialize() {
+    Repository repository = Repository(Directory.current.path);
+    debugPrintToConsole(message: "Repository path is ${repository.path}");
+
+    Branch branchA = Branch(branchAName, repository);
+    BranchMetaData? branchAMetaData = branchA.branchMetaData;
+    if (branchAMetaData == null) {
+      debugPrintToConsole(message: "branchAMetaData == null");
+
+      return [ShowErrorCommand("Branch $branchAName has no meta data")];
+    }
+
+    CommitMetaData? commitAMetaData = branchAMetaData.commits[commitASha];
+    if (commitAMetaData == null) {
+      debugPrintToConsole(message: "commitAMetaData == null");
+      return [ShowErrorCommand("Commit $commitASha has no meta data")];
+    }
+
+    Branch branchB = Branch(branchBName, repository);
+    BranchMetaData? branchBMetaData = branchB.branchMetaData;
+    if (branchBMetaData == null) {
+      debugPrintToConsole(message: "branchBMetaData == null");
+
+      return [ShowErrorCommand("Branch $branchBName has no meta data")];
+    }
+    CommitMetaData? commitBMetaData = branchBMetaData.commits[commitBSha];
+    if (commitBMetaData == null) {
+      debugPrintToConsole(message: "commitBMetaData == null");
+      return [ShowErrorCommand("Commit $commitBSha has no meta data")];
+    }
+
+    Commit commitA = Commit(
+      commitAMetaData.sha,
+      branchA,
+      commitAMetaData.message,
+      commitAMetaData.commitedAt,
+    );
+
+    Commit commitB = Commit(
+      commitBMetaData.sha,
+      branchB,
+      commitBMetaData.message,
+      commitBMetaData.commitedAt,
+    );
+
+    return [ShowCommitDiffCommand(repository, commitA, commitB)];
   }
 }
