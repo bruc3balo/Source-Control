@@ -78,6 +78,9 @@ extension StagingActions on Staging {
 
       //Ignore staging these files
       List<String> patternsToIgnore = ignore.patternsToIgnore;
+      debugPrintToConsole(
+        message: "Ignoring ${patternsToIgnore.join(" ")}",
+      );
 
       //List files for staging
       List<FileSystemEntity> filesToBeStaged =

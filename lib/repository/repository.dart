@@ -43,6 +43,7 @@ extension RepositoryActions on Repository {
         return;
       }
 
+
       repositoryDirectory.createSync(recursive: true);
       onSuccessfullyInitialized?.call();
     } on FileSystemException catch (e, trace) {

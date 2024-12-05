@@ -81,6 +81,7 @@ class StageFilesInitializer implements CommandFacade {
 
     return [
       StageFilesCommand(staging, pattern),
+
     ];
   }
 }
@@ -268,5 +269,36 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
     );
 
     return [ShowCommitDiffCommand(repository, commitA, commitB)];
+  }
+}
+
+class MergeBranchInitializer implements CommandFacade {
+  final String otherBranchName;
+
+  MergeBranchInitializer(this.otherBranchName);
+
+  @override
+  List<Command> initialize() {
+    Repository repository = Repository(Directory.current.path);
+    debugPrintToConsole(message: "Repository path is ${repository.path}");
+
+    Branch otherBranch = Branch(otherBranchName, repository);
+    State state = State(repository);
+    Branch? thisBranch = state.getCurrentBranch(
+      onRepositoryNotInitialized: () => debugPrintToConsole(
+        message: "Repository on path is ${repository.path} is not initialized",
+      ),
+      onNoStateFile: () => debugPrintToConsole(
+        message: "Missing repository state file",
+      ),
+    );
+
+    if (thisBranch == null) {
+      return [ShowErrorCommand("error")];
+    }
+
+    return [
+      MergeBranchCommand(repository, thisBranch, otherBranch),
+    ];
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
 
 import 'package:balo/command_line_interface/cli.dart';
@@ -271,11 +272,24 @@ extension BranchManager on Branch {
 }
 
 extension BranchMerge on Branch {
-  Future<void> merge({
+  Future<void> mergeFromOtherBranchIntoThis({
     required Branch otherBranch,
+    Function()? onSameBranchMerge,
+    Function()? onRepositoryNotInitialized,
     Function()? onNoOtherBranchMetaData,
     Function()? onNoCommit,
   }) async {
+    //Ensure merging from repository
+    if (!repository.isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return;
+    }
+
+    if(otherBranch == this) {
+      onSameBranchMerge?.call();
+      return;
+    }
+
     //Get all files from otherBranch latest commit
     BranchMetaData? otherBranchData = otherBranch.branchMetaData;
     if (otherBranchData == null) {
@@ -324,21 +338,88 @@ extension BranchMerge on Branch {
         f.path.replaceAll(workingBranchPrefix, ""): f
     };
 
-    HashSet<String> filePaths = HashSet.of(
-      [...workingBranchFilesMap.keys, ...otherBranchFilesMap.keys],
+    HashSet<String> filePaths = HashSet.of(otherBranchFilesMap.keys);
+
+    List<File> mergeResult = await _doMerge(
+      filePaths: filePaths,
+      workingBranchFilesMap: workingBranchFilesMap,
+      otherBranchFilesMap: otherBranchFilesMap,
     );
+
+    await _addMergedFilesToWorkingDir(
+      otherBranchPath: otherBranchPrefix,
+      workingDirPath: workingBranchPrefix,
+      mergeResult: mergeResult,
+    );
+  }
+
+  Future<void> _addMergedFilesToWorkingDir({
+    required String otherBranchPath,
+    required String workingDirPath,
+    required List<File> mergeResult,
+  }) async {
+    debugPrintToConsole(
+      message: "Merging ${mergeResult.length} files to $workingDirPath",
+    );
+
+    for (File file in mergeResult) {
+      String path = file.path;
+      String prefixPath =
+          path.startsWith(otherBranchPath) ? otherBranchPath : workingDirPath;
+      String newPath = file.path.replaceAll(prefixPath, workingDirPath);
+      file.copySync(newPath);
+
+      debugPrintToConsole(
+        message: "Copying to ${basename(newPath)} to $newPath",
+      );
+    }
+
+    debugPrintToConsole(
+      message: "Done merging ${mergeResult.length} files to $workingDirPath",
+    );
+  }
+
+  Future<List<File>> _doMerge({
+    required HashSet<String> filePaths,
+    required Map<String, File> workingBranchFilesMap,
+    required Map<String, File> otherBranchFilesMap,
+  }) async {
+    debugPrintToConsole(
+      message: "Starting file comparison for ${filePaths.length} files",
+    );
+
+    List<File> mergeResult = [];
 
     //Compare file by file
     for (String key in filePaths) {
+      bool conflict = false;
+      // same -> Pick other
+      // insert -> Fast Forward
+      // delete -> pick mine
+      // modify -> conflict [theirs] [mine]
       File? otherFile = otherBranchFilesMap[key];
       File? thisFile = workingBranchFilesMap[key];
 
       if (otherFile == null) {
-        //Keep mine
+        //Keep this
+        mergeResult.add(thisFile!);
+        debugPrintToConsole(
+          message: "Auto merging for ${basename(thisFile.path)}",
+          color: CliColor.defaultColor,
+        );
+        continue;
       } else if (thisFile == null) {
-        //Keep theirs
+        //Keep other
+        mergeResult.add(otherFile);
+        debugPrintToConsole(
+          message: "Auto merging for ${basename(otherFile.path)}",
+          color: CliColor.defaultColor,
+        );
+        continue;
       } else {
-        //Compare line by line
+        //Compare line by line and write to file
+        List<String> linesToWrite = [];
+
         List<String> otherLines = otherFile.readAsLinesSync();
         int otherLength = otherLines.length;
 
@@ -346,30 +427,78 @@ extension BranchMerge on Branch {
         int thisLength = thisLines.length;
 
         int maxLines = max(otherLength, thisLength);
+        debugPrintToConsole(
+          message: "Checking $maxLines lines for $key",
+        );
 
+        lineLoop:
         for (int line = 0; line < maxLines; line++) {
           if (line > otherLength - 1) {
             //out of bounds
+            //keep this line
+            linesToWrite.add(thisLines[line]);
           } else if (line > thisLength - 1) {
             //out of bounds
+            //keep other line
+            linesToWrite.add(otherLines[line]);
           } else {
             //Compare lines
 
             String otherLine = otherLines[line];
             String thisLine = thisLines[line];
 
-            int diffScore = await levenshteinDistance(otherLine, thisLine);
+
+            //int diffScore = await levenshteinDistance(otherLine, thisLine);
+            int diffScore = otherLine.length.compareTo(thisLine.length);
+            debugPrintToConsole(
+              message: "Lines $line compares $diffScore",
+            );
+
+            if (diffScore == 0) {
+              //add either
+              linesToWrite.add(otherLine);
+              continue lineLoop;
+            }
+
+            //Merge conflict detected
+            conflict = true;
+
+            //include both
+            linesToWrite.add("$otherLine >> @@other@@");
+            linesToWrite.add("$thisLine >> @@this@@");
           }
         }
+
+        //Modify this file to show conflicts
+        if (conflict) {
+          thisFile.writeAsStringSync(
+            linesToWrite.join("\n"),
+            mode: FileMode.write,
+            flush: true,
+          );
+
+          debugPrintToConsole(
+            message: "CONFLICT for ${basename(thisFile.path)}",
+            color: CliColor.brightRed,
+            style: CliStyle.bold,
+          );
+        } else {
+          debugPrintToConsole(
+            message: "Auto merging for ${basename(otherFile.path)}",
+            color: CliColor.brightRed,
+            style: CliStyle.bold,
+          );
+        }
+
+        mergeResult.add(thisFile);
       }
     }
 
-    // same -> Pick other
-    // insert -> Fast Forward
-    // delete -> pick mine
-    // modify -> conflict [theirs] [mine]
+    debugPrintToConsole(
+      message: "Completed file comparison for ${mergeResult.length} files",
+    );
 
-    //
+    return mergeResult;
   }
 }
 

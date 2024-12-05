@@ -44,6 +44,6 @@ void moveFiles({
       flush: true,
     );
 
-    printToConsole(message: "mv ${sourceFile.path} -> $fileDestinationPath");
+    debugPrintToConsole(message: "mv ${sourceFile.path} -> $fileDestinationPath");
   }
 }

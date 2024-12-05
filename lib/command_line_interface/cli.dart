@@ -10,7 +10,6 @@ import 'package:dart_console/dart_console.dart';
 final Console console = Console();
 bool isVerboseMode = true;
 
-
 enum CliColor {
   // Text Colors
   defaultColor('\x1B[0m'),
@@ -181,6 +180,15 @@ class CommandLineRunner implements CommandExecutor {
         }
 
         return CheckoutToBranchInitializer(branch);
+      case CommandMapperEnum.merge:
+        String? branch = optionMapEnum[CommandOptionsMapperEnum.branch];
+        if (branch == null) {
+          debugPrintToConsole(message: "No branch name");
+          return ErrorInitializer("Branch required");
+        }
+
+        return MergeBranchInitializer(branch);
+
       case CommandMapperEnum.diff:
         String? branchAName = optionMapEnum[CommandOptionsMapperEnum.branchA];
         if (branchAName == null) {

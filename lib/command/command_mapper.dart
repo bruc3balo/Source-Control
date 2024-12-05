@@ -50,6 +50,11 @@ enum CommandMapperEnum {
     command: ["diff"],
     description: "Show differences between 2 commits",
     options: [CommandOptionsMapperEnum.branchA, CommandOptionsMapperEnum.shaA, CommandOptionsMapperEnum.branchB, CommandOptionsMapperEnum.shaB],
+  ),
+  merge(
+    command: ["merge"],
+    description: "Merge a commit from another branch to the current branch",
+    options: [CommandOptionsMapperEnum.branch],
   );
 
   final List<String> command;

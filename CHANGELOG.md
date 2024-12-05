@@ -12,3 +12,4 @@
 - Commit files to a branch
 - View commit history
 - Git diff on branches
+- Merge another branches commit into current working dir

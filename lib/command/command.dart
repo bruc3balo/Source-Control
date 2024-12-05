@@ -12,16 +12,13 @@ import 'package:balo/repository/state/state.dart';
 import 'package:dart_console/dart_console.dart';
 
 abstract class Command {
-
-
   Future<void> execute();
-  Future<void> undo();
 
+  Future<void> undo();
 }
 
 ///Command to show help
 class ShowHelpCommand extends Command {
-
   @override
   Future<void> execute() async {
     printHelp();
@@ -56,7 +53,7 @@ class ShowErrorCommand extends Command {
 class InitializeRepositoryCommand extends Command {
   final Repository repository;
 
-   InitializeRepositoryCommand(this.repository);
+  InitializeRepositoryCommand(this.repository);
 
   @override
   Future<void> execute() async {
@@ -173,7 +170,18 @@ class StageFilesCommand extends Command {
     debugPrintToConsole(
       message: "Executing stage files command",
     );
-    Isolate.run(() async => await staging.stageFiles(pattern: pattern));
+    await Isolate.run(
+      () async => await staging.stageFiles(
+        pattern: pattern,
+        onFileSystemException: (e) => debugPrintToConsole(
+          message: e.message,
+          color: CliColor.red,
+        ),
+        onUninitializedRepository: () => debugPrintToConsole(
+          message: "Repository not initialized",
+        ),
+      ),
+    );
   }
 
   @override
@@ -402,14 +410,18 @@ class CheckoutToBranchCommand extends Command {
     Branch branch = Branch(branchName, repository);
     await Isolate.run(() async {
       await branch.checkoutToBranch(
-        onRepositoryNotInitialized: () => debugPrintToConsole(message: "Repository not initialized"),
-        onSameBranch: () => debugPrintToConsole(message: "Cannot checkout to same branch"),
-        onStateDoesntExists: () => debugPrintToConsole(message: "State doesn't exist"),
-        onBranchMetaDataDoesntExists: () => debugPrintToConsole(message: "Branch meta data doesn't exists"),
-        onFileSystemException: (e) => debugPrintToConsole(message: e.message, color: CliColor.red),
+        onRepositoryNotInitialized: () =>
+            debugPrintToConsole(message: "Repository not initialized"),
+        onSameBranch: () =>
+            debugPrintToConsole(message: "Cannot checkout to same branch"),
+        onStateDoesntExists: () =>
+            debugPrintToConsole(message: "State doesn't exist"),
+        onBranchMetaDataDoesntExists: () =>
+            debugPrintToConsole(message: "Branch meta data doesn't exists"),
+        onFileSystemException: (e) =>
+            debugPrintToConsole(message: e.message, color: CliColor.red),
       );
     });
-
   }
 
   @override
@@ -433,17 +445,56 @@ class ShowCommitDiffCommand extends Command {
       await a.compareCommitDiff(
         other: b,
         onDiffCalculated: (d) => d.fullPrint(),
-        onNoOtherCommitMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no commit meta data"),
-        onNoOtherCommitBranchMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no branch data"),
-        onNoThisCommitMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no commit meta data"),
-        onNoThisCommitBranchMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no branch data"),
+        onNoOtherCommitMetaData: () => debugPrintToConsole(
+            message:
+                "Commit b ${b.sha} (${b.branch.branchName}) has no commit meta data"),
+        onNoOtherCommitBranchMetaData: () => debugPrintToConsole(
+            message:
+                "Commit b ${b.sha} (${b.branch.branchName}) has no branch data"),
+        onNoThisCommitMetaData: () => debugPrintToConsole(
+            message:
+                "Commit a ${a.sha} (${a.branch.branchName}) has no commit meta data"),
+        onNoThisCommitBranchMetaData: () => debugPrintToConsole(
+            message:
+                "Commit a ${a.sha} (${a.branch.branchName}) has no branch data"),
       );
     });
-
   }
 
   @override
   Future<void> undo() async {
     debugPrintToConsole(message: "Undoing checkout to branch command");
+  }
+}
+
+///Command to merge a branch with a working dir
+class MergeBranchCommand extends Command {
+  final Repository repository;
+  final Branch thisBranch;
+  final Branch otherBranch;
+
+  MergeBranchCommand(this.repository, this.thisBranch, this.otherBranch);
+
+  @override
+  Future<void> execute() async {
+    debugPrintToConsole(message: "Executing merge branch command");
+
+    await thisBranch.mergeFromOtherBranchIntoThis(
+      otherBranch: otherBranch,
+      onRepositoryNotInitialized: () => debugPrintToConsole(
+        message: "Repository not initialized",
+      ),
+      onNoOtherBranchMetaData: () => debugPrintToConsole(
+        message: "${otherBranch.branchName} branch doesn't exist",
+      ),
+      onNoCommit: () => debugPrintToConsole(
+        message: "${otherBranch.branchName} branch doesn't have a commit",
+      ),
+    );
+  }
+
+  @override
+  Future<void> undo() async {
+    debugPrintToConsole(message: "Undoing merge branch command");
   }
 }
