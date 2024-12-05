@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/commit.dart';
@@ -71,7 +72,7 @@ extension BranchCreation on Branch {
     Function(FileSystemException)? onFileSystemException,
   }) async {
     try {
-      if (!exists) {
+      if (!branchMetaDataExists) {
         await createBranch(
           onFileSystemException: (e) => debugPrintToConsole(
             message: e.message,
@@ -114,12 +115,7 @@ extension BranchCreation on Branch {
       }
 
       if (branchData.commits.isNotEmpty) {
-        List<CommitMetaData> allBranchCommits =
-            branchData.commits.values.toList()
-              ..sort(
-                (a, b) => -a.commitedAt.compareTo(b.commitedAt),
-              );
-
+        List<CommitMetaData> allBranchCommits = branchData.sortedBranchCommits;
         CommitMetaData commitMetaData = allBranchCommits.first;
         String latestCommitDirPath =
             join(branchDirectoryPath, branchCommitFolder, commitMetaData.sha);
@@ -200,10 +196,10 @@ extension BranchMetaDataStorage on Branch {
 
   File get managerFile => File(managerPath);
 
-  bool get exists => managerFile.existsSync();
+  bool get branchMetaDataExists => managerFile.existsSync();
 
   BranchMetaData? get branchMetaData {
-    if (!exists) return null;
+    if (!branchMetaDataExists) return null;
 
     String fileData = managerFile.readAsStringSync();
     if (fileData.isEmpty) return null;
@@ -216,7 +212,7 @@ extension BranchMetaDataStorage on Branch {
     Function()? onDuplicateFile,
     Function()? onCreateFile,
   }) async {
-    if (exists) {
+    if (branchMetaDataExists) {
       onDuplicateFile?.call();
       return;
     }
@@ -229,7 +225,7 @@ extension BranchMetaDataStorage on Branch {
   }
 
   void saveBranchMetaData(BranchMetaData metaData) {
-    if (!exists) createMetaDataFile();
+    if (!branchMetaDataExists) createMetaDataFile();
 
     managerFile.writeAsStringSync(
       jsonEncode(metaData.toJson()),
@@ -245,7 +241,7 @@ extension BranchManager on Branch {
     Function(CommitMetaData)? onCommitCreated,
     Function()? onNoMetaData,
   }) async {
-    if (!exists) {
+    if (!branchMetaDataExists) {
       onMissingManager?.call();
       return;
     }
@@ -272,6 +268,104 @@ extension BranchManager on Branch {
   }
 }
 
+extension BranchMerge on Branch {
+  void merge({
+    required Branch otherBranch,
+    Function()? onNoOtherBranchMetaData,
+    Function()? onNoCommit,
+  }) {
+    //Get all files from otherBranch latest commit
+    BranchMetaData? otherBranchData = otherBranch.branchMetaData;
+    if (otherBranchData == null) {
+      onNoOtherBranchMetaData?.call();
+      return;
+    }
+
+    CommitMetaData? commitMetaData =
+        otherBranchData.sortedBranchCommits.firstOrNull;
+
+    if (commitMetaData == null) {
+      onNoCommit?.call();
+      return;
+    }
+    Commit otherCommit = Commit(
+      commitMetaData.sha,
+      otherBranch,
+      commitMetaData.message,
+      commitMetaData.commitedAt,
+    );
+    List<File> otherCommitFiles = otherCommit.getCommitFiles() ?? [];
+
+    //Get all files from this current working branch
+    Directory workingBranchDir = repository.repositoryDirectory.parent;
+    List<File> workingBranchFiles = workingBranchDir
+        .listSync(recursive: true)
+        .where((e) => e.statSync().type == FileSystemEntityType.file)
+        .map((e) => File(e.path))
+        .toList();
+
+    //Get other branch files map
+    String otherBranchPrefix = join(
+      otherBranch.branchDirectoryPath,
+      branchCommitFolder,
+      otherCommit.sha,
+    );
+    Map<String, File> otherBranchFilesMap = {
+      for (var f in otherCommitFiles)
+        f.path.replaceAll(otherBranchPrefix, ""): f
+    };
+
+    //Get this branch files map
+    String workingBranchPrefix = workingBranchDir.path;
+    Map<String, File> workingBranchFilesMap = {
+      for (var f in workingBranchFiles)
+        f.path.replaceAll(workingBranchPrefix, ""): f
+    };
+
+    HashSet<String> filePaths = HashSet.of(
+      [...workingBranchFilesMap.keys, ...otherBranchFilesMap.keys],
+    );
+
+    //Compare file by file
+    for (String key in filePaths) {
+      File? otherFile = otherBranchFilesMap[key];
+      File? thisFile = workingBranchFilesMap[key];
+
+      if (otherFile == null) {
+        //Keep mine
+      } else if (thisFile == null) {
+        //Keep theirs
+      } else {
+        //Compare line by line
+        List<String> otherLines = otherFile.readAsLinesSync();
+        int otherLength = otherLines.length;
+
+        List<String> thisLines = thisFile.readAsLinesSync();
+        int thisLength = thisLines.length;
+
+        int maxLines = max(otherLength, thisLength);
+
+        for (int line = 0; line < maxLines; line++) {
+          if (line > otherLength - 1) {
+            //out of bounds
+          } else if (line > thisLength - 1) {
+            //out of bounds
+          } else {
+            //Compare line by line
+          }
+        }
+      }
+    }
+
+    // same -> Pick other
+    // insert -> Fast Forward
+    // delete -> pick mine
+    // modify -> conflict [theirs] [mine]
+
+    //
+  }
+}
+
 @freezed
 class BranchMetaData with _$BranchMetaData {
   factory BranchMetaData({
@@ -281,6 +375,13 @@ class BranchMetaData with _$BranchMetaData {
 
   factory BranchMetaData.fromJson(Map<String, Object?> json) =>
       _$BranchMetaDataFromJson(json);
+}
+
+extension BranchMetaDataX on BranchMetaData {
+  List<CommitMetaData> get sortedBranchCommits => commits.values.toList()
+    ..sort(
+      (a, b) => -a.commitedAt.compareTo(b.commitedAt),
+    );
 }
 
 @freezed
