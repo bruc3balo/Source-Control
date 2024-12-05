@@ -8,6 +8,8 @@ import 'package:balo/user_input/user_input.dart';
 import 'package:dart_console/dart_console.dart';
 
 final Console console = Console();
+bool isVerboseMode = true;
+
 
 enum CliColor {
   // Text Colors
@@ -80,12 +82,11 @@ String? listenForInput({String? title}) {
 void debugPrintToConsole({
   required String message,
   bool newLine = false,
-  bool isDebugMode = true,
   CliColor color = CliColor.magenta,
   CliStyle? style,
   TextAlignment alignment = TextAlignment.left,
 }) {
-  if (!isDebugMode) return;
+  if (!isVerboseMode) return;
   printToConsole(
     message: message,
     newLine: newLine,
@@ -223,7 +224,7 @@ class CommandLineRunner implements CommandExecutor {
     int i = 0;
     try {
       while (i < commands.length) {
-        await commands[i++].runExecute();
+        await commands[i++].execute();
       }
       return 0;
     } catch (e, trace) {
@@ -231,8 +232,9 @@ class CommandLineRunner implements CommandExecutor {
       debugPrintToConsole(message: trace.toString(), color: CliColor.red);
 
       while (i > 0) {
-        await commands[--i].runUndo();
+        await commands[--i].undo();
       }
+
       return 1;
     }
   }

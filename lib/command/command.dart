@@ -13,11 +13,9 @@ import 'package:dart_console/dart_console.dart';
 
 abstract class Command {
 
-  Future<void> runExecute () async => await Isolate.run(_execute);
-  Future<void> runUndo () async => await Isolate.run(_undo);
 
-  Future<void> _execute();
-  Future<void> _undo();
+  Future<void> execute();
+  Future<void> undo();
 
 }
 
@@ -25,12 +23,12 @@ abstract class Command {
 class ShowHelpCommand extends Command {
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     printHelp();
   }
 
   @override
-  Future<void> _undo() async {}
+  Future<void> undo() async {}
 }
 
 ///Command to show help
@@ -40,7 +38,7 @@ class ShowErrorCommand extends Command {
   ShowErrorCommand(this.error);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     printToConsole(
       message: error,
       color: CliColor.red,
@@ -51,7 +49,7 @@ class ShowErrorCommand extends Command {
   }
 
   @override
-  Future<void> _undo() async {}
+  Future<void> undo() async {}
 }
 
 ///Command to initialize a repository
@@ -61,7 +59,7 @@ class InitializeRepositoryCommand extends Command {
    InitializeRepositoryCommand(this.repository);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(
       message: "Executing initialize repository command",
     );
@@ -76,7 +74,7 @@ class InitializeRepositoryCommand extends Command {
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
       message: "Undoing initialize repository command",
     );
@@ -97,7 +95,7 @@ class CreateStateFileCommand extends Command {
   CreateStateFileCommand(this.repository, this.currentBranch);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(
       message: "Executing create state file command",
     );
@@ -107,7 +105,7 @@ class CreateStateFileCommand extends Command {
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
       message: "Undoing create state file command",
     );
@@ -122,7 +120,7 @@ class CreateIgnoreFileCommand extends Command {
   CreateIgnoreFileCommand(this.repository);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(
       message: "Executing ignore file command",
     );
@@ -130,7 +128,7 @@ class CreateIgnoreFileCommand extends Command {
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
       message: "Undoing ignore file command",
     );
@@ -147,7 +145,7 @@ class CreateNewBranchCommand extends Command {
   CreateNewBranchCommand(this.repository, this.name);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(
       message: "Executing create new branch command",
     );
@@ -155,7 +153,7 @@ class CreateNewBranchCommand extends Command {
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
       message: "Undoing create new branch command",
     );
@@ -171,15 +169,15 @@ class StageFilesCommand extends Command {
   StageFilesCommand(this.staging, this.pattern);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(
       message: "Executing stage files command",
     );
-    staging.stageFiles(pattern: pattern);
+    Isolate.run(() async => await staging.stageFiles(pattern: pattern));
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
       message: "Undoing stage files command",
     );
@@ -195,7 +193,7 @@ class AddIgnorePatternCommand extends Command {
   AddIgnorePatternCommand(this.repository, this.pattern);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(
       message: "Executing add ignore pattern command",
     );
@@ -203,7 +201,7 @@ class AddIgnorePatternCommand extends Command {
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
       message: "Undoing add ignore pattern command",
     );
@@ -219,7 +217,7 @@ class RemoveIgnorePatternCommand extends Command {
   RemoveIgnorePatternCommand(this.repository, this.pattern);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(
       message: "Executing remove ignore pattern command",
     );
@@ -227,7 +225,7 @@ class RemoveIgnorePatternCommand extends Command {
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
       message: "Undoing remove ignore pattern command",
     );
@@ -242,7 +240,7 @@ class PrintCurrentBranchCommand extends Command {
   PrintCurrentBranchCommand(this.repository);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     Branch? branch = repository.state.getCurrentBranch(
       onRepositoryNotInitialized: () => debugPrintToConsole(
         message: "Repository not initialized",
@@ -267,7 +265,7 @@ class PrintCurrentBranchCommand extends Command {
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
       message: "Undoing get status of current branch command",
     );
@@ -281,7 +279,7 @@ class GetStatusOfCurrentBranch extends Command {
   GetStatusOfCurrentBranch(this.repository);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(
         message: "Executing get status of current branch command");
 
@@ -308,7 +306,7 @@ class GetStatusOfCurrentBranch extends Command {
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
         message: "Undoing get status of current branch command");
   }
@@ -322,7 +320,7 @@ class CommitStagedFilesCommand extends Command {
   CommitStagedFilesCommand(this.repository, this.message);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(message: "Executing commit staged files command");
 
     Branch? branch = repository.state.getCurrentBranch();
@@ -346,11 +344,13 @@ class CommitStagedFilesCommand extends Command {
       );
       return;
     }
-    await staging.commitStagedFiles(message: message);
+    await Isolate.run(() async {
+      await staging.commitStagedFiles(message: message);
+    });
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(message: "Undoing commiting files command");
   }
 }
@@ -363,7 +363,7 @@ class GetBranchCommitHistoryCommand extends Command {
   GetBranchCommitHistoryCommand(this.repository, this.branchName);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(
         message: "Executing get branch history command on $branchName");
 
@@ -383,7 +383,7 @@ class GetBranchCommitHistoryCommand extends Command {
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(
         message: "Undoing get branch history command on $branchName");
   }
@@ -397,20 +397,23 @@ class CheckoutToBranchCommand extends Command {
   CheckoutToBranchCommand(this.repository, this.branchName);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(message: "Executing checkout to branch command");
     Branch branch = Branch(branchName, repository);
-    branch.checkoutToBranch(
-      onRepositoryNotInitialized: () => debugPrintToConsole(message: "Repository not initialized"),
-      onSameBranch: () => debugPrintToConsole(message: "Cannot checkout to same branch"),
-      onStateDoesntExists: () => debugPrintToConsole(message: "State doesn't exist"),
-      onBranchMetaDataDoesntExists: () => debugPrintToConsole(message: "Branch meta data doesn't exists"),
-      onFileSystemException: (e) => debugPrintToConsole(message: e.message, color: CliColor.red),
-    );
+    await Isolate.run(() async {
+      await branch.checkoutToBranch(
+        onRepositoryNotInitialized: () => debugPrintToConsole(message: "Repository not initialized"),
+        onSameBranch: () => debugPrintToConsole(message: "Cannot checkout to same branch"),
+        onStateDoesntExists: () => debugPrintToConsole(message: "State doesn't exist"),
+        onBranchMetaDataDoesntExists: () => debugPrintToConsole(message: "Branch meta data doesn't exists"),
+        onFileSystemException: (e) => debugPrintToConsole(message: e.message, color: CliColor.red),
+      );
+    });
+
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(message: "Undoing checkout to branch command");
   }
 }
@@ -424,20 +427,23 @@ class ShowCommitDiffCommand extends Command {
   ShowCommitDiffCommand(this.repository, this.a, this.b);
 
   @override
-  Future<void> _execute() async {
+  Future<void> execute() async {
     debugPrintToConsole(message: "Executing compare commit diff command");
-    await a.compareCommitDiff(
-      other: b,
-      onDiffCalculated: (d) => d.fullPrint(),
-      onNoOtherCommitMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no commit meta data"),
-      onNoOtherCommitBranchMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no branch data"),
-      onNoThisCommitMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no commit meta data"),
-      onNoThisCommitBranchMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no branch data"),
-    );
+    await Isolate.run(() async {
+      await a.compareCommitDiff(
+        other: b,
+        onDiffCalculated: (d) => d.fullPrint(),
+        onNoOtherCommitMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no commit meta data"),
+        onNoOtherCommitBranchMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no branch data"),
+        onNoThisCommitMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no commit meta data"),
+        onNoThisCommitBranchMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no branch data"),
+      );
+    });
+
   }
 
   @override
-  Future<void> _undo() async {
+  Future<void> undo() async {
     debugPrintToConsole(message: "Undoing checkout to branch command");
   }
 }

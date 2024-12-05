@@ -101,6 +101,10 @@ enum CommandOptionsMapperEnum {
     option: ["--sha-a"],
     description: "Selects commit b sha",
   ),
+  verbose(
+    option: ["--v"],
+    description: "Prints debug statements",
+  ),
   shaB(
     option: ["--sha-b"],
     description: "Selects commit a sha",

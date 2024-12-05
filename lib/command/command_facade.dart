@@ -127,7 +127,7 @@ class PrintCurrentBranchInitializer implements CommandFacade {
   @override
   List<Command> initialize() {
     Repository repository = Repository(Directory.current.path);
-    debugPrintToConsole(message: "Repository path is ${repository.path}");
+    debugPrintToConsole(message: "extends ${repository.path}");
     return [PrintCurrentBranchCommand(repository)];
   }
 }

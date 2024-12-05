@@ -1,13 +1,16 @@
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:balo/command/command_facade.dart';
+import 'package:balo/command/command_mapper.dart';
 import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/user_input/user_input.dart';
+
 
 Future<void> main(List<String> arguments) async {
   UserInput userInput = UserInput(arguments);
   final CommandLineRunner runner = CommandLineRunner();
+
+  isVerboseMode = arguments.any((a) => a == CommandOptionsMapperEnum.verbose.option.first);
 
   debugPrintToConsole(
     message: "Arguments: ${userInput.toString()} \n",
