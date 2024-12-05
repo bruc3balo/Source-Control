@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:balo/command/command_facade.dart';
 import 'package:balo/command_line_interface/cli.dart';

@@ -1,6 +1,9 @@
+import 'dart:collection';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:balo/command_line_interface/cli.dart';
+import 'package:balo/repository/diff/diff.dart';
 
 String regexPattern(String pattern) => pattern.startsWith('.')
     ? r'(^|/)' + pattern.replaceFirst('.', r'\.') + r'(/|$)'
@@ -23,10 +26,11 @@ void moveFiles({
   required Directory sourceDir,
   required Directory destinationDir,
 }) {
-  printToConsole(message: "moving ${files.length}  files from ${sourceDir.path} to ${destinationDir.path}");
+  printToConsole(
+      message:
+          "moving ${files.length}  files from ${sourceDir.path} to ${destinationDir.path}");
 
   for (File sourceFile in files) {
-
     String fileDestinationPath = sourceFile.path.replaceAll(
       sourceDir.path,
       destinationDir.path,

@@ -266,7 +266,8 @@ class FileLineDiff {
     }
 
     String lineB = bTotalLines[aLineNo];
-    int diffScore = await LevenshteinDistance(lineA, lineB).calculateDistance();
+    int diffScore = await levenshteinDistance(lineA, lineB);
+
     return FileLineDiff(
       thisPath: a.path,
       otherPath: b.path,
@@ -295,46 +296,35 @@ extension DiffTypeColor on DiffType {
       };
 
   String get title => switch (this) {
-    DiffType.insert => "inserted",
-    DiffType.modify => "modified",
-    DiffType.delete => "deleted",
-    DiffType.same => "same",
-  };
+        DiffType.insert => "inserted",
+        DiffType.modify => "modified",
+        DiffType.delete => "deleted",
+        DiffType.same => "same",
+      };
 }
 
-class LevenshteinDistance {
+
+class LineComparison {
+  final String key;
   final String lineA;
   final String lineB;
 
-  LevenshteinDistance(this.lineA, this.lineB);
-
-  void _calculateDistance(SendPort sendPort) async {
-    lineA.levenshteinDistance(lineB).then(
-          (distance) => sendPort.send(distance),
-        );
-  }
-
-  Future<int> calculateDistance() async {
-    // Create a ReceivePort to get data from the isolate
-    final ReceivePort receivePort = ReceivePort("levenshteinDistance");
-
-    // Spawn a new isolate
-    await Isolate.spawn(_calculateDistance, receivePort.sendPort);
-
-    // Wait for the result from the spawned isolate
-    return await receivePort.first;
-  }
+  LineComparison({
+    required this.key,
+    required this.lineA,
+    required this.lineB,
+  });
 }
 
 extension CommitDiffPrint on CommitDiff {
-
   void fullPrint() {
     printDiff();
 
-    for(var a in filesDiff) {
+    for (var a in filesDiff) {
       a.printDiff();
 
-      for(var b in a.linesDiff.values.where((e) => e.diffType != DiffType.same)) {
+      for (var b
+          in a.linesDiff.values.where((e) => e.diffType != DiffType.same)) {
         b.printDiff();
       }
     }
@@ -373,8 +363,10 @@ extension FileDiffPrint on FileDiff {
   }
 
   void printDiff() {
-
-    int differences = diffCount.entries.where((e) => e.key != DiffType.same).map((e) => e.value).fold(0, (a, b) => a + b);
+    int differences = diffCount.entries
+        .where((e) => e.key != DiffType.same)
+        .map((e) => e.value)
+        .fold(0, (a, b) => a + b);
     printToConsole(
       message:
           "Files: a -> ${basename(thisFile.path)}, b -> ${basename(otherFile.path)} = ${diffType.title} ($differences difference${differences == 1 ? '' : 's'})",
@@ -383,7 +375,8 @@ extension FileDiffPrint on FileDiff {
       newLine: true,
     );
     printToConsole(
-      message: "${DiffType.insert.color.color} ++inserted ${diffCount[DiffType.insert] ?? 0} ${CliColor.defaultColor.color} ${DiffType.delete.color.color}--deleted ${diffCount[DiffType.delete] ?? 0}${CliColor.defaultColor.color} ${DiffType.modify.color.color} **modified ${diffCount[DiffType.modify] ?? 0}${CliColor.defaultColor.color}",
+      message:
+          "${DiffType.insert.color.color} ++inserted ${diffCount[DiffType.insert] ?? 0} ${CliColor.defaultColor.color} ${DiffType.delete.color.color}--deleted ${diffCount[DiffType.delete] ?? 0}${CliColor.defaultColor.color} ${DiffType.modify.color.color} **modified ${diffCount[DiffType.modify] ?? 0}${CliColor.defaultColor.color}",
       color: DiffType.insert.color,
     );
   }

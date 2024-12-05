@@ -5,11 +5,13 @@ import 'dart:math';
 
 import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/commit.dart';
+import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
+import 'package:dart_levenshtein/dart_levenshtein.dart';
 import 'package:path/path.dart';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -269,11 +271,11 @@ extension BranchManager on Branch {
 }
 
 extension BranchMerge on Branch {
-  void merge({
+  Future<void> merge({
     required Branch otherBranch,
     Function()? onNoOtherBranchMetaData,
     Function()? onNoCommit,
-  }) {
+  }) async {
     //Get all files from otherBranch latest commit
     BranchMetaData? otherBranchData = otherBranch.branchMetaData;
     if (otherBranchData == null) {
@@ -351,7 +353,12 @@ extension BranchMerge on Branch {
           } else if (line > thisLength - 1) {
             //out of bounds
           } else {
-            //Compare line by line
+            //Compare lines
+
+            String otherLine = otherLines[line];
+            String thisLine = thisLines[line];
+
+            int diffScore = await levenshteinDistance(otherLine, thisLine);
           }
         }
       }

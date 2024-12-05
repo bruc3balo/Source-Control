@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:balo/command/command.dart';
@@ -111,7 +112,7 @@ abstract class CommandExecutor {
   CommandFacade inputToCommands(UserInput userInput);
 
   //Run commands and return and exit code
-  Future<int> runCommand(List<Command> commands);
+  FutureOr<int> runCommand(List<Command> commands);
 }
 
 ///Parses user input and creates commands
@@ -216,13 +217,13 @@ class CommandLineRunner implements CommandExecutor {
   }
 
   @override
-  Future<int> runCommand(List<Command> commands) async {
+  FutureOr<int> runCommand(List<Command> commands) async {
     debugPrintToConsole(message: "Executing ${commands.length} commands");
 
     int i = 0;
     try {
       while (i < commands.length) {
-        await commands[i++].execute();
+        await commands[i++].runExecute();
       }
       return 0;
     } catch (e, trace) {
@@ -230,7 +231,7 @@ class CommandLineRunner implements CommandExecutor {
       debugPrintToConsole(message: trace.toString(), color: CliColor.red);
 
       while (i > 0) {
-        await commands[--i].undo();
+        await commands[--i].runUndo();
       }
       return 1;
     }

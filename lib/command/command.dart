@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:balo/command/command_mapper.dart';
 import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/branch/branch.dart';
@@ -7,34 +9,38 @@ import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
-import 'package:balo/utils/variables.dart';
 import 'package:dart_console/dart_console.dart';
 
 abstract class Command {
-  Future<void> execute();
 
-  Future<void> undo();
+  Future<void> runExecute () async => await Isolate.run(_execute);
+  Future<void> runUndo () async => await Isolate.run(_undo);
+
+  Future<void> _execute();
+  Future<void> _undo();
+
 }
 
 ///Command to show help
-class ShowHelpCommand implements Command {
+class ShowHelpCommand extends Command {
+
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     printHelp();
   }
 
   @override
-  Future<void> undo() async {}
+  Future<void> _undo() async {}
 }
 
 ///Command to show help
-class ShowErrorCommand implements Command {
+class ShowErrorCommand extends Command {
   final String error;
 
   ShowErrorCommand(this.error);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     printToConsole(
       message: error,
       color: CliColor.red,
@@ -45,17 +51,17 @@ class ShowErrorCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {}
+  Future<void> _undo() async {}
 }
 
 ///Command to initialize a repository
-class InitializeRepositoryCommand implements Command {
+class InitializeRepositoryCommand extends Command {
   final Repository repository;
 
-  const InitializeRepositoryCommand(this.repository);
+   InitializeRepositoryCommand(this.repository);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(
       message: "Executing initialize repository command",
     );
@@ -70,7 +76,7 @@ class InitializeRepositoryCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
       message: "Undoing initialize repository command",
     );
@@ -84,14 +90,14 @@ class InitializeRepositoryCommand implements Command {
 }
 
 ///Command to create state file
-class CreateStateFileCommand implements Command {
+class CreateStateFileCommand extends Command {
   final Repository repository;
   final String currentBranch;
 
   CreateStateFileCommand(this.repository, this.currentBranch);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(
       message: "Executing create state file command",
     );
@@ -101,7 +107,7 @@ class CreateStateFileCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
       message: "Undoing create state file command",
     );
@@ -110,13 +116,13 @@ class CreateStateFileCommand implements Command {
 }
 
 ///Command to create an ignore file
-class CreateIgnoreFileCommand implements Command {
+class CreateIgnoreFileCommand extends Command {
   final Repository repository;
 
   CreateIgnoreFileCommand(this.repository);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(
       message: "Executing ignore file command",
     );
@@ -124,7 +130,7 @@ class CreateIgnoreFileCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
       message: "Undoing ignore file command",
     );
@@ -133,7 +139,7 @@ class CreateIgnoreFileCommand implements Command {
 }
 
 ///Command to create a branch
-class CreateNewBranchCommand implements Command {
+class CreateNewBranchCommand extends Command {
   final Repository repository;
   final String name;
   late final Branch branch = Branch(name, repository);
@@ -141,7 +147,7 @@ class CreateNewBranchCommand implements Command {
   CreateNewBranchCommand(this.repository, this.name);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(
       message: "Executing create new branch command",
     );
@@ -149,7 +155,7 @@ class CreateNewBranchCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
       message: "Undoing create new branch command",
     );
@@ -158,14 +164,14 @@ class CreateNewBranchCommand implements Command {
 }
 
 ///Command to stage files
-class StageFilesCommand implements Command {
+class StageFilesCommand extends Command {
   final Staging staging;
   final String pattern;
 
   StageFilesCommand(this.staging, this.pattern);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(
       message: "Executing stage files command",
     );
@@ -173,7 +179,7 @@ class StageFilesCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
       message: "Undoing stage files command",
     );
@@ -182,14 +188,14 @@ class StageFilesCommand implements Command {
 }
 
 ///Command to add ignore pattern
-class AddIgnorePatternCommand implements Command {
+class AddIgnorePatternCommand extends Command {
   final Repository repository;
   final String pattern;
 
   AddIgnorePatternCommand(this.repository, this.pattern);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(
       message: "Executing add ignore pattern command",
     );
@@ -197,7 +203,7 @@ class AddIgnorePatternCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
       message: "Undoing add ignore pattern command",
     );
@@ -206,14 +212,14 @@ class AddIgnorePatternCommand implements Command {
 }
 
 ///Command to remove ignore pattern
-class RemoveIgnorePatternCommand implements Command {
+class RemoveIgnorePatternCommand extends Command {
   final Repository repository;
   final String pattern;
 
   RemoveIgnorePatternCommand(this.repository, this.pattern);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(
       message: "Executing remove ignore pattern command",
     );
@@ -221,7 +227,7 @@ class RemoveIgnorePatternCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
       message: "Undoing remove ignore pattern command",
     );
@@ -230,13 +236,13 @@ class RemoveIgnorePatternCommand implements Command {
 }
 
 ///Command to print the current branch
-class PrintCurrentBranchCommand implements Command {
+class PrintCurrentBranchCommand extends Command {
   final Repository repository;
 
   PrintCurrentBranchCommand(this.repository);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     Branch? branch = repository.state.getCurrentBranch(
       onRepositoryNotInitialized: () => debugPrintToConsole(
         message: "Repository not initialized",
@@ -261,7 +267,7 @@ class PrintCurrentBranchCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
       message: "Undoing get status of current branch command",
     );
@@ -269,13 +275,13 @@ class PrintCurrentBranchCommand implements Command {
 }
 
 ///Command to get status of current branch
-class GetStatusOfCurrentBranch implements Command {
+class GetStatusOfCurrentBranch extends Command {
   final Repository repository;
 
   GetStatusOfCurrentBranch(this.repository);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(
         message: "Executing get status of current branch command");
 
@@ -302,21 +308,21 @@ class GetStatusOfCurrentBranch implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
         message: "Undoing get status of current branch command");
   }
 }
 
 ///Command to commit staged files
-class CommitStagedFilesCommand implements Command {
+class CommitStagedFilesCommand extends Command {
   final Repository repository;
   final String message;
 
   CommitStagedFilesCommand(this.repository, this.message);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(message: "Executing commit staged files command");
 
     Branch? branch = repository.state.getCurrentBranch();
@@ -344,20 +350,20 @@ class CommitStagedFilesCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(message: "Undoing commiting files command");
   }
 }
 
 ///Command to get branch commits
-class GetBranchCommitHistoryCommand implements Command {
+class GetBranchCommitHistoryCommand extends Command {
   final Repository repository;
   final String branchName;
 
   GetBranchCommitHistoryCommand(this.repository, this.branchName);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(
         message: "Executing get branch history command on $branchName");
 
@@ -377,21 +383,21 @@ class GetBranchCommitHistoryCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(
         message: "Undoing get branch history command on $branchName");
   }
 }
 
 ///Command to checkout to branch
-class CheckoutToBranchCommand implements Command {
+class CheckoutToBranchCommand extends Command {
   final Repository repository;
   final String branchName;
 
   CheckoutToBranchCommand(this.repository, this.branchName);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(message: "Executing checkout to branch command");
     Branch branch = Branch(branchName, repository);
     branch.checkoutToBranch(
@@ -404,13 +410,13 @@ class CheckoutToBranchCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(message: "Undoing checkout to branch command");
   }
 }
 
 ///Command to diff between 2 commits
-class ShowCommitDiffCommand implements Command {
+class ShowCommitDiffCommand extends Command {
   final Repository repository;
   final Commit a;
   final Commit b;
@@ -418,7 +424,7 @@ class ShowCommitDiffCommand implements Command {
   ShowCommitDiffCommand(this.repository, this.a, this.b);
 
   @override
-  Future<void> execute() async {
+  Future<void> _execute() async {
     debugPrintToConsole(message: "Executing compare commit diff command");
     await a.compareCommitDiff(
       other: b,
@@ -431,7 +437,7 @@ class ShowCommitDiffCommand implements Command {
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> _undo() async {
     debugPrintToConsole(message: "Undoing checkout to branch command");
   }
 }
