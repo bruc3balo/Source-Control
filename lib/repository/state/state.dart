@@ -66,7 +66,7 @@ extension StateStorage on State {
   }
 
   Future<void> createStateFile({
-    required String currentBranch,
+    required Branch currentBranch,
     Function()? onAlreadyExists,
     Function()? onSuccessfullyCreated,
     Function()? onRepositoryNotInitialized,
@@ -85,7 +85,7 @@ extension StateStorage on State {
 
       await stateFile.create(recursive: true, exclusive: true);
 
-      StateData data = StateData(currentBranch: currentBranch);
+      StateData data = StateData(currentBranch: currentBranch.branchName);
 
       //Write state to file
       stateFile.writeAsStringSync(jsonEncode(data));

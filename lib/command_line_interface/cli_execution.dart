@@ -107,43 +107,33 @@ abstract class UndoableCommandExecutor {
         return MergeBranchInitializer(branch);
 
       case CliCommandsEnum.diff:
-        String? branchAName = parsedCommands.getOption(
+        String? thisBranchName = parsedCommands.getOption(
           CliCommandOptionsEnum.thisBranch,
         );
-        if (branchAName == null) {
-          debugPrintToConsole(message: "No branch a name");
-          return ErrorInitializer("Branch a required");
-        }
 
-        String? shaAName = parsedCommands.getOption(
+        String? thisSha = parsedCommands.getOption(
           CliCommandOptionsEnum.thisSha,
         );
-        if (shaAName == null) {
-          debugPrintToConsole(message: "No commit a sha");
-          return ErrorInitializer("Sha a required");
-        }
 
-        String? branchBName = parsedCommands.getOption(
+
+        String? otherBranchName = parsedCommands.getOption(
           CliCommandOptionsEnum.otherBranch,
         );
-        if (branchBName == null) {
+        if (otherBranchName == null) {
           debugPrintToConsole(message: "No branch b name");
           return ErrorInitializer("Branch b required");
         }
 
-        String? shaBName = parsedCommands.getOption(
+        String? otherSha = parsedCommands.getOption(
           CliCommandOptionsEnum.otherSha,
         );
-        if (shaBName == null) {
-          debugPrintToConsole(message: "No commit b sha");
-          return ErrorInitializer("Sha b required");
-        }
+
 
         return ShowDiffBetweenCommitsInitializer(
-          branchAName: branchAName,
-          branchBName: branchBName,
-          commitASha: shaAName,
-          commitBSha: shaBName,
+          thisBranchName: thisBranchName,
+          otherBranchName: otherBranchName,
+          thisCommitSha: thisSha,
+          otherCommitSha: otherSha,
         );
       default:
         return ErrorInitializer("Unknown command");

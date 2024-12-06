@@ -93,7 +93,7 @@ class InitializeRepositoryCommand extends UndoableCommand {
 ///Command to create state file
 class CreateStateFileCommand extends UndoableCommand {
   final Repository repository;
-  final String currentBranch;
+  final Branch currentBranch;
 
   CreateStateFileCommand(this.repository, this.currentBranch);
 
@@ -142,10 +142,9 @@ class CreateIgnoreFileCommand extends UndoableCommand {
 ///Command to create a branch
 class CreateNewBranchCommand extends UndoableCommand {
   final Repository repository;
-  final String name;
-  late final Branch branch = Branch(name, repository);
+  final Branch branch;
 
-  CreateNewBranchCommand(this.repository, this.name);
+  CreateNewBranchCommand(this.repository, this.branch);
 
   @override
   Future<void> execute() async {
@@ -400,14 +399,13 @@ class GetBranchCommitHistoryCommand extends UndoableCommand {
 ///Command to checkout to branch
 class CheckoutToBranchCommand extends UndoableCommand {
   final Repository repository;
-  final String branchName;
+  final Branch branch;
 
-  CheckoutToBranchCommand(this.repository, this.branchName);
+  CheckoutToBranchCommand(this.repository, this.branch);
 
   @override
   Future<void> execute() async {
     debugPrintToConsole(message: "Executing checkout to branch command");
-    Branch branch = Branch(branchName, repository);
     await Isolate.run(() async {
       await branch.checkoutToBranch(
         onRepositoryNotInitialized: () => debugPrintToConsole(message: "Repository not initialized"),
@@ -428,22 +426,22 @@ class CheckoutToBranchCommand extends UndoableCommand {
 ///Command to diff between 2 commits
 class ShowCommitDiffCommand extends UndoableCommand {
   final Repository repository;
-  final Commit a;
-  final Commit b;
+  final Commit thisCommit;
+  final Commit otherCommit;
 
-  ShowCommitDiffCommand(this.repository, this.a, this.b);
+  ShowCommitDiffCommand(this.repository, this.thisCommit, this.otherCommit);
 
   @override
   Future<void> execute() async {
     debugPrintToConsole(message: "Executing compare commit diff command");
     await Isolate.run(() async {
-      await a.compareCommitDiff(
-        other: b,
+      await thisCommit.compareCommitDiff(
+        other: otherCommit,
         onDiffCalculated: (d) => d.fullPrint(),
-        onNoOtherCommitMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no commit meta data"),
-        onNoOtherCommitBranchMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no branch data"),
-        onNoThisCommitMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no commit meta data"),
-        onNoThisCommitBranchMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no branch data"),
+        onNoOtherCommitMetaData: () => debugPrintToConsole(message: "Commit b ${otherCommit.sha} (${otherCommit.branch.branchName}) has no commit meta data"),
+        onNoOtherCommitBranchMetaData: () => debugPrintToConsole(message: "Commit b ${otherCommit.sha} (${otherCommit.branch.branchName}) has no branch data"),
+        onNoThisCommitMetaData: () => debugPrintToConsole(message: "Commit a ${thisCommit.sha} (${thisCommit.branch.branchName}) has no commit meta data"),
+        onNoThisCommitBranchMetaData: () => debugPrintToConsole(message: "Commit a ${thisCommit.sha} (${thisCommit.branch.branchName}) has no branch data"),
       );
     });
   }

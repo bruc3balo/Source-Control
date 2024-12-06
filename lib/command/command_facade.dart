@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:balo/command/command.dart';
 import 'package:balo/command_line_interface/cli_arguments.dart';
-import 'package:balo/command_line_interface/cli_execution.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repository.dart';
@@ -25,7 +24,6 @@ class ErrorInitializer implements CommandFacade {
 }
 
 class HelpInitializer implements CommandFacade {
-
   final CliCommandsEnum? command;
 
   HelpInitializer({this.command});
@@ -48,14 +46,15 @@ class RepositoryInitializer implements CommandFacade {
 
     // Initialize the repository
     Repository repository = Repository(path!);
+    Branch branch = Branch(defaultBranch, repository);
 
     // Return the list of commands
     return [
       InitializeRepositoryCommand(repository),
       CreateIgnoreFileCommand(repository),
       AddIgnorePatternCommand(repository, repositoryFolderName),
-      CreateNewBranchCommand(repository, defaultBranch),
-      CreateStateFileCommand(repository, defaultBranch),
+      CreateNewBranchCommand(repository, branch),
+      CreateStateFileCommand(repository, branch),
     ];
   }
 }
@@ -88,7 +87,6 @@ class StageFilesInitializer implements CommandFacade {
 
     return [
       StageFilesCommand(staging, pattern),
-
     ];
   }
 }
@@ -101,17 +99,14 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
 
   @override
   List<UndoableCommand> initialize() {
-    if ((patternToAdd == null || patternToAdd!.isEmpty) &&
-        (patternToRemove == null || patternToRemove!.isEmpty)) {
+    if ((patternToAdd == null || patternToAdd!.isEmpty) && (patternToRemove == null || patternToRemove!.isEmpty)) {
       debugPrintToConsole(message: "No pattern provided");
       return [ShowErrorCommand("Pattern to add or remove required")];
     }
 
     if (patternToAdd == patternToRemove) {
       debugPrintToConsole(message: "Add and remove pattern is the same");
-      return [
-        ShowErrorCommand("Pattern to add and remove should not be the same")
-      ];
+      return [ShowErrorCommand("Pattern to add and remove should not be the same")];
     }
 
     Repository repository = Repository(Directory.current.path);
@@ -212,21 +207,21 @@ class CheckoutToBranchInitializer implements CommandFacade {
   List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
-    return [CheckoutToBranchCommand(repository, branchName)];
+    return [CheckoutToBranchCommand(repository, Branch(branchName, repository))];
   }
 }
 
 class ShowDiffBetweenCommitsInitializer implements CommandFacade {
-  final String branchAName;
-  final String commitASha;
-  final String branchBName;
-  final String commitBSha;
+  final String? thisBranchName;
+  final String? thisCommitSha;
+  final String otherBranchName;
+  final String? otherCommitSha;
 
   ShowDiffBetweenCommitsInitializer({
-    required this.branchAName,
-    required this.commitASha,
-    required this.branchBName,
-    required this.commitBSha,
+    required this.thisBranchName,
+    required this.thisCommitSha,
+    required this.otherBranchName,
+    required this.otherCommitSha,
   });
 
   @override
@@ -234,48 +229,59 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
 
-    Branch branchA = Branch(branchAName, repository);
-    BranchMetaData? branchAMetaData = branchA.branchMetaData;
-    if (branchAMetaData == null) {
-      debugPrintToConsole(message: "branchAMetaData == null");
-
-      return [ShowErrorCommand("Branch $branchAName has no meta data")];
+    State state = repository.state;
+    StateData? stateData = state.stateInfo;
+    if (stateData == null) {
+      return [ShowErrorCommand("Repository has no state data")];
     }
 
-    CommitMetaData? commitAMetaData = branchAMetaData.commits[commitASha];
-    if (commitAMetaData == null) {
+    Branch? thisBranch = thisBranchName == null ? state.getCurrentBranch() : Branch(thisBranchName!, repository);
+    if (thisBranch == null) {
+      return [ShowErrorCommand("Unable to get current branch info and has not been provided")];
+    }
+
+    BranchMetaData? thisBranchMetaData = thisBranch.branchMetaData;
+    if (thisBranchMetaData == null) {
+      return [ShowErrorCommand("This branch $thisBranchName has no meta data")];
+    }
+
+    CommitMetaData? thisCommitMetaData =
+        thisCommitSha == null ? thisBranchMetaData.sortedBranchCommits.firstOrNull : thisBranchMetaData.commits[thisCommitSha];
+    if (thisCommitMetaData == null) {
       debugPrintToConsole(message: "commitAMetaData == null");
-      return [ShowErrorCommand("Commit $commitASha has no meta data")];
+      return [ShowErrorCommand("Commit $thisCommitSha has no meta data")];
     }
 
-    Branch branchB = Branch(branchBName, repository);
-    BranchMetaData? branchBMetaData = branchB.branchMetaData;
-    if (branchBMetaData == null) {
+    Branch otherBranch = Branch(otherBranchName, repository);
+    BranchMetaData? otherBranchMetaData = otherBranch.branchMetaData;
+    if (otherBranchMetaData == null) {
       debugPrintToConsole(message: "branchBMetaData == null");
 
-      return [ShowErrorCommand("Branch $branchBName has no meta data")];
+      return [ShowErrorCommand("Branch $otherBranchName has no meta data")];
     }
-    CommitMetaData? commitBMetaData = branchBMetaData.commits[commitBSha];
-    if (commitBMetaData == null) {
+
+    CommitMetaData? otherCommitMetaData =
+        otherCommitSha == null ? otherBranchMetaData.sortedBranchCommits.firstOrNull : otherBranchMetaData.commits[otherCommitSha];
+    if (otherCommitMetaData == null) {
       debugPrintToConsole(message: "commitBMetaData == null");
-      return [ShowErrorCommand("Commit $commitBSha has no meta data")];
+      return [ShowErrorCommand("Commit $otherCommitSha has no meta data")];
     }
 
-    Commit commitA = Commit(
-      commitAMetaData.sha,
-      branchA,
-      commitAMetaData.message,
-      commitAMetaData.commitedAt,
+    Commit thisCommit = Commit(
+      thisCommitMetaData.sha,
+      thisBranch,
+      thisCommitMetaData.message,
+      thisCommitMetaData.commitedAt,
     );
 
-    Commit commitB = Commit(
-      commitBMetaData.sha,
-      branchB,
-      commitBMetaData.message,
-      commitBMetaData.commitedAt,
+    Commit otherCommit = Commit(
+      otherCommitMetaData.sha,
+      otherBranch,
+      otherCommitMetaData.message,
+      otherCommitMetaData.commitedAt,
     );
 
-    return [ShowCommitDiffCommand(repository, commitA, commitB)];
+    return [ShowCommitDiffCommand(repository, thisCommit, otherCommit)];
   }
 }
 

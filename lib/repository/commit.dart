@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:balo/command_line_interface/cli_execution.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/utils/variables.dart';
@@ -62,12 +61,12 @@ extension CommitActions on Commit {
     Function(CommitDiff)? onDiffCalculated,
   }) async {
     CommitDiff commitDiff = await CommitDiff.calculateDiff(
-      a: this,
-      b: other,
-      onNoACommitBranchMetaData: onNoThisCommitBranchMetaData,
-      onNoACommitMetaData: onNoThisCommitMetaData,
-      onNoBCommitBranchMetaData: onNoOtherCommitBranchMetaData,
-      onNoBCommitMetaData: onNoOtherCommitMetaData,
+      thisCommit: this,
+      otherCommit: other,
+      onNoThisCommitBranchMetaData: onNoThisCommitBranchMetaData,
+      onNoThisCommitMetaData: onNoThisCommitMetaData,
+      onNoOtherCommitBranchMetaData: onNoOtherCommitBranchMetaData,
+      onNoOtherCommitMetaData: onNoOtherCommitMetaData,
     );
     onDiffCalculated?.call(commitDiff);
   }

@@ -1,4 +1,3 @@
-
 enum CliColor {
   // Text Colors
   defaultColor('\x1B[0m'),

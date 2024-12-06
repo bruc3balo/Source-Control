@@ -59,14 +59,12 @@ extension RepositoryCommons on Repository {
 }
 
 extension RepositoryEnvironment on Repository {
-
   List<Branch> get allBranches =>
       Directory(join(repositoryPath, branchFolderName))
           .listSync(recursive: false, followLinks: false)
           .where((f) => f.statSync().type == FileSystemEntityType.directory)
           .map((f) => Branch(basename(f.path), this))
           .toList();
-
   Ignore get ignore => Ignore(this);
   State get state => State(this);
 }

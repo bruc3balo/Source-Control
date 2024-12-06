@@ -25,75 +25,75 @@ class CommitDiff {
   });
 
   static Future<CommitDiff> calculateDiff({
-    required Commit a,
-    required Commit b,
-    Function()? onNoBCommitBranchMetaData,
-    Function()? onNoBCommitMetaData,
-    Function()? onNoACommitBranchMetaData,
-    Function()? onNoACommitMetaData,
+    required Commit thisCommit,
+    required Commit otherCommit,
+    Function()? onNoOtherCommitBranchMetaData,
+    Function()? onNoOtherCommitMetaData,
+    Function()? onNoThisCommitBranchMetaData,
+    Function()? onNoThisCommitMetaData,
   }) async {
     //Get a commit files
-    List<File>? aFiles = a.getCommitFiles(
-      onNoCommitBranchMetaData: onNoACommitBranchMetaData,
-      onNoCommitMetaData: onNoACommitMetaData,
+    List<File>? thisFiles = thisCommit.getCommitFiles(
+      onNoCommitBranchMetaData: onNoThisCommitBranchMetaData,
+      onNoCommitMetaData: onNoThisCommitMetaData,
     );
 
     //Get b commit files
-    List<File>? bFiles = b.getCommitFiles(
-      onNoCommitBranchMetaData: onNoBCommitBranchMetaData,
-      onNoCommitMetaData: onNoBCommitMetaData,
+    List<File>? otherFiles = otherCommit.getCommitFiles(
+      onNoCommitBranchMetaData: onNoOtherCommitBranchMetaData,
+      onNoCommitMetaData: onNoOtherCommitMetaData,
     );
 
-    if (aFiles == null && bFiles == null) {
+    if (thisFiles == null && otherFiles == null) {
       return CommitDiff(
         filesDiff: [],
-        thisCommit: a,
-        otherCommit: b,
+        thisCommit: thisCommit,
+        otherCommit: otherCommit,
         statistic: {},
       );
     }
-    aFiles ??= [];
-    bFiles ??= [];
+    thisFiles ??= [];
+    otherFiles ??= [];
 
-    //Get b files map
-    String bDirPrefix =
-        join(b.branch.branchDirectoryPath, branchCommitFolder, b.sha);
-    Map<String, File> bFilesMap = {
-      for (var f in bFiles) f.path.replaceAll(bDirPrefix, ""): f
+    //Get other files map
+    String otherDirPrefix =
+        join(otherCommit.branch.branchDirectoryPath, branchCommitFolder, otherCommit.sha);
+    Map<String, File> otherFilesMap = {
+      for (var f in otherFiles) f.path.replaceAll(otherDirPrefix, ""): f
     };
 
-    //Get a files map
-    String aDirPrefix =
-        join(a.branch.branchDirectoryPath, branchCommitFolder, a.sha);
-    Map<String, File> aFilesMap = {
-      for (var f in aFiles) f.path.replaceAll(aDirPrefix, ""): f
+    //Get this files map
+    String thisDirPrefix =
+        join(thisCommit.branch.branchDirectoryPath, branchCommitFolder, thisCommit.sha);
+    Map<String, File> thisFilesMap = {
+      for (var f in thisFiles) f.path.replaceAll(thisDirPrefix, ""): f
     };
 
     //Compare this with other
     debugPrintToConsole(
       message:
-          "Comparing files from ${a.sha} commit (${aFiles.length} files) to ${b.sha} commit (${bFiles.length} files)",
+          "Comparing files from ${thisCommit.sha} commit (${thisFiles.length} files) to ${otherCommit.sha} commit (${otherFiles.length} files)",
     );
 
     List<FileDiff> filesDiff = [];
     Map<DiffType, int> statistics = {};
-    HashSet<String> abFiles = HashSet();
-    abFiles.addAll(aFilesMap.keys);
-    abFiles.addAll(bFilesMap.keys);
+    HashSet<String> thisAndOtherFiles = HashSet();
+    thisAndOtherFiles.addAll(thisFilesMap.keys);
+    thisAndOtherFiles.addAll(otherFilesMap.keys);
 
-    for (String key in abFiles) {
-      debugPrintToConsole(message: key);
+    for (String thisOrOtherFileKey in thisAndOtherFiles) {
+      debugPrintToConsole(message: thisOrOtherFileKey);
 
-      File? aFile = aFilesMap[key];
-      File? bFile = bFilesMap[key];
+      File? thisFile = thisFilesMap[thisOrOtherFileKey];
+      File? otherFile = otherFilesMap[thisOrOtherFileKey];
 
       late DiffType diffType;
-      if (aFile == null) {
+      if (thisFile == null) {
         diffType = DiffType.delete;
-      } else if (bFile == null) {
+      } else if (otherFile == null) {
         diffType = DiffType.insert;
       } else {
-        FileDiff fileDiff = await FileDiff.calculateDiff(a: aFile, b: bFile);
+        FileDiff fileDiff = await FileDiff.calculateDiff(thisFile: thisFile, otherFile: otherFile);
         filesDiff.add(fileDiff);
         diffType = DiffType.modify;
       }
@@ -103,8 +103,8 @@ class CommitDiff {
 
     return CommitDiff(
       filesDiff: filesDiff,
-      thisCommit: a,
-      otherCommit: b,
+      thisCommit: thisCommit,
+      otherCommit: otherCommit,
       statistic: statistics,
     );
   }
@@ -133,28 +133,28 @@ class FileDiff {
   });
 
   static Future<FileDiff> calculateDiff({
-    required File a,
-    required File b,
+    required File thisFile,
+    required File otherFile,
   }) async {
-    if (!a.existsSync()) {
+    if (!thisFile.existsSync()) {
       return FileDiff(
-        thisFile: a,
-        otherFile: b,
+        thisFile: thisFile,
+        otherFile: otherFile,
         linesDiff: {},
         diffType: DiffType.delete,
       );
     }
 
-    List<String> aTotalLines = a.readAsLinesSync();
-    if (!b.existsSync()) {
+    List<String> thisTotalLines = thisFile.readAsLinesSync();
+    if (!otherFile.existsSync()) {
       Map<int, FileLineDiff> linesDiff = {};
-      for (int i = 0; i < aTotalLines.length; i++) {
+      for (int i = 0; i < thisTotalLines.length; i++) {
         int lineNo = i + 1;
         linesDiff.putIfAbsent(
           lineNo,
           () => FileLineDiff(
-            thisPath: a.path,
-            otherPath: b.path,
+            thisPath: thisFile.path,
+            otherPath: otherFile.path,
             thisLineNo: lineNo,
             diffScore: maxDiffScore,
             diffType: DiffType.insert,
@@ -163,29 +163,29 @@ class FileDiff {
       }
 
       return FileDiff(
-        thisFile: a,
-        otherFile: b,
+        thisFile: thisFile,
+        otherFile: otherFile,
         linesDiff: linesDiff,
         diffType: DiffType.insert,
       );
     }
 
     Map<int, FileLineDiff> linesDiff = {};
-    int bLines = b.readAsLinesSync().length;
-    int maxLines = max(aTotalLines.length, bLines);
+    int otherLines = otherFile.readAsLinesSync().length;
+    int maxLines = max(thisTotalLines.length, otherLines);
 
     for (int lineNo = 0; lineNo < maxLines; lineNo++) {
       FileLineDiff fileLineDiff = await FileLineDiff.calculateDiff(
-        a: a,
-        aLineNo: lineNo,
-        b: b,
+        thisFile: thisFile,
+        thisLineNo: lineNo,
+        otherFile: otherFile,
       );
       linesDiff.putIfAbsent(lineNo, () => fileLineDiff);
     }
 
     return FileDiff(
-      thisFile: a,
-      otherFile: b,
+      thisFile: thisFile,
+      otherFile: otherFile,
       linesDiff: linesDiff,
       diffType: DiffType.modify,
     );
@@ -217,61 +217,61 @@ class FileLineDiff {
   });
 
   static Future<FileLineDiff> calculateDiff({
-    required File a,
-    required int aLineNo,
-    Function()? onALineDoesntExist,
-    required File b,
+    required File thisFile,
+    required int thisLineNo,
+    Function()? onThisLineDoesntExist,
+    required File otherFile,
   }) async {
-    if (!a.existsSync()) {
+    if (!thisFile.existsSync()) {
       return FileLineDiff(
-        thisPath: a.path,
-        otherPath: b.path,
-        thisLineNo: aLineNo,
+        thisPath: thisFile.path,
+        otherPath: otherFile.path,
+        thisLineNo: thisLineNo,
         diffScore: maxDiffScore,
         diffType: DiffType.delete,
       );
     }
 
-    List<String> aTotalLines = a.readAsLinesSync();
-    if (aLineNo > aTotalLines.length - 1) {
-      onALineDoesntExist?.call();
+    List<String> thisTotalLines = thisFile.readAsLinesSync();
+    if (thisLineNo > thisTotalLines.length - 1) {
+      onThisLineDoesntExist?.call();
       return FileLineDiff(
-        thisPath: a.path,
-        otherPath: b.path,
-        thisLineNo: aLineNo,
+        thisPath: thisFile.path,
+        otherPath: otherFile.path,
+        thisLineNo: thisLineNo,
         diffScore: maxDiffScore,
         diffType: DiffType.delete,
       );
     }
-    String lineA = aTotalLines[aLineNo];
-    if (!b.existsSync()) {
+    String thisLine = thisTotalLines[thisLineNo];
+    if (!otherFile.existsSync()) {
       return FileLineDiff(
-        thisPath: a.path,
-        otherPath: b.path,
-        thisLineNo: aLineNo,
+        thisPath: thisFile.path,
+        otherPath: otherFile.path,
+        thisLineNo: thisLineNo,
         diffScore: maxDiffScore,
         diffType: DiffType.insert,
       );
     }
 
-    List<String> bTotalLines = b.readAsLinesSync();
-    if (aLineNo > bTotalLines.length - 1) {
+    List<String> otherTotalLines = otherFile.readAsLinesSync();
+    if (thisLineNo > otherTotalLines.length - 1) {
       return FileLineDiff(
-        thisPath: a.path,
-        otherPath: b.path,
-        thisLineNo: aLineNo,
+        thisPath: thisFile.path,
+        otherPath: otherFile.path,
+        thisLineNo: thisLineNo,
         diffScore: maxDiffScore,
         diffType: DiffType.insert,
       );
     }
 
-    String lineB = bTotalLines[aLineNo];
-    int diffScore = await levenshteinDistance(lineA, lineB);
+    String otherLine = otherTotalLines[thisLineNo];
+    int diffScore = await levenshteinDistance(thisLine, otherLine);
 
     return FileLineDiff(
-      thisPath: a.path,
-      otherPath: b.path,
-      thisLineNo: aLineNo,
+      thisPath: thisFile.path,
+      otherPath: otherFile.path,
+      thisLineNo: thisLineNo,
       diffScore: diffScore,
       diffType: diffScore == 0 ? DiffType.same : DiffType.modify,
     );
@@ -303,16 +303,15 @@ extension DiffTypeColor on DiffType {
       };
 }
 
-
 class LineComparison {
   final String key;
-  final String lineA;
-  final String lineB;
+  final String thisLine;
+  final String otherLine;
 
   LineComparison({
     required this.key,
-    required this.lineA,
-    required this.lineB,
+    required this.thisLine,
+    required this.otherLine,
   });
 }
 
