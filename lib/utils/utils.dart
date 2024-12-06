@@ -1,25 +1,25 @@
-import 'dart:collection';
 import 'dart:io';
-import 'dart:isolate';
+import 'package:balo/view/terminal.dart';
 
-import 'package:balo/command_line_interface/cli.dart';
-import 'package:balo/repository/diff/diff.dart';
-
-String regexPattern(String pattern) => pattern.startsWith('.')
+String fileRegexPattern(String pattern) => pattern.startsWith('.')
     ? r'(^|/)' + pattern.replaceFirst('.', r'\.') + r'(/|$)'
     : r'(^|/)' + pattern + r'(/|$)';
 
+String get switchRegexPattern => r'^--|-';
+
 bool shouldIgnorePath(String path, List<String> ignoredPatterns) {
   return ignoredPatterns.any((pattern) {
-    String p = regexPattern(pattern);
+    String p = fileRegexPattern(pattern);
     return RegExp(p).hasMatch(path);
   });
 }
 
 bool shouldAddPath(String path, String pattern) {
-  String p = regexPattern(pattern);
+  String p = fileRegexPattern(pattern);
   return RegExp(p).hasMatch(path);
 }
+
+
 
 void moveFiles({
   required List<File> files,

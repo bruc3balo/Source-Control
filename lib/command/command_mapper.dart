@@ -1,65 +1,128 @@
-import 'package:balo/command_line_interface/cli.dart';
+import 'package:balo/view/terminal.dart';
+import 'package:balo/view/themes.dart';
 
 enum CommandMapperEnum {
   help(
-    command: ["help", "-h"],
+    command: "help",
     description: "Print usage information",
-    options: [CommandOptionsMapperEnum.path],
+    options: [],
   ),
   init(
-    command: ["init"],
+    command: "init",
     description: "Initialized a new repository",
-    options: [CommandOptionsMapperEnum.path],
+    options: [
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.path,
+        mandatory: false,
+        defaultValue: ".",
+      ),
+    ],
   ),
   add(
-    command: ["add"],
+    command: "add",
     description: "Stage files for commit",
-    options: [CommandOptionsMapperEnum.pattern],
+    options: [
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.pattern,
+        mandatory: false,
+        defaultValue: ".",
+      ),
+    ],
   ),
   ignore(
-    command: ["ignore"],
+    command: "ignore",
     description: "Modify ignore file",
-    options: [CommandOptionsMapperEnum.add, CommandOptionsMapperEnum.remove],
+    options: [
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.add,
+        mandatory: false,
+      ),
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.remove,
+        mandatory: false,
+      ),
+    ],
   ),
   log(
-    command: ["log"],
+    command: "log",
     description: "Shows commit history for a specific branch",
-    options: [CommandOptionsMapperEnum.branch],
+    options: [
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.branch,
+        mandatory: false,
+      ),
+    ],
   ),
   status(
-    command: ["status"],
-    description: "Get status of stage",
+    command: "status",
+    description: "Get status of branch",
     options: [],
   ),
   branch(
-    command: ["branch"],
+    command: "branch",
     description: "Get branch info ",
     options: [],
   ),
   checkout(
-    command: ["checkout"],
+    command: "checkout",
     description: "Switch branches",
-    options: [CommandOptionsMapperEnum.branch],
+    options: [
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.branch,
+        mandatory: true,
+        defaultValue: null,
+      )
+    ],
   ),
   commit(
-    command: ["commit"],
+    command: "commit",
     description: "Commit staged files",
-    options: [CommandOptionsMapperEnum.message],
+    options: [
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.message,
+        mandatory: true,
+      ),
+    ],
   ),
   diff(
-    command: ["diff"],
+    command: "diff",
     description: "Show differences between 2 commits",
-    options: [CommandOptionsMapperEnum.branchA, CommandOptionsMapperEnum.shaA, CommandOptionsMapperEnum.branchB, CommandOptionsMapperEnum.shaB],
+    options: [
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.branchA,
+        mandatory: true,
+      ),
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.shaA,
+        mandatory: true,
+      ),
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.branchB,
+        mandatory: true,
+      ),
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.shaB,
+        mandatory: true,
+      ),
+    ],
   ),
   merge(
-    command: ["merge"],
+    command: "merge",
     description: "Merge a commit from another branch to the current branch",
-    options: [CommandOptionsMapperEnum.branch],
+    options: [
+      CommandOption(
+        optionEnum: CommandOptionsMapperEnum.branch,
+        mandatory: true,
+        defaultValue: null,
+      )
+    ],
   );
 
-  final List<String> command;
+  final String command;
   final String description;
-  final List<CommandOptionsMapperEnum> options;
+
+  //Mandatory bool
+  final List<CommandOption> options;
 
   const CommandMapperEnum({
     required this.command,
@@ -68,8 +131,7 @@ enum CommandMapperEnum {
   });
 
   static final Map<String, CommandMapperEnum> commandOptionsMap = {
-    for (var e in CommandMapperEnum.values)
-      for (var a in e.command) a.toLowerCase().trim(): e
+    for (var e in CommandMapperEnum.values) e.command.toLowerCase().trim(): e
   };
 }
 
@@ -79,44 +141,44 @@ enum CommandOptionsMapperEnum {
     description: "Adds an entry",
   ),
   remove(
-    option: ["--remove", "rm"],
+    option: ["--remove", "-rm"],
     description: "Removes an entry",
   ),
   branch(
-    option: ["-b"],
+    option: ["--branch", "-b"],
     description: "Refers to a specific branch",
   ),
   message(
-    option: ["-m", "--message"],
+    option: ["--message", "-m"],
     description: "Adds a message to a commit",
   ),
   path(
-    option: ["-p", "--path"],
+    option: ["--path", "-p"],
     description: "Describes path to execute command",
   ),
   pattern(
-    option: ["-f", "--file"],
+    option: ["--file", "-f"],
     description: "Describes the file pattern to search for",
   ),
   branchA(
-    option: ["--b-a"],
+    option: ["--branch-a", "-ba"],
     description: "Selects branch a name",
+  ),
+  branchB(
+    option: ["--branch-b", "-bb"],
+    description: "Selects branch b name",
   ),
   shaA(
     option: ["--sha-a"],
     description: "Selects commit b sha",
   ),
-  verbose(
-    option: ["--v"],
-    description: "Prints debug statements",
-  ),
   shaB(
     option: ["--sha-b"],
     description: "Selects commit a sha",
   ),
-  branchB(
-    option: ["--b-b"],
-    description: "Selects branch b name",
+  verbose(
+    option: ["--v"],
+    description: "Prints debug statements",
   );
 
   final List<String> option;
@@ -133,6 +195,18 @@ enum CommandOptionsMapperEnum {
   };
 }
 
+class CommandOption {
+  final CommandOptionsMapperEnum optionEnum;
+  final bool mandatory;
+  final String? defaultValue;
+
+  const CommandOption({
+    required this.optionEnum,
+    required this.mandatory,
+    this.defaultValue,
+  });
+}
+
 void printHelp() {
   //Intro
   printToConsole(
@@ -145,21 +219,23 @@ void printHelp() {
   printToConsole(message: "balo \$command \$option \$arguments \n");
 
   //Example
-  printToConsole(message: "Example:", color: CliColor.blue);
+  printToConsole(message: "Example:", color: CliColor.blue, newLine: true);
   printToConsole(message: "balo init .");
 
-  //Commands
-  printToConsole(message: "Commands:", color: CliColor.blue, newLine: true);
-  for (var c in CommandMapperEnum.values) {
+  print('Available commands:');
+  for (CommandMapperEnum command in CommandMapperEnum.values) {
     printToConsole(
-      message: "   ${c.command.join(", ")}   ${c.description}",
-      color: CliColor.yellow,
-      newLine: true,
-    );
-    printToConsole(
-      message:
-          "   Options: \n   ${c.options.map((o) => "${o.option.join(", ")}   ${o.description}").join("\n   ")}",
+      message: '- ${command.command}: ${command.description}',
       color: CliColor.defaultColor,
     );
+
+    printToConsole(message: '  Options:');
+    for (CommandOption option in command.options) {
+      printToConsole(
+        message:
+            '    ${option.optionEnum.option.join(", ")}: ${option.optionEnum.description}',
+        color: CliColor.defaultColor,
+      );
+    }
   }
 }

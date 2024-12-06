@@ -1,8 +1,8 @@
-# 0: source control system
+# 0: source control system [![wakatime](https://wakatime.com/badge/user/e508bec6-f1ed-42e9-a365-8c4e69c8dd19/project/bff0792d-4b5a-4003-98b3-d9e75973114d.svg)](https://wakatime.com/badge/user/e508bec6-f1ed-42e9-a365-8c4e69c8dd19/project/bff0792d-4b5a-4003-98b3-d9e75973114d)
+
 
 Build a distributed source control system in the style of Git. It should be possible to initialise a repository in a directory and the repository proper should be stored in a dot-prefixed subdirectory. There should be support for staging files (git add) and committing them. There should be a way to view the commit history, to create branches, merge and do diffs between them. Conflicting changes should be detected but there's no need to build resolution features for them, or anything like rebasing. It should also be possible to clone the repository (on disk—it doesn't have to work over network). Finally, there should be a way to ignore files.
 
-[![wakatime](https://wakatime.com/badge/user/e508bec6-f1ed-42e9-a365-8c4e69c8dd19/project/bff0792d-4b5a-4003-98b3-d9e75973114d.svg)](https://wakatime.com/badge/user/e508bec6-f1ed-42e9-a365-8c4e69c8dd19/project/bff0792d-4b5a-4003-98b3-d9e75973114d)
 # Design Patterns
 - Commands have been done with the **Command Design Pattern**
 - The inputs parsed into a list commands with the **Facade** pattern

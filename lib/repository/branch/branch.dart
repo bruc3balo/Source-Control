@@ -12,6 +12,8 @@ import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
+import 'package:balo/view/terminal.dart';
+import 'package:balo/view/themes.dart';
 import 'package:dart_levenshtein/dart_levenshtein.dart';
 import 'package:path/path.dart';
 

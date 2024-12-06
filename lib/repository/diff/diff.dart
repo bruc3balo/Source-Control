@@ -6,6 +6,8 @@ import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/utils/variables.dart';
+import 'package:balo/view/terminal.dart';
+import 'package:balo/view/themes.dart';
 import 'package:dart_levenshtein/dart_levenshtein.dart';
 import 'package:path/path.dart';
 

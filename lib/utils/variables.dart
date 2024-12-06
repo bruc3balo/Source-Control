@@ -1,3 +1,5 @@
+const executableName = "balo";
+const executableDescription = "A cli utility for balo repository";
 const repositoryFolderName = ".balo";
 const repositoryIgnoreFileName = ".baloignore";
 const branchFolderName = "branches";

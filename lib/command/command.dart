@@ -1,7 +1,6 @@
 import 'dart:isolate';
 
-import 'package:balo/command/command_mapper.dart';
-import 'package:balo/command_line_interface/cli.dart';
+import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/diff/diff.dart';
@@ -9,6 +8,8 @@ import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
+import 'package:balo/view/terminal.dart';
+import 'package:balo/view/themes.dart';
 import 'package:dart_console/dart_console.dart';
 
 abstract class Command {
@@ -21,7 +22,11 @@ abstract class Command {
 class ShowHelpCommand extends Command {
   @override
   Future<void> execute() async {
-    printHelp();
+    //printHelp();
+    printToConsole(
+      message: argParser.usage,
+      color: CliColor.brightWhite,
+    );
   }
 
   @override

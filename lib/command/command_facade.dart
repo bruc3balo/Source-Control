@@ -8,6 +8,7 @@ import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/variables.dart';
+import 'package:balo/view/terminal.dart';
 
 abstract class CommandFacade {
   List<Command> initialize();
