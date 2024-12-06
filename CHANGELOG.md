@@ -13,3 +13,4 @@
 - View commit history
 - Git diff on branches
 - Merge another branches commit into current working dir
+- Command line parsing upgrade

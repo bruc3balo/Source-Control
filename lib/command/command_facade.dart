@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:balo/command/command.dart';
-import 'package:balo/command_line_interface/cli.dart';
+import 'package:balo/command_line_interface/cli_arguments.dart';
+import 'package:balo/command_line_interface/cli_execution.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repository.dart';
@@ -24,8 +25,13 @@ class ErrorInitializer implements CommandFacade {
 }
 
 class HelpInitializer implements CommandFacade {
+
+  final CliCommandsEnum? command;
+
+  HelpInitializer({this.command});
+
   @override
-  List<UndoableCommand> initialize() => [ShowHelpCommand()];
+  List<UndoableCommand> initialize() => [ShowHelpCommand(command: command)];
 }
 
 class RepositoryInitializer implements CommandFacade {

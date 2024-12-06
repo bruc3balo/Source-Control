@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:balo/command_line_interface/cli.dart';
+import 'package:balo/command_line_interface/cli_execution.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/utils/variables.dart';

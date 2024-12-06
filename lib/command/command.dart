@@ -1,5 +1,6 @@
 import 'dart:isolate';
 
+import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
@@ -20,9 +21,13 @@ abstract class UndoableCommand {
 
 ///Command to show help
 class ShowHelpCommand extends UndoableCommand {
+  final CliCommandsEnum? command;
+
+  ShowHelpCommand({this.command});
+
   @override
   Future<void> execute() async {
-    inputParser.printHelp();
+    inputParser.printHelp(command: command);
   }
 
   @override

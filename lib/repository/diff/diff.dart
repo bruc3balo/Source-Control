@@ -1,8 +1,6 @@
 import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
-import 'dart:isolate';
-import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/utils/variables.dart';

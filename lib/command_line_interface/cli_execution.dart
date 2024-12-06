@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:balo/command/command.dart';
 import 'package:balo/command/command_facade.dart';
-import 'package:balo/command_line_interface/arguments.dart';
+import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/command_line_interface/user_input.dart';
 import 'package:balo/view/terminal.dart';
@@ -28,6 +28,10 @@ abstract class UndoableCommandExecutor {
       newLine: true,
     );
 
+    if(parsedCommands.hasOption(CliCommandOptionsEnum.help)) {
+      return HelpInitializer(command: parsedCommands.command);
+    }
+
     switch (parsedCommands.command) {
 
       case CliCommandsEnum.help:
@@ -35,7 +39,7 @@ abstract class UndoableCommandExecutor {
 
       case CliCommandsEnum.init:
         if(parsedCommands.hasOption(CliCommandOptionsEnum.help)) {
-
+          return HelpInitializer(command: parsedCommands.command);
         }
         //Path
         String? path = parsedCommands.getOption(CliCommandOptionsEnum.path);
@@ -66,6 +70,11 @@ abstract class UndoableCommandExecutor {
           patternToRemove: patternToRemove,
         );
       case CliCommandsEnum.branch:
+        if(parsedCommands.hasOption(CliCommandOptionsEnum.help)) {
+          printToConsole(message: "Showing branch help");
+          return PrintCurrentBranchInitializer();
+        }
+
         String? branch = parsedCommands.getOption(CliCommandOptionsEnum.branch);
         if (branch == null) {
           return PrintCurrentBranchInitializer();

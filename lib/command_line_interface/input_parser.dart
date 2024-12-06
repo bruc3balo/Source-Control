@@ -4,10 +4,11 @@ import 'package:balo/command_line_interface/user_input.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
+import 'package:dart_console/dart_console.dart';
 
-import 'arguments.dart';
+import 'cli_arguments.dart';
 
-ArgsCommandParser inputParser = ArgsCommandParser.instance;
+final ArgsCommandParser inputParser = ArgsCommandParser.instance;
 
 ///Represents result of [CliCommandsEnum] and [CliCommandOptionsEnum]
 ///mapped from [UserInput]
@@ -33,14 +34,9 @@ class ParsedCommands {
 
 ///A Basic definition of what a command parser would do
 abstract class CommandParser {
-  CommandRunner get _runner => CommandRunner(
-        executableName,
-        executableDescription,
-      );
-
   ParsedCommands parseUserInput(UserInput userInput);
 
-  void printHelp();
+  void printHelp({CliCommandsEnum? command});
 }
 
 ///Implementation of a [CommandParser] using [ArgParser] package
@@ -79,7 +75,8 @@ class ArgsCommandParser extends CommandParser {
     }
 
     //Single command help
-    if (command[CliCommandOptionsEnum.help.option] == true) {
+    if (commandsEnum == CliCommandsEnum.help ||
+        command[CliCommandOptionsEnum.help.option] == true) {
       options.putIfAbsent(CliCommandOptionsEnum.help, () => true);
       return ParsedCommands(commandsEnum, options);
     }
@@ -106,29 +103,23 @@ class ArgsCommandParser extends CommandParser {
     return ParsedCommands(commandsEnum, options);
   }
 
-  @override
-  void printHelp() {
-
-    for (ArgParser command in _argParser.commands.values) {
-
-      printToConsole(
-        message: command.usage,
-        color: CliColor.brightWhite,
-        newLine: true,
-      );
-
-      printToConsole(
-        message: "=" * 200,
-        color: CliColor.cyan,
-        newLine: true,
-      );
-    }
-  }
-
   static ArgParser _buildParser() {
     final ArgParser cliCommandParser = ArgParser();
     for (CliCommandsEnum commandEnum in CliCommandsEnum.values) {
       final ArgParser cliCommandOptionsParser = ArgParser();
+
+      // Add options to the command parser
+      if (commandEnum != CliCommandsEnum.help) {
+        CliCommandOptionsEnum h = CliCommandOptionsEnum.help;
+        cliCommandOptionsParser.addFlag(
+          h.option,
+          abbr: h.abbreviation,
+          help: "Show info related to ${commandEnum.command}",
+          defaultsTo: false,
+          negatable: false,
+          aliases: h.aliases,
+        );
+      }
 
       for (CommandOption cliCommandOption in commandEnum.options) {
         CliCommandOptionsEnum o = cliCommandOption.optionEnum;
@@ -142,19 +133,6 @@ class ArgsCommandParser extends CommandParser {
           defaultsTo: cliCommandOption.defaultValue,
           mandatory: cliCommandOption.mandatory,
           aliases: o.aliases,
-        );
-      }
-
-      // Add options to the command parser
-      if (commandEnum != CliCommandsEnum.help) {
-        CliCommandOptionsEnum h = CliCommandOptionsEnum.help;
-        cliCommandOptionsParser.addFlag(
-          h.option,
-          abbr: h.abbreviation,
-          help: "Show info related to ${commandEnum.command}",
-          defaultsTo: false,
-          negatable: false,
-          aliases: h.aliases,
         );
       }
 
@@ -174,5 +152,98 @@ class ArgsCommandParser extends CommandParser {
     );
 
     return cliCommandParser;
+  }
+
+  @override
+  void printHelp({CliCommandsEnum? command}) {
+    printToConsole(
+      message: "${"=" * 45} $executableName help page ${"=" * 45}",
+      color: CliColor.defaultColor,
+      style: CliStyle.bold,
+      alignment: TextAlignment.center,
+      newLine: true,
+    );
+
+    printToConsole(
+      message: executableName,
+      color: CliColor.brightWhite,
+      style: CliStyle.bold,
+      newLine: true,
+    );
+
+    printToConsole(
+      message: executableDescription,
+      color: CliColor.defaultColor,
+    );
+
+    List<Option> globalOptions = _argParser.options.values.toList();
+    printToConsole(
+      message: "Global options",
+      newLine: true,
+      style: CliStyle.underline,
+    );
+    globalOptions.forEach(_printOption);
+
+    printToConsole(
+      message: "Commands",
+      newLine: true,
+      style: CliStyle.underline,
+    );
+
+    if (command == null || command == CliCommandsEnum.help) {
+      // Print help for all commands
+      CliCommandsEnum.values.forEach(_printCommandHelp);
+      return;
+    }
+
+    // Print help for a specific command
+    _printCommandHelp(command);
+  }
+
+  void _printCommandHelp(CliCommandsEnum command) {
+    String commandName = command.command;
+
+    ArgParser? arg = _argParser.commands[commandName];
+    if (arg == null) return;
+
+    CliCommandsEnum? cliCommand = CliCommandsEnum.cliCommandsMap[commandName];
+    if (cliCommand == null) return;
+
+    printToConsole(
+      message: commandName,
+      color: CliColor.brightMagenta,
+      style: CliStyle.bold,
+      newLine: true,
+    );
+
+    printToConsole(
+      message: cliCommand.description,
+      color: CliColor.brightWhite,
+    );
+
+    List<Option> options = arg.options.values.toList();
+    options.sort((a, b) => a.mandatory ? -1 : 1);
+    options.forEach(_printOption);
+
+    // Separator between commands
+    printToConsole(
+      message: "-" * 100,
+      color: CliColor.cyan,
+      newLine: true,
+    );
+  }
+
+  void _printOption(Option o) {
+    CliCommandOptionsEnum? cli =
+        CliCommandOptionsEnum.cliCommandOptionsMap[o.name];
+    if (cli == null) return;
+
+    CliColor color = o.mandatory ? CliColor.brightGreen : CliColor.white;
+
+    printToConsole(
+      message:
+          "${o.help}: ${CliColor.brightMagenta.color}--${o.name}, -${o.abbr}${color.color}${o.valueHelp == null ? '' : ' = <${o.valueHelp}>'}",
+      color: color,
+    );
   }
 }

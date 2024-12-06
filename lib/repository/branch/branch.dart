@@ -1,12 +1,9 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math';
 
-import 'package:balo/command_line_interface/cli.dart';
 import 'package:balo/repository/commit.dart';
-import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
@@ -14,7 +11,6 @@ import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
-import 'package:dart_levenshtein/dart_levenshtein.dart';
 import 'package:path/path.dart';
 
 import 'package:freezed_annotation/freezed_annotation.dart';

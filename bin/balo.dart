@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:balo/command/command_facade.dart';
-import 'package:balo/command_line_interface/cli.dart';
+import 'package:balo/command_line_interface/cli_execution.dart';
 import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/command_line_interface/user_input.dart';
 import 'package:balo/view/terminal.dart';

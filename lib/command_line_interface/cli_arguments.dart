@@ -138,85 +138,85 @@ enum CliCommandOptionsEnum {
   add(
     option: "add",
     abbreviation: "a",
-    aliases: [],
-    description: "Adds an entry",
-    valueHelp: "value of entry"
+    aliases: ["append"],
+    description: "Add an entry to the configuration or file",
+    valueHelp: "entry_value",
   ),
   remove(
     option: "remove",
     abbreviation: "r",
-    aliases: ["rm"],
-    description: "Removes an entry",
-    valueHelp: "value of entry"
+    aliases: ["delete, rm"],
+    description: "Remove an entry from the configuration",
+    valueHelp: "entry_value",
   ),
   branch(
     option: "branch",
     abbreviation: "b",
-    aliases: [],
-    description: "Refers to a specific branch",
-    valueHelp: "name of branch"
+    aliases: ["br", "branch-name"],
+    description: "Specify a branch to operate on",
+    valueHelp: "branch_name",
   ),
   message(
     option: "message",
     abbreviation: "m",
-    aliases: [],
-    description: "Adds a message",
-    valueHelp: "message"
+    aliases: ["msg"],
+    description: "Provide a commit or operation message",
+    valueHelp: '"commit_message"'
   ),
   path(
     option: "path",
     abbreviation: "p",
-    aliases: [],
-    description: "Describes path to execute command",
-    valueHelp: "path"
+    aliases: ["dir, directory"],
+    description: "Specify the file path for the operation",
+    valueHelp: "file_path"
   ),
   filePattern(
     option: "file",
     abbreviation: "f",
-    aliases: [],
-    description: "Describes the file pattern to search for",
-    valueHelp: "regex pattern"
+    aliases: ["pattern", "files"],
+    description: "Specify a pattern for matching files",
+    valueHelp: "file_pattern"
   ),
   thisBranch(
-    option: "this-branch",
+    option: "source-branch",
     abbreviation: "t",
     aliases: ["branch-a"],
-    description: "Selects this branch name",
+    description: "Specify the current branch",
     valueHelp: "branch name",
   ),
   otherBranch(
-    option: "other-branch",
+    option: "destination-branch",
     abbreviation: "o",
     aliases: ["branch-b"],
-    description: "Selects other branch name",
+    description: "Specify the target branch",
     valueHelp: "branch name",
   ),
   thisSha(
-    option: "this-sha",
+    option: "source-sha",
     abbreviation: 'x',
-    aliases: ["sha-a"],
-    description: "Selects this commit sha",
-    valueHelp: "commit sha",
+    aliases: ["current-sha"],
+    description: "Specify the current commit SHA",
+    valueHelp: "current_sha",
   ),
   otherSha(
-    option: "other-sha",
+    option: "target-sha",
     abbreviation: "y",
-    aliases: ["sha-b"],
-    description: "Selects other commit sha",
-    valueHelp: "commit sha"
+    aliases: ["target-sha"],
+    description: "Specify the target commit SHA",
+    valueHelp: "target_sha"
   ),
   help(
     option: "help",
     abbreviation: "h",
-    aliases: [],
-    description: "Print usage information",
+    aliases: ["usage", "info"],
+    description: "Display help and usage information",
     valueHelp: null
   ),
   verbose(
     option: "verbose",
     abbreviation: "v",
-    aliases: [],
-    description: "Prints debug statements",
+    aliases: ["debug"],
+    description: "Display detailed debugging information",
     valueHelp: null
   );
 
