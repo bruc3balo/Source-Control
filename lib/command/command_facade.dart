@@ -131,12 +131,12 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
   }
 }
 
-class PrintCurrentBranchInitializer implements CommandFacade {
+class ListBranchesInitializer implements CommandFacade {
   @override
   List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "extends ${repository.path}");
-    return [PrintCurrentBranchCommand(repository)];
+    return [ListBranchesCommand(repository)];
   }
 }
 

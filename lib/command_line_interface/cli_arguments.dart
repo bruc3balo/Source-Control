@@ -4,7 +4,7 @@ enum CliCommandsEnum {
   help(
     command: "help",
     options: [],
-    description: "Print usage information",
+    description: "Display general or command-specific help and usage information",
   ),
   init(
     command: "init",
@@ -19,7 +19,7 @@ enum CliCommandsEnum {
   ),
   add(
     command: "add",
-    description: "Stage files for commit",
+    description: "Stage files or patterns for commit",
     options: [
       CommandOption(
         optionEnum: CliCommandOptionsEnum.filePattern,
@@ -30,7 +30,7 @@ enum CliCommandsEnum {
   ),
   ignore(
     command: "ignore",
-    description: "Modify ignore file",
+    description: "Add or remove entries in the ignore file",
     options: [
       CommandOption(
         optionEnum: CliCommandOptionsEnum.add,
@@ -44,7 +44,7 @@ enum CliCommandsEnum {
   ),
   log(
     command: "log",
-    description: "Shows commit history for a specific branch",
+    description: "Display commit history for a branch",
     options: [
       CommandOption(
         optionEnum: CliCommandOptionsEnum.branch,
@@ -54,17 +54,17 @@ enum CliCommandsEnum {
   ),
   status(
     command: "status",
-    description: "Get status of branch",
+    description: "Show the working tree status",
     options: [],
   ),
   branch(
     command: "branch",
-    description: "Get branch info ",
+    description: "List branches",
     options: [],
   ),
   checkout(
     command: "checkout",
-    description: "Switch branches",
+    description: "Switch to a different branch",
     options: [
       CommandOption(
         optionEnum: CliCommandOptionsEnum.branch,
@@ -75,7 +75,7 @@ enum CliCommandsEnum {
   ),
   commit(
     command: "commit",
-    description: "Commit staged files",
+    description: "Record changes to the repository",
     options: [
       CommandOption(
         optionEnum: CliCommandOptionsEnum.message,
@@ -85,7 +85,7 @@ enum CliCommandsEnum {
   ),
   diff(
     command: "diff",
-    description: "Show differences between 2 commits",
+    description: "Show changes between commits, branches, or the working tree",
     options: [
       CommandOption(
         optionEnum: CliCommandOptionsEnum.thisBranch,
@@ -107,7 +107,7 @@ enum CliCommandsEnum {
   ),
   merge(
     command: "merge",
-    description: "Merge a commit from another branch to the current branch",
+    description: "Merge a branch into the current branch",
     options: [
       CommandOption(
         optionEnum: CliCommandOptionsEnum.branch,

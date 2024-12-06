@@ -81,7 +81,9 @@ class ArgsCommandParser extends CommandParser {
       return ParsedCommands(commandsEnum, options);
     }
 
-    for (String optionName in parsedInput.options) {
+    for (String optionName in command.options) {
+      if (!command.wasParsed(optionName)) continue;
+
       String? optionValue = command[optionName];
 
       CliCommandOptionsEnum? optionsEnum =
@@ -95,10 +97,6 @@ class ArgsCommandParser extends CommandParser {
 
       options.putIfAbsent(optionsEnum, () => optionValue);
     }
-
-    options[CliCommandOptionsEnum.verbose] = parsedInput.flag(
-      CliCommandOptionsEnum.verbose.option,
-    );
 
     return ParsedCommands(commandsEnum, options);
   }

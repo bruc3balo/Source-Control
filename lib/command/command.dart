@@ -248,14 +248,14 @@ class RemoveIgnorePatternCommand extends UndoableCommand {
 }
 
 ///Command to print the current branch
-class PrintCurrentBranchCommand extends UndoableCommand {
+class ListBranchesCommand extends UndoableCommand {
   final Repository repository;
 
-  PrintCurrentBranchCommand(this.repository);
+  ListBranchesCommand(this.repository);
 
   @override
   Future<void> execute() async {
-    Branch? branch = repository.state.getCurrentBranch(
+    Branch? currentBranch = repository.state.getCurrentBranch(
       onRepositoryNotInitialized: () => debugPrintToConsole(
         message: "Repository not initialized",
         color: CliColor.red,
@@ -265,17 +265,15 @@ class PrintCurrentBranchCommand extends UndoableCommand {
       ),
     );
 
-    if (branch == null) {
-      printToConsole(message: "Failed to get current branch");
-      return;
+    for (Branch b in repository.allBranches) {
+      bool isCurrentBranch = b.branchName == currentBranch?.branchName;
+      printToConsole(
+        message: "${b.branchName} ${isCurrentBranch ? "*" : ''}",
+        style: isCurrentBranch ? null : CliStyle.bold,
+        alignment: TextAlignment.left,
+        color: isCurrentBranch ? CliColor.brightCyan : CliColor.white,
+      );
     }
-
-    printToConsole(
-      message: "${branch.branchName}*",
-      style: CliStyle.bold,
-      alignment: TextAlignment.left,
-      color: CliColor.brightCyan,
-    );
   }
 
   @override
@@ -294,8 +292,7 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    debugPrintToConsole(
-        message: "Executing get status of current branch command");
+    debugPrintToConsole(message: "Executing get status of current branch command");
 
     StateData? stateData = repository.state.stateInfo;
     if (stateData == null) {
@@ -321,8 +318,7 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
 
   @override
   Future<void> undo() async {
-    debugPrintToConsole(
-        message: "Undoing get status of current branch command");
+    debugPrintToConsole(message: "Undoing get status of current branch command");
   }
 }
 
@@ -378,8 +374,7 @@ class GetBranchCommitHistoryCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    debugPrintToConsole(
-        message: "Executing get branch history command on $branchName");
+    debugPrintToConsole(message: "Executing get branch history command on $branchName");
 
     Branch branch = Branch(branchName, repository);
     BranchMetaData? metaData = branch.branchMetaData;
@@ -388,10 +383,8 @@ class GetBranchCommitHistoryCommand extends UndoableCommand {
       return;
     }
 
-    String history = metaData.commits.values
-        .map((c) =>
-            "Commit: ${c.sha} \nMessage: ${c.message} \nDate: ${c.commitedAt.toLocal().toIso8601String()}")
-        .join("\n");
+    String history =
+        metaData.commits.values.map((c) => "Commit: ${c.sha} \nMessage: ${c.message} \nDate: ${c.commitedAt.toLocal().toIso8601String()}").join("\n");
 
     printToConsole(message: history, color: CliColor.cyan);
   }
@@ -417,16 +410,11 @@ class CheckoutToBranchCommand extends UndoableCommand {
     Branch branch = Branch(branchName, repository);
     await Isolate.run(() async {
       await branch.checkoutToBranch(
-        onRepositoryNotInitialized: () =>
-            debugPrintToConsole(message: "Repository not initialized"),
-        onSameBranch: () =>
-            debugPrintToConsole(message: "Cannot checkout to same branch"),
-        onStateDoesntExists: () =>
-            debugPrintToConsole(message: "State doesn't exist"),
-        onBranchMetaDataDoesntExists: () =>
-            debugPrintToConsole(message: "Branch meta data doesn't exists"),
-        onFileSystemException: (e) =>
-            debugPrintToConsole(message: e.message, color: CliColor.red),
+        onRepositoryNotInitialized: () => debugPrintToConsole(message: "Repository not initialized"),
+        onSameBranch: () => debugPrintToConsole(message: "Cannot checkout to same branch"),
+        onStateDoesntExists: () => debugPrintToConsole(message: "State doesn't exist"),
+        onBranchMetaDataDoesntExists: () => debugPrintToConsole(message: "Branch meta data doesn't exists"),
+        onFileSystemException: (e) => debugPrintToConsole(message: e.message, color: CliColor.red),
       );
     });
   }
@@ -452,18 +440,10 @@ class ShowCommitDiffCommand extends UndoableCommand {
       await a.compareCommitDiff(
         other: b,
         onDiffCalculated: (d) => d.fullPrint(),
-        onNoOtherCommitMetaData: () => debugPrintToConsole(
-            message:
-                "Commit b ${b.sha} (${b.branch.branchName}) has no commit meta data"),
-        onNoOtherCommitBranchMetaData: () => debugPrintToConsole(
-            message:
-                "Commit b ${b.sha} (${b.branch.branchName}) has no branch data"),
-        onNoThisCommitMetaData: () => debugPrintToConsole(
-            message:
-                "Commit a ${a.sha} (${a.branch.branchName}) has no commit meta data"),
-        onNoThisCommitBranchMetaData: () => debugPrintToConsole(
-            message:
-                "Commit a ${a.sha} (${a.branch.branchName}) has no branch data"),
+        onNoOtherCommitMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no commit meta data"),
+        onNoOtherCommitBranchMetaData: () => debugPrintToConsole(message: "Commit b ${b.sha} (${b.branch.branchName}) has no branch data"),
+        onNoThisCommitMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no commit meta data"),
+        onNoThisCommitBranchMetaData: () => debugPrintToConsole(message: "Commit a ${a.sha} (${a.branch.branchName}) has no branch data"),
       );
     });
   }

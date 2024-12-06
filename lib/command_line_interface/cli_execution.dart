@@ -28,17 +28,16 @@ abstract class UndoableCommandExecutor {
       newLine: true,
     );
 
-    if(parsedCommands.hasOption(CliCommandOptionsEnum.help)) {
+    if (parsedCommands.hasOption(CliCommandOptionsEnum.help)) {
       return HelpInitializer(command: parsedCommands.command);
     }
 
     switch (parsedCommands.command) {
-
       case CliCommandsEnum.help:
         return HelpInitializer();
 
       case CliCommandsEnum.init:
-        if(parsedCommands.hasOption(CliCommandOptionsEnum.help)) {
+        if (parsedCommands.hasOption(CliCommandOptionsEnum.help)) {
           return HelpInitializer(command: parsedCommands.command);
         }
         //Path
@@ -49,8 +48,7 @@ abstract class UndoableCommandExecutor {
 
       case CliCommandsEnum.add:
         //Path
-        String? path =
-            parsedCommands.getOption(CliCommandOptionsEnum.filePattern);
+        String? path = parsedCommands.getOption(CliCommandOptionsEnum.filePattern);
         if ("." == path) path = "*";
         path ??= "*";
 
@@ -70,17 +68,7 @@ abstract class UndoableCommandExecutor {
           patternToRemove: patternToRemove,
         );
       case CliCommandsEnum.branch:
-        if(parsedCommands.hasOption(CliCommandOptionsEnum.help)) {
-          printToConsole(message: "Showing branch help");
-          return PrintCurrentBranchInitializer();
-        }
-
-        String? branch = parsedCommands.getOption(CliCommandOptionsEnum.branch);
-        if (branch == null) {
-          return PrintCurrentBranchInitializer();
-        }
-
-        return PrintCurrentBranchInitializer();
+        return ListBranchesInitializer();
       case CliCommandsEnum.status:
         return PrintStatusOfCurrentBranchInitializer();
       case CliCommandsEnum.commit:
