@@ -3,78 +3,105 @@ import 'dart:io';
 
 import 'package:balo/command/command.dart';
 import 'package:balo/command/command_facade.dart';
-import 'package:balo/command/command_mapper.dart';
+import 'package:balo/command_line_interface/arguments.dart';
+import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/command_line_interface/user_input.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
-import 'package:dart_console/dart_console.dart';
 
-
-/// CommandExecutor
-abstract class CommandExecutor {
-  CommandFacade inputToCommands(UserInput userInput) {
+/// [UndoableCommand] Executor
+abstract class UndoableCommandExecutor {
+  ///Parses [UserInput] using a [CommandParser] to return a run list
+  ///of contiguous commands to be run as a facade [CommandFacade]
+  CommandFacade inputToCommands(
+    UserInput userInput,
+    CommandParser commandParser,
+  ) {
     if (userInput.isEmpty) return HelpInitializer();
 
-    CommandMapperEnum? commandEnum = userInput.commandEnum;
-    Map<CommandOptionsMapperEnum, String?> optionMapEnum =
-        userInput.mapOptionsEnum;
+    ParsedCommands parsedCommands = commandParser.parseUserInput(userInput);
+    isVerboseMode = parsedCommands.getOption(CliCommandOptionsEnum.verbose);
 
-    switch (commandEnum) {
-      case CommandMapperEnum.help:
+    debugPrintToConsole(
+      message: "Arguments: ${parsedCommands.toString()} \n",
+      style: CliStyle.bold,
+      newLine: true,
+    );
+
+    switch (parsedCommands.command) {
+
+      case CliCommandsEnum.help:
         return HelpInitializer();
-      case CommandMapperEnum.init:
-      //Path
-        String? path = optionMapEnum[CommandOptionsMapperEnum.path];
+
+      case CliCommandsEnum.init:
+        if(parsedCommands.hasOption(CliCommandOptionsEnum.help)) {
+
+        }
+        //Path
+        String? path = parsedCommands.getOption(CliCommandOptionsEnum.path);
         if (path == "." || path == null) path = Directory.current.path;
 
         return RepositoryInitializer(path);
 
-      case CommandMapperEnum.add:
-      //Path
-        String? path = optionMapEnum[CommandOptionsMapperEnum.pattern];
+      case CliCommandsEnum.add:
+        //Path
+        String? path =
+            parsedCommands.getOption(CliCommandOptionsEnum.filePattern);
         if ("." == path) path = "*";
         path ??= "*";
 
         return StageFilesInitializer(path);
 
-      case CommandMapperEnum.ignore:
-      //Path
-        String? patternToAdd = optionMapEnum[CommandOptionsMapperEnum.add];
-        String? patternToRemove =
-        optionMapEnum[CommandOptionsMapperEnum.remove];
+      case CliCommandsEnum.ignore:
+        //Path
+        String? patternToAdd = parsedCommands.getOption(
+          CliCommandOptionsEnum.add,
+        );
+        String? patternToRemove = parsedCommands.getOption(
+          CliCommandOptionsEnum.remove,
+        );
 
         return ModifyIgnoreFileInitializer(
           patternToAdd: patternToAdd,
           patternToRemove: patternToRemove,
         );
-      case CommandMapperEnum.branch:
-        if (optionMapEnum.isEmpty) {
+      case CliCommandsEnum.branch:
+        String? branch = parsedCommands.getOption(CliCommandOptionsEnum.branch);
+        if (branch == null) {
           return PrintCurrentBranchInitializer();
         }
 
         return PrintCurrentBranchInitializer();
-      case CommandMapperEnum.status:
+      case CliCommandsEnum.status:
         return PrintStatusOfCurrentBranchInitializer();
-      case CommandMapperEnum.commit:
-        String? message = optionMapEnum[CommandOptionsMapperEnum.message];
+      case CliCommandsEnum.commit:
+        String? message = parsedCommands.getOption(
+          CliCommandOptionsEnum.message,
+        );
         if (message == null) {
           return ErrorInitializer("Commit message required");
         }
 
         return CommitStagedFilesInitializer(message);
-      case CommandMapperEnum.log:
-        String? branch = optionMapEnum[CommandOptionsMapperEnum.branch];
+      case CliCommandsEnum.log:
+        String? branch = parsedCommands.getOption(
+          CliCommandOptionsEnum.branch,
+        );
         return GetCommitHistoryInitializer(branch);
-      case CommandMapperEnum.checkout:
-        String? branch = optionMapEnum[CommandOptionsMapperEnum.branch];
+      case CliCommandsEnum.checkout:
+        String? branch = parsedCommands.getOption(
+          CliCommandOptionsEnum.branch,
+        );
         if (branch == null) {
           debugPrintToConsole(message: "No branch name");
           return ErrorInitializer("Branch required");
         }
 
         return CheckoutToBranchInitializer(branch);
-      case CommandMapperEnum.merge:
-        String? branch = optionMapEnum[CommandOptionsMapperEnum.branch];
+      case CliCommandsEnum.merge:
+        String? branch = parsedCommands.getOption(
+          CliCommandOptionsEnum.branch,
+        );
         if (branch == null) {
           debugPrintToConsole(message: "No branch name");
           return ErrorInitializer("Branch required");
@@ -82,26 +109,34 @@ abstract class CommandExecutor {
 
         return MergeBranchInitializer(branch);
 
-      case CommandMapperEnum.diff:
-        String? branchAName = optionMapEnum[CommandOptionsMapperEnum.branchA];
+      case CliCommandsEnum.diff:
+        String? branchAName = parsedCommands.getOption(
+          CliCommandOptionsEnum.thisBranch,
+        );
         if (branchAName == null) {
           debugPrintToConsole(message: "No branch a name");
           return ErrorInitializer("Branch a required");
         }
 
-        String? shaAName = optionMapEnum[CommandOptionsMapperEnum.shaA];
+        String? shaAName = parsedCommands.getOption(
+          CliCommandOptionsEnum.thisSha,
+        );
         if (shaAName == null) {
           debugPrintToConsole(message: "No commit a sha");
           return ErrorInitializer("Sha a required");
         }
 
-        String? branchBName = optionMapEnum[CommandOptionsMapperEnum.branchB];
+        String? branchBName = parsedCommands.getOption(
+          CliCommandOptionsEnum.otherBranch,
+        );
         if (branchBName == null) {
           debugPrintToConsole(message: "No branch b name");
           return ErrorInitializer("Branch b required");
         }
 
-        String? shaBName = optionMapEnum[CommandOptionsMapperEnum.shaB];
+        String? shaBName = parsedCommands.getOption(
+          CliCommandOptionsEnum.otherSha,
+        );
         if (shaBName == null) {
           debugPrintToConsole(message: "No commit b sha");
           return ErrorInitializer("Sha b required");
@@ -114,12 +149,13 @@ abstract class CommandExecutor {
           commitBSha: shaBName,
         );
       default:
-        return ErrorInitializer("Unknown command ${userInput.command}");
+        return ErrorInitializer("Unknown command");
     }
   }
 
-  //Run commands and return and exit code
-  FutureOr<int> runCommand(List<Command> commands) async {
+  ///Runs a list of contiguous [UndoableCommand] and return an exit code
+  ///If one command throws an [Exception] they will all be undone
+  FutureOr<int> runCommand(List<UndoableCommand> commands) async {
     debugPrintToConsole(message: "Executing ${commands.length} commands");
 
     int i = 0;
@@ -141,8 +177,5 @@ abstract class CommandExecutor {
   }
 }
 
-///Parses user input and creates commands
-///Runs commands created
-class CommandLineRunner extends CommandExecutor {
-
-}
+///Default implementation of an [UndoableCommandExecutor] with default functions
+class DefaultCommandLineRunner extends UndoableCommandExecutor {}

@@ -12,21 +12,17 @@ import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 import 'package:dart_console/dart_console.dart';
 
-abstract class Command {
+abstract class UndoableCommand {
   Future<void> execute();
 
   Future<void> undo();
 }
 
 ///Command to show help
-class ShowHelpCommand extends Command {
+class ShowHelpCommand extends UndoableCommand {
   @override
   Future<void> execute() async {
-    //printHelp();
-    printToConsole(
-      message: argParser.usage,
-      color: CliColor.brightWhite,
-    );
+    inputParser.printHelp();
   }
 
   @override
@@ -34,7 +30,7 @@ class ShowHelpCommand extends Command {
 }
 
 ///Command to show help
-class ShowErrorCommand extends Command {
+class ShowErrorCommand extends UndoableCommand {
   final String error;
 
   ShowErrorCommand(this.error);
@@ -55,7 +51,7 @@ class ShowErrorCommand extends Command {
 }
 
 ///Command to initialize a repository
-class InitializeRepositoryCommand extends Command {
+class InitializeRepositoryCommand extends UndoableCommand {
   final Repository repository;
 
   InitializeRepositoryCommand(this.repository);
@@ -90,7 +86,7 @@ class InitializeRepositoryCommand extends Command {
 }
 
 ///Command to create state file
-class CreateStateFileCommand extends Command {
+class CreateStateFileCommand extends UndoableCommand {
   final Repository repository;
   final String currentBranch;
 
@@ -116,7 +112,7 @@ class CreateStateFileCommand extends Command {
 }
 
 ///Command to create an ignore file
-class CreateIgnoreFileCommand extends Command {
+class CreateIgnoreFileCommand extends UndoableCommand {
   final Repository repository;
 
   CreateIgnoreFileCommand(this.repository);
@@ -139,7 +135,7 @@ class CreateIgnoreFileCommand extends Command {
 }
 
 ///Command to create a branch
-class CreateNewBranchCommand extends Command {
+class CreateNewBranchCommand extends UndoableCommand {
   final Repository repository;
   final String name;
   late final Branch branch = Branch(name, repository);
@@ -164,7 +160,7 @@ class CreateNewBranchCommand extends Command {
 }
 
 ///Command to stage files
-class StageFilesCommand extends Command {
+class StageFilesCommand extends UndoableCommand {
   final Staging staging;
   final String pattern;
 
@@ -199,7 +195,7 @@ class StageFilesCommand extends Command {
 }
 
 ///Command to add ignore pattern
-class AddIgnorePatternCommand extends Command {
+class AddIgnorePatternCommand extends UndoableCommand {
   final Repository repository;
   final String pattern;
 
@@ -223,7 +219,7 @@ class AddIgnorePatternCommand extends Command {
 }
 
 ///Command to remove ignore pattern
-class RemoveIgnorePatternCommand extends Command {
+class RemoveIgnorePatternCommand extends UndoableCommand {
   final Repository repository;
   final String pattern;
 
@@ -247,7 +243,7 @@ class RemoveIgnorePatternCommand extends Command {
 }
 
 ///Command to print the current branch
-class PrintCurrentBranchCommand extends Command {
+class PrintCurrentBranchCommand extends UndoableCommand {
   final Repository repository;
 
   PrintCurrentBranchCommand(this.repository);
@@ -286,7 +282,7 @@ class PrintCurrentBranchCommand extends Command {
 }
 
 ///Command to get status of current branch
-class GetStatusOfCurrentBranch extends Command {
+class GetStatusOfCurrentBranch extends UndoableCommand {
   final Repository repository;
 
   GetStatusOfCurrentBranch(this.repository);
@@ -326,7 +322,7 @@ class GetStatusOfCurrentBranch extends Command {
 }
 
 ///Command to commit staged files
-class CommitStagedFilesCommand extends Command {
+class CommitStagedFilesCommand extends UndoableCommand {
   final Repository repository;
   final String message;
 
@@ -369,7 +365,7 @@ class CommitStagedFilesCommand extends Command {
 }
 
 ///Command to get branch commits
-class GetBranchCommitHistoryCommand extends Command {
+class GetBranchCommitHistoryCommand extends UndoableCommand {
   final Repository repository;
   final String branchName;
 
@@ -398,12 +394,13 @@ class GetBranchCommitHistoryCommand extends Command {
   @override
   Future<void> undo() async {
     debugPrintToConsole(
-        message: "Undoing get branch history command on $branchName");
+      message: "Undoing get branch history command on $branchName",
+    );
   }
 }
 
 ///Command to checkout to branch
-class CheckoutToBranchCommand extends Command {
+class CheckoutToBranchCommand extends UndoableCommand {
   final Repository repository;
   final String branchName;
 
@@ -436,7 +433,7 @@ class CheckoutToBranchCommand extends Command {
 }
 
 ///Command to diff between 2 commits
-class ShowCommitDiffCommand extends Command {
+class ShowCommitDiffCommand extends UndoableCommand {
   final Repository repository;
   final Commit a;
   final Commit b;
@@ -473,7 +470,7 @@ class ShowCommitDiffCommand extends Command {
 }
 
 ///Command to merge a branch with a working dir
-class MergeBranchCommand extends Command {
+class MergeBranchCommand extends UndoableCommand {
   final Repository repository;
   final Branch thisBranch;
   final Branch otherBranch;

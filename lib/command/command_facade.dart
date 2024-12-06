@@ -11,7 +11,7 @@ import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 
 abstract class CommandFacade {
-  List<Command> initialize();
+  List<UndoableCommand> initialize();
 }
 
 class ErrorInitializer implements CommandFacade {
@@ -20,12 +20,12 @@ class ErrorInitializer implements CommandFacade {
   ErrorInitializer(this.error);
 
   @override
-  List<Command> initialize() => [ShowErrorCommand(error)];
+  List<UndoableCommand> initialize() => [ShowErrorCommand(error)];
 }
 
 class HelpInitializer implements CommandFacade {
   @override
-  List<Command> initialize() => [ShowHelpCommand()];
+  List<UndoableCommand> initialize() => [ShowHelpCommand()];
 }
 
 class RepositoryInitializer implements CommandFacade {
@@ -34,7 +34,7 @@ class RepositoryInitializer implements CommandFacade {
   RepositoryInitializer(this.path);
 
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     if (path == null) {
       debugPrintToConsole(message: "Path not provided");
       return [ShowErrorCommand("Path required")];
@@ -60,7 +60,7 @@ class StageFilesInitializer implements CommandFacade {
   StageFilesInitializer(this.pattern);
 
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     if (pattern.isEmpty) {
       debugPrintToConsole(message: "Pattern not provided");
       return [ShowErrorCommand("Pattern required")];
@@ -94,7 +94,7 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
   ModifyIgnoreFileInitializer({this.patternToAdd, this.patternToRemove});
 
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     if ((patternToAdd == null || patternToAdd!.isEmpty) &&
         (patternToRemove == null || patternToRemove!.isEmpty)) {
       debugPrintToConsole(message: "No pattern provided");
@@ -109,7 +109,7 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
     }
 
     Repository repository = Repository(Directory.current.path);
-    List<Command> commands = [];
+    List<UndoableCommand> commands = [];
 
     if (patternToAdd != null && patternToAdd!.isNotEmpty) {
       debugPrintToConsole(message: "Found pattern to add $patternToAdd");
@@ -127,7 +127,7 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
 
 class PrintCurrentBranchInitializer implements CommandFacade {
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "extends ${repository.path}");
     return [PrintCurrentBranchCommand(repository)];
@@ -136,7 +136,7 @@ class PrintCurrentBranchInitializer implements CommandFacade {
 
 class PrintStatusOfCurrentBranchInitializer implements CommandFacade {
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
     return [GetStatusOfCurrentBranch(repository)];
@@ -149,7 +149,7 @@ class CommitStagedFilesInitializer implements CommandFacade {
   CommitStagedFilesInitializer(this.message);
 
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
     return [CommitStagedFilesCommand(repository, message)];
@@ -162,7 +162,7 @@ class GetCommitHistoryInitializer implements CommandFacade {
   GetCommitHistoryInitializer(this.branchName);
 
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
 
@@ -203,7 +203,7 @@ class CheckoutToBranchInitializer implements CommandFacade {
   CheckoutToBranchInitializer(this.branchName);
 
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
     return [CheckoutToBranchCommand(repository, branchName)];
@@ -224,7 +224,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
   });
 
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
 
@@ -279,7 +279,7 @@ class MergeBranchInitializer implements CommandFacade {
   MergeBranchInitializer(this.otherBranchName);
 
   @override
-  List<Command> initialize() {
+  List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
 
