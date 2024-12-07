@@ -1,30 +1,39 @@
 import 'dart:io';
+import 'package:balo/repository/ignore.dart';
+import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 
-String fileRegexPattern(String pattern) {
-  return pattern.startsWith('.') ? r'(^|/)' + pattern.replaceFirst('.', r'\.') + r'(/|$)' : r'(^|/)' + pattern + r'(/|$)';
+String filePatternToRegex(String pattern) {
+  return pattern.replaceAll('.', r'\.').replaceAll('**', r'.*').replaceAll('*', r'[^/]*').replaceAll('?', r'[^/]');
 }
 
-String get switchRegexPattern => r'^--|-';
 
-bool shouldIgnorePath(String path, List<String> ignoredPatterns) {
-  return ignoredPatterns.any((pattern) {
-    String p = fileRegexPattern(pattern);
-    return RegExp(p).hasMatch(path);
-  });
+
+bool isValidBranchName(String? branchName) {
+  // Check if the branch name is null or empty
+  if (branchName == null || branchName.isEmpty) {
+    return false;
+  }
+
+  // branch should contain spaces
+  if (branchName.contains(" ")) {
+    return false;
+  }
+
+  // branch should not start with a dot
+  if (branchName.startsWith(".")) {
+    return false;
+  }
+
+  return true;
 }
 
-bool shouldAddPath(String path, String pattern) {
-  String p = fileRegexPattern(pattern);
-  return RegExp(p).hasMatch(path);
-}
-
-void moveFiles({
+void copyFiles({
   required List<File> files,
   required Directory sourceDir,
   required Directory destinationDir,
 }) {
-  printToConsole(message: "moving ${files.length}  files from ${sourceDir.path} to ${destinationDir.path}");
+  printToConsole(message: "copying ${files.length} files from ${sourceDir.path} to ${destinationDir.path}");
 
   for (File sourceFile in files) {
     String fileDestinationPath = sourceFile.path.replaceAll(
@@ -40,6 +49,6 @@ void moveFiles({
         flush: true,
       );
 
-    debugPrintToConsole(message: "mv ${sourceFile.path} -> $fileDestinationPath");
+    debugPrintToConsole(message: "cp ${sourceFile.path} -> $fileDestinationPath");
   }
 }

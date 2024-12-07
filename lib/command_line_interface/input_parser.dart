@@ -1,6 +1,7 @@
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
 import 'package:balo/command_line_interface/user_input.dart';
+import 'package:balo/repository/ignore.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
@@ -16,8 +17,7 @@ class ParsedCommands {
   final CliCommandsEnum command;
   final Map<CliCommandOptionsEnum, dynamic> _options;
 
-  ParsedCommands(this.command, Map<CliCommandOptionsEnum, dynamic> options)
-      : _options = options;
+  ParsedCommands(this.command, Map<CliCommandOptionsEnum, dynamic> options) : _options = options;
 
   dynamic getOption(CliCommandOptionsEnum o) => _options[o];
 
@@ -75,8 +75,7 @@ class ArgsCommandParser extends CommandParser {
     }
 
     //Single command help
-    if (commandsEnum == CliCommandsEnum.help ||
-        command[CliCommandOptionsEnum.help.option] == true) {
+    if (commandsEnum == CliCommandsEnum.help || command[CliCommandOptionsEnum.help.option] == true) {
       options.putIfAbsent(CliCommandOptionsEnum.help, () => true);
       return ParsedCommands(commandsEnum, options);
     }
@@ -86,8 +85,7 @@ class ArgsCommandParser extends CommandParser {
 
       String? optionValue = command[optionName];
 
-      CliCommandOptionsEnum? optionsEnum =
-          CliCommandOptionsEnum.cliCommandOptionsMap[optionName];
+      CliCommandOptionsEnum? optionsEnum = CliCommandOptionsEnum.cliCommandOptionsMap[optionName];
       if (optionsEnum == null) {
         throw UsageException(
           "Unknown option $optionName for command $commandName",
@@ -232,16 +230,31 @@ class ArgsCommandParser extends CommandParser {
   }
 
   void _printOption(Option o) {
-    CliCommandOptionsEnum? cli =
-        CliCommandOptionsEnum.cliCommandOptionsMap[o.name];
+
+    CliCommandOptionsEnum? cli = CliCommandOptionsEnum.cliCommandOptionsMap[o.name];
     if (cli == null) return;
 
     CliColor color = o.mandatory ? CliColor.brightGreen : CliColor.white;
 
     printToConsole(
-      message:
-          "${o.help}: ${CliColor.brightMagenta.color}--${o.name}, -${o.abbr}${color.color}${o.valueHelp == null ? '' : ' = <${o.valueHelp}>'}",
+      message: "${o.help}: ${CliColor.brightMagenta.color}--${o.name}, -${o.abbr}${color.color}${o.valueHelp == null ? '' : ' = <${o.valueHelp}>'} ${o.defaultsTo == null ? "" : "(default = ${o.defaultsTo})"}",
       color: color,
     );
+
+    if (cli == CliCommandOptionsEnum.filePattern) {
+      printToConsole(
+        message: "File pattern rules",
+        color: CliColor.blue,
+        style: CliStyle.underline
+      );
+      for (IgnorePatternRules ipr in IgnorePatternRules.values) {
+        printToConsole(
+          message: "${ipr.description}: ${CliColor.brightMagenta.color}${ipr.pattern}${CliColor.defaultColor.color} = <pattern> (pattern position = ${ipr.position.name}) e.g. ${CliColor.brightYellow.color}${ipr.example.testPattern}${CliColor.defaultColor.color}",
+          color: CliColor.defaultColor,
+        );
+      }
+      printToConsole(message: "");
+    }
+
   }
 }

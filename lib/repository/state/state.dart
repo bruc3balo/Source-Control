@@ -147,6 +147,7 @@ extension StateActions on State {
 class StateData with _$StateData {
   factory StateData({
     required String currentBranch,
+    String? currentCommit,
   }) = _StateData;
 
   factory StateData.fromJson(Map<String, Object?> json) =>

@@ -53,7 +53,7 @@ extension RepositoryActions on Repository {
 }
 
 extension RepositoryCommons on Repository {
-  String get repositoryPath => join(path, repositoryFolderName);
+  String get repositoryPath => join(path, repositoryWorkingDirName);
   Directory get repositoryDirectory => Directory(repositoryPath);
   bool get isInitialized => repositoryDirectory.existsSync();
 }

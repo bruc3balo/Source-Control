@@ -6,6 +6,7 @@ import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repository.dart';
+import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
@@ -17,6 +18,7 @@ part 'staging.freezed.dart';
 
 part 'staging.g.dart';
 
+///Pre-[Commit] area on a [Branch] with files ready to be commited
 class Staging {
   final Branch branch;
 
@@ -48,10 +50,10 @@ extension StagingActions on Staging {
       return;
     }
 
-    List<File> filesToBeStaged =
-        data.filesToBeStaged.map((e) => File(e)).toList();
+    List<File> filesToBeStaged = data.filesToBeStaged.map((e) => File(e)).toList();
 
-    moveFiles(
+    //Move files to be staged
+    copyFiles(
       files: filesToBeStaged,
       sourceDir: r.repositoryDirectory.parent,
       destinationDir: commitDir,
@@ -63,6 +65,17 @@ extension StagingActions on Staging {
 
     //Delete staging
     deleteStagingData();
+
+    //Point to latest commit
+    State state = State(repository);
+    StateData? stateData = state.stateInfo;
+    if (stateData == null) {
+      stateData = StateData(currentBranch: branch.branchName, currentCommit: commit.sha);
+    } else {
+      stateData = stateData.copyWith(currentCommit: commit.sha);
+    }
+
+    await state.saveStateData(stateData: stateData);
   }
 
   Future<void> stageFiles({
@@ -77,25 +90,26 @@ extension StagingActions on Staging {
       }
 
       //Ignore staging these files
+      Ignore i = ignore;
       List<String> patternsToIgnore = ignore.patternsToIgnore;
       debugPrintToConsole(
         message: "Ignoring ${patternsToIgnore.join(" ")}",
       );
 
       //List files for staging
-      List<FileSystemEntity> filesToBeStaged =
-          repository.repositoryDirectory.parent
-              .listSync(recursive: true, followLinks: false)
+      String repositoryParent = repository.repositoryDirectory.parent.path;
+      List<FileSystemEntity> filesToBeStaged = repository.repositoryDirectory.parent
+          .listSync(recursive: true, followLinks: false)
 
-              //Files only
-              .where((f) => f.statSync().type == FileSystemEntityType.file)
+          //Files only
+          .where((f) => FileSystemEntityType.file == f.statSync().type)
 
-              //Pattern match
-              .where((f) => shouldAddPath(f.path, pattern))
+          //To add
+          .where((f) => shouldAddPath(f.path.replaceAll(repositoryParent, ""), pattern: pattern))
 
-              //Ignore
-              .where((f) => !shouldIgnorePath(f.path, patternsToIgnore))
-              .toList();
+          //Ignore
+          .where((f) => !shouldIgnorePath(f.path.replaceAll(repositoryParent, ""), patternsToIgnore))
+          .toList();
 
       //Clear previous staging
       if (stagingFile.existsSync()) {
@@ -147,6 +161,8 @@ extension StagingStorage on Staging {
   File get stagingFile => File(stagingFilePath);
 
   StagingData? get stagingData {
+    if (!isStaged) return null;
+
     String fileData = stagingFile.readAsStringSync();
     if (fileData.isEmpty) return null;
 
@@ -169,6 +185,86 @@ extension StagingCommons on Staging {
   Ignore get ignore => repository.ignore;
 }
 
+extension StagingIgnore on Staging {
+
+  ///[path] starts with [Platform.pathSeparator] as a relative path from the [Repository]parent dir
+  bool shouldAddPath(String path, {String pattern = star}) {
+    debugPrintToConsole(message: "Checking if should add Path: $path", newLine: true);
+    debugPrintToConsole(message: "Pattern: $pattern");
+
+    if (pattern == dot || pattern == star || pattern.isEmpty) return true;
+
+    final IgnorePatternRules rule = IgnorePatternRules.detectRule(pattern);
+    final bool matched = switch (rule) {
+      IgnorePatternRules.pathFromRoot => rule.patternMatches(
+        testPattern: pattern,
+        inputPattern: path,
+      ),
+      IgnorePatternRules.suffix => rule.patternMatches(
+        testPattern: pattern,
+        inputPattern: path,
+      ),
+      IgnorePatternRules.single => rule.patternMatches(
+        testPattern: pattern,
+        inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
+      ),
+      IgnorePatternRules.contains => rule.patternMatches(
+        testPattern: pattern,
+        inputPattern: path,
+      ),
+      IgnorePatternRules.exactMatch => rule.patternMatches(
+        testPattern: pattern,
+        inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
+      ),
+    };
+
+    debugPrintToConsole(message: "Result: $matched");
+    debugPrintToConsole(message: "Description: Pattern matched $matched against $rule");
+
+    return matched;
+  }
+
+  ///[path] starts with [Platform.pathSeparator] as a relative path from the [Repository] parent dir
+  bool shouldIgnorePath(String path, List<String> ignoredPatterns) {
+    debugPrintToConsole(message: "Checking if should ignore $path", newLine: true);
+
+    for (String ignorePattern in ignoredPatterns) {
+      IgnorePatternRules rule = IgnorePatternRules.detectRule(ignorePattern);
+
+      final bool matched = switch (rule) {
+        IgnorePatternRules.pathFromRoot => rule.patternMatches(
+          testPattern: ignorePattern,
+          inputPattern: path,
+        ),
+        IgnorePatternRules.suffix => rule.patternMatches(
+          testPattern: ignorePattern,
+          inputPattern: path,
+        ),
+        IgnorePatternRules.single => rule.patternMatches(
+          testPattern: ignorePattern,
+          inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
+        ),
+        IgnorePatternRules.contains => rule.patternMatches(
+          testPattern: ignorePattern,
+          inputPattern: path,
+        ),
+        IgnorePatternRules.exactMatch => rule.patternMatches(
+          testPattern: ignorePattern,
+          inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
+        ),
+      };
+
+      if (matched) {
+        debugPrintToConsole(message: "$path will be ignored due to match by $rule on $ignorePattern");
+        return true;
+      }
+    }
+
+    debugPrintToConsole(message: "$path will not be ignored");
+    return false;
+  }
+}
+
 @freezed
 class StagingData with _$StagingData {
   factory StagingData({
@@ -176,6 +272,5 @@ class StagingData with _$StagingData {
     required List<String> filesToBeStaged,
   }) = _StagingData;
 
-  factory StagingData.fromJson(Map<String, Object?> json) =>
-      _$StagingDataFromJson(json);
+  factory StagingData.fromJson(Map<String, Object?> json) => _$StagingDataFromJson(json);
 }

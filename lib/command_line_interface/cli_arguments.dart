@@ -1,4 +1,7 @@
 
+import 'package:balo/repository/ignore.dart';
+import 'package:balo/utils/variables.dart';
+
 ///Cli commands run by the user
 enum CliCommandsEnum {
   help(
@@ -24,7 +27,7 @@ enum CliCommandsEnum {
       CommandOption(
         optionEnum: CliCommandOptionsEnum.filePattern,
         mandatory: false,
-        defaultValue: ".",
+        defaultValue: dot,
       ),
     ],
   ),

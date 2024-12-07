@@ -1,6 +1,6 @@
 const executableName = "balo";
 const executableDescription = "A cli utility for balo repository";
-const repositoryFolderName = ".balo";
+const repositoryWorkingDirName = ".balo";
 const repositoryIgnoreFileName = ".baloignore";
 const branchFolderName = "branches";
 const stateFileName = "state.json";
@@ -12,3 +12,6 @@ const branchMetaDataFileName = "meta.json";
 const stagedAtKey = "staged_at";
 const filePathsKey = "file_paths";
 const currentBranchKey = "current_branch";
+
+const dot = '.';
+const star = '*';

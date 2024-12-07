@@ -21,6 +21,7 @@ StateData _$StateDataFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$StateData {
   String get currentBranch => throw _privateConstructorUsedError;
+  String? get currentCommit => throw _privateConstructorUsedError;
 
   /// Serializes this StateData to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -37,7 +38,7 @@ abstract class $StateDataCopyWith<$Res> {
   factory $StateDataCopyWith(StateData value, $Res Function(StateData) then) =
       _$StateDataCopyWithImpl<$Res, StateData>;
   @useResult
-  $Res call({String currentBranch});
+  $Res call({String currentBranch, String? currentCommit});
 }
 
 /// @nodoc
@@ -56,12 +57,17 @@ class _$StateDataCopyWithImpl<$Res, $Val extends StateData>
   @override
   $Res call({
     Object? currentBranch = null,
+    Object? currentCommit = freezed,
   }) {
     return _then(_value.copyWith(
       currentBranch: null == currentBranch
           ? _value.currentBranch
           : currentBranch // ignore: cast_nullable_to_non_nullable
               as String,
+      currentCommit: freezed == currentCommit
+          ? _value.currentCommit
+          : currentCommit // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -74,7 +80,7 @@ abstract class _$$StateDataImplCopyWith<$Res>
       __$$StateDataImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String currentBranch});
+  $Res call({String currentBranch, String? currentCommit});
 }
 
 /// @nodoc
@@ -91,12 +97,17 @@ class __$$StateDataImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? currentBranch = null,
+    Object? currentCommit = freezed,
   }) {
     return _then(_$StateDataImpl(
       currentBranch: null == currentBranch
           ? _value.currentBranch
           : currentBranch // ignore: cast_nullable_to_non_nullable
               as String,
+      currentCommit: freezed == currentCommit
+          ? _value.currentCommit
+          : currentCommit // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -104,17 +115,19 @@ class __$$StateDataImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$StateDataImpl implements _StateData {
-  _$StateDataImpl({required this.currentBranch});
+  _$StateDataImpl({required this.currentBranch, this.currentCommit});
 
   factory _$StateDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$StateDataImplFromJson(json);
 
   @override
   final String currentBranch;
+  @override
+  final String? currentCommit;
 
   @override
   String toString() {
-    return 'StateData(currentBranch: $currentBranch)';
+    return 'StateData(currentBranch: $currentBranch, currentCommit: $currentCommit)';
   }
 
   @override
@@ -123,12 +136,14 @@ class _$StateDataImpl implements _StateData {
         (other.runtimeType == runtimeType &&
             other is _$StateDataImpl &&
             (identical(other.currentBranch, currentBranch) ||
-                other.currentBranch == currentBranch));
+                other.currentBranch == currentBranch) &&
+            (identical(other.currentCommit, currentCommit) ||
+                other.currentCommit == currentCommit));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, currentBranch);
+  int get hashCode => Object.hash(runtimeType, currentBranch, currentCommit);
 
   /// Create a copy of StateData
   /// with the given fields replaced by the non-null parameter values.
@@ -147,13 +162,17 @@ class _$StateDataImpl implements _StateData {
 }
 
 abstract class _StateData implements StateData {
-  factory _StateData({required final String currentBranch}) = _$StateDataImpl;
+  factory _StateData(
+      {required final String currentBranch,
+      final String? currentCommit}) = _$StateDataImpl;
 
   factory _StateData.fromJson(Map<String, dynamic> json) =
       _$StateDataImpl.fromJson;
 
   @override
   String get currentBranch;
+  @override
+  String? get currentCommit;
 
   /// Create a copy of StateData
   /// with the given fields replaced by the non-null parameter values.

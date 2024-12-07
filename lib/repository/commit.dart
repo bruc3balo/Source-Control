@@ -5,6 +5,7 @@ import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
+///Snapshot of a working directory
 class Commit {
   final Branch branch;
   final String sha;

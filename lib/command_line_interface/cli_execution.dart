@@ -6,6 +6,7 @@ import 'package:balo/command/command_facade.dart';
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/command_line_interface/user_input.dart';
+import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 
@@ -48,10 +49,7 @@ abstract class UndoableCommandExecutor {
 
       case CliCommandsEnum.add:
         //Path
-        String? path = parsedCommands.getOption(CliCommandOptionsEnum.filePattern);
-        if ("." == path) path = "*";
-        path ??= "*";
-
+        String path = parsedCommands.getOption(CliCommandOptionsEnum.filePattern);
         return StageFilesInitializer(path);
 
       case CliCommandsEnum.ignore:
@@ -148,7 +146,11 @@ abstract class UndoableCommandExecutor {
     int i = 0;
     try {
       while (i < commands.length) {
-        await commands[i++].execute();
+        UndoableCommand c = commands[i++];
+        debugPrintToConsole(
+          message: "Executing ${c.runtimeType}",
+        );
+        await c.execute();
       }
       return 0;
     } catch (e, trace) {
@@ -156,6 +158,10 @@ abstract class UndoableCommandExecutor {
       debugPrintToConsole(message: trace.toString(), color: CliColor.red);
 
       while (i > 0) {
+        UndoableCommand c = commands[--i];
+        debugPrintToConsole(
+          message: "Undoing ${c.runtimeType}",
+        );
         await commands[--i].undo();
       }
 

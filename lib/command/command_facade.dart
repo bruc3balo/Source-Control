@@ -52,7 +52,7 @@ class RepositoryInitializer implements CommandFacade {
     return [
       InitializeRepositoryCommand(repository),
       CreateIgnoreFileCommand(repository),
-      AddIgnorePatternCommand(repository, repositoryFolderName),
+      AddIgnorePatternCommand(repository, repositoryWorkingDirName),
       CreateNewBranchCommand(repository, branch),
       CreateStateFileCommand(repository, branch),
     ];
