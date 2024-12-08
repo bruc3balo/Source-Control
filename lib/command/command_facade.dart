@@ -4,6 +4,7 @@ import 'package:balo/command/command.dart';
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
+import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
@@ -323,4 +324,55 @@ class MergeBranchInitializer implements CommandFacade {
       MergeBranchCommand(repository, thisBranch, otherBranch),
     ];
   }
+}
+
+class AddRemoteInitializer implements CommandFacade {
+
+  final String name;
+  final String url;
+
+  AddRemoteInitializer(this.name, this.url);
+
+  @override
+  List<UndoableCommand> initialize() {
+    Repository repository = Repository(Directory.current.path);
+    Remote remote = Remote(repository, name, url);
+    return [
+      AddRemoteCommand(repository, remote),
+    ];
+  }
+
+}
+
+
+class RemoveRemoteInitializer implements CommandFacade {
+
+  final String name;
+
+  RemoveRemoteInitializer(this.name);
+
+  @override
+  List<UndoableCommand> initialize() {
+    Repository repository = Repository(Directory.current.path);
+    Remote remote = Remote(repository, name, '');
+    return [
+      RemoveRemoteCommand(repository, remote),
+    ];
+  }
+
+}
+
+
+class ListAllRemoteInitializer implements CommandFacade {
+
+  ListAllRemoteInitializer();
+
+  @override
+  List<UndoableCommand> initialize() {
+    Repository repository = Repository(Directory.current.path);
+    return [
+      ListRemoteCommand(repository),
+    ];
+  }
+
 }

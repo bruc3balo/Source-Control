@@ -9,6 +9,7 @@ const branchStage = "stage.json";
 const branchCommitFolder = "commits";
 const branchTreeMetaDataFileName = "tree.json";
 const objectsStore = "objects";
+const remoteFileName = "remotes.json";
 
 const stagedAtKey = "staged_at";
 const filePathsKey = "file_paths";

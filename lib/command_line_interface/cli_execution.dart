@@ -98,7 +98,6 @@ abstract class UndoableCommandExecutor {
 
         printToConsole(message: "Branch $branch, commit $commitSha");
 
-
         return CheckoutToBranchInitializer(branch, commitSha);
       case CliCommandsEnum.merge:
         String? branch = parsedCommands.getOption(
@@ -138,6 +137,33 @@ abstract class UndoableCommandExecutor {
           thisCommitSha: thisSha,
           otherCommitSha: otherSha,
         );
+      case CliCommandsEnum.remote:
+        if (!parsedCommands.hasOption(CliCommandOptionsEnum.add) && !parsedCommands.hasOption(CliCommandOptionsEnum.remove)) {
+          debugPrintToConsole(message: "Remote option is null");
+          return ListAllRemoteInitializer();
+        }
+
+        bool isAdding = parsedCommands.hasOption(CliCommandOptionsEnum.add);
+
+        String remoteName = parsedCommands.getOption(
+          isAdding ? CliCommandOptionsEnum.add : CliCommandOptionsEnum.remove,
+        );
+
+        String? remoteUrl = parsedCommands.getOption(
+          CliCommandOptionsEnum.remoteUrl,
+        );
+
+        if (isAdding && remoteUrl == null) {
+          debugPrintToConsole(message: "Remote url is null");
+          return ErrorInitializer("Remote option required url");
+        }
+
+        if(isAdding) {
+          return AddRemoteInitializer(remoteName, remoteUrl!);
+        } else {
+          return RemoveRemoteInitializer(remoteName);
+        }
+
       default:
         return ErrorInitializer("Unknown command");
     }

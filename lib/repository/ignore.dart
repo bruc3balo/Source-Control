@@ -26,7 +26,7 @@ extension IgnoreCommons on Ignore {
       ignoreFile.existsSync() ? ignoreFile.readAsLinesSync().where((p) => p.isNotEmpty && !p.startsWith("#")).toList() : [];
 }
 
-extension IgnoreActions on Ignore {
+extension IgnoreActions on Ignore{
   Future<void> createIgnoreFile({
     Function()? onAlreadyExists,
     Function()? onSuccessfullyCreated,

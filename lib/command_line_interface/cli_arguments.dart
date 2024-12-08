@@ -1,4 +1,3 @@
-
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/utils/variables.dart';
 
@@ -123,6 +122,25 @@ enum CliCommandsEnum {
         defaultValue: null,
       )
     ],
+  ),
+  remote(
+    command: "remote",
+    description: "Links a local repository to a remote repository",
+    options: [
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.add,
+        mandatory: false,
+      ),
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.remove,
+        mandatory: false,
+      ),
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.remoteUrl,
+        mandatory: false,
+        defaultValue: null,
+      ),
+    ],
   );
 
   final String command;
@@ -142,7 +160,6 @@ enum CliCommandsEnum {
 
 ///Cli options and flags attached to [CliCommandsEnum]
 enum CliCommandOptionsEnum {
-
   add(
     option: "add",
     abbreviation: "a",
@@ -176,22 +193,22 @@ enum CliCommandOptionsEnum {
     abbreviation: "m",
     aliases: ["msg"],
     description: "Provide a commit or operation message",
-    valueHelp: '"commit_message"'
+    valueHelp: '"commit_message"',
   ),
+  remoteUrl(
+      option: "url",
+      abbreviation: "u",
+      aliases: ["url", "remote-path"],
+      description: "Provide a remote path (local) or url",
+      valueHelp: '"remote_url"'),
   path(
-    option: "path",
-    abbreviation: "p",
-    aliases: ["dir, directory"],
-    description: "Specify the file path for the operation",
-    valueHelp: "file_path"
-  ),
+      option: "path", abbreviation: "p", aliases: ["dir, directory"], description: "Specify the file path for the operation", valueHelp: "file_path"),
   filePattern(
-    option: "file",
-    abbreviation: "f",
-    aliases: ["pattern", "files"],
-    description: "Specify a pattern for matching files",
-    valueHelp: "file_pattern"
-  ),
+      option: "file",
+      abbreviation: "f",
+      aliases: ["pattern", "files"],
+      description: "Specify a pattern for matching files",
+      valueHelp: "file_pattern"),
   thisBranch(
     option: "source-branch",
     abbreviation: "t",
@@ -213,27 +230,9 @@ enum CliCommandOptionsEnum {
     description: "Specify the current commit SHA",
     valueHelp: "current_sha",
   ),
-  otherSha(
-    option: "target-sha",
-    abbreviation: "y",
-    aliases: ["target-sha"],
-    description: "Specify the target commit SHA",
-    valueHelp: "target_sha"
-  ),
-  help(
-    option: "help",
-    abbreviation: "h",
-    aliases: ["usage", "info"],
-    description: "Display help and usage information",
-    valueHelp: null
-  ),
-  verbose(
-    option: "verbose",
-    abbreviation: "v",
-    aliases: ["debug"],
-    description: "Display detailed debugging information",
-    valueHelp: null
-  );
+  otherSha(option: "target-sha", abbreviation: "y", aliases: ["target-sha"], description: "Specify the target commit SHA", valueHelp: "target_sha"),
+  help(option: "help", abbreviation: "h", aliases: ["usage", "info"], description: "Display help and usage information", valueHelp: null),
+  verbose(option: "verbose", abbreviation: "v", aliases: ["debug"], description: "Display detailed debugging information", valueHelp: null);
 
   final String option;
   final String abbreviation;

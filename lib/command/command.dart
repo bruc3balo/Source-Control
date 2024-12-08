@@ -8,6 +8,7 @@ import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/repository/ignore.dart';
+import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
@@ -345,7 +346,6 @@ class ListBranchesCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-
     State state = repository.state;
 
     Branch? currentBranch = state.getCurrentBranch(
@@ -617,6 +617,70 @@ class MergeBranchCommand extends UndoableCommand {
         message: "No commit branch meta data",
       ),
     );
+  }
+
+  @override
+  Future<void> undo() async {}
+}
+
+class AddRemoteCommand extends UndoableCommand {
+  final Repository repository;
+  late Remote remote;
+
+  AddRemoteCommand(this.repository, this.remote);
+
+  @override
+  Future<void> execute() async {
+    remote.addRemote(
+      onRemoteAlreadyExists: () => debugPrintToConsole(message: "Remote already exists"),
+    );
+  }
+
+  @override
+  Future<void> undo() async {}
+}
+
+class RemoveRemoteCommand extends UndoableCommand {
+  final Repository repository;
+  late Remote remote;
+
+  RemoveRemoteCommand(this.repository, this.remote);
+
+  @override
+  Future<void> execute() async {
+    remote.removeRemote(
+      onRemoteDoesntExists: () => debugPrintToConsole(message: "Remote doesn't exists"),
+    );
+  }
+
+  @override
+  Future<void> undo() async {}
+}
+
+class ListRemoteCommand extends UndoableCommand {
+  final Repository repository;
+
+  ListRemoteCommand(this.repository);
+
+  @override
+  Future<void> execute() async {
+    RemoteMetaData? remoteMetaData = repository.remoteMetaData;
+    if (remoteMetaData == null || remoteMetaData.remotes.isEmpty) {
+      printToConsole(
+        message: "No remotes found",
+        color: CliColor.red,
+        newLine: true,
+      );
+      return;
+    }
+
+    for(RemoteData r in remoteMetaData.remotes.values) {
+      printToConsole(
+        message: "(${r.name}) ${r.url}",
+        color: CliColor.cyan,
+        newLine: true,
+      );
+    }
   }
 
   @override

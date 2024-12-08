@@ -14,4 +14,5 @@
 - Git diff on branches
 - Merge another branches commit into current working dir
 - Command line parsing upgrade using args package
-- 
+- Store objects only when changed
+- Add / Remove a remote

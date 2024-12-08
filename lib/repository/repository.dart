@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/ignore.dart';
+import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
@@ -43,7 +45,6 @@ extension RepositoryActions on Repository {
         return;
       }
 
-
       repositoryDirectory.createSync(recursive: true);
       onSuccessfullyInitialized?.call();
     } on FileSystemException catch (e, trace) {
@@ -54,18 +55,34 @@ extension RepositoryActions on Repository {
 
 extension RepositoryCommons on Repository {
   String get repositoryPath => join(path, repositoryWorkingDirName);
+
   Directory get repositoryDirectory => Directory(repositoryPath);
+
   Directory get workingDirectory => Directory(repositoryDirectory.parent.path);
+
   bool get isInitialized => repositoryDirectory.existsSync();
 }
 
 extension RepositoryEnvironment on Repository {
-  List<Branch> get allBranches =>
-      Directory(join(repositoryPath, branchFolderName))
-          .listSync(recursive: false, followLinks: false)
-          .where((f) => f.statSync().type == FileSystemEntityType.directory)
-          .map((f) => Branch(basename(f.path), this))
-          .toList();
+  List<Branch> get allBranches => Directory(join(repositoryPath, branchFolderName))
+      .listSync(recursive: false, followLinks: false)
+      .where((f) => f.statSync().type == FileSystemEntityType.directory)
+      .map((f) => Branch(basename(f.path), this))
+      .toList();
+
   Ignore get ignore => Ignore(this);
+
   State get state => State(this);
+
+  RemoteMetaData? get remoteMetaData {
+    String remotePath = join(repositoryDirectory.path, remoteFileName);
+    File remoteFile = File(remotePath);
+
+    if (!remoteFile.existsSync()) {
+      return null;
+    }
+
+    String data = remoteFile.readAsStringSync();
+    return RemoteMetaData.fromJson(jsonDecode(data));
+  }
 }

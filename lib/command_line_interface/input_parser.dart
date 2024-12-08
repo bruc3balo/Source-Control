@@ -21,7 +21,7 @@ class ParsedCommands {
 
   dynamic getOption(CliCommandOptionsEnum o) => _options[o];
 
-  dynamic hasOption(CliCommandOptionsEnum o) => _options.containsKey(o);
+  bool hasOption(CliCommandOptionsEnum o) => _options.containsKey(o);
 
   @override
   String toString() => """
