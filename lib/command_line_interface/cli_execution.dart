@@ -164,6 +164,59 @@ abstract class UndoableCommandExecutor {
           return RemoveRemoteInitializer(remoteName);
         }
 
+      case CliCommandsEnum.clone:
+
+        String? remoteUrl = parsedCommands.getOption(
+          CliCommandOptionsEnum.remoteUrl,
+        );
+
+        if (remoteUrl == null) {
+          debugPrintToConsole(message: "Remote url is null");
+          return ErrorInitializer("Remote option required url");
+        }
+
+        String? branchName = parsedCommands.getOption(
+          CliCommandOptionsEnum.branch,
+        );
+
+        return CloneRepositoryInitializer(remoteUrl, branchName);
+
+      case CliCommandsEnum.push:
+
+        String? remoteName = parsedCommands.getOption(
+          CliCommandOptionsEnum.remoteName,
+        );
+
+        if (remoteName == null) {
+          debugPrintToConsole(message: "Remote name is null");
+          return ErrorInitializer("Remote option required url");
+        }
+
+        String? branchName = parsedCommands.getOption(
+          CliCommandOptionsEnum.branch,
+        );
+
+        return PushRepositoryInitializer(remoteName, branchName);
+
+
+      case CliCommandsEnum.pull:
+
+        String? remoteName = parsedCommands.getOption(
+          CliCommandOptionsEnum.remoteName,
+        );
+
+        if (remoteName == null) {
+          debugPrintToConsole(message: "Remote name is null");
+          return ErrorInitializer("Remote option required url");
+        }
+
+        String? branchName = parsedCommands.getOption(
+          CliCommandOptionsEnum.branch,
+        );
+
+        return PullRepositoryInitializer(remoteName, branchName);
+
+
       default:
         return ErrorInitializer("Unknown command");
     }

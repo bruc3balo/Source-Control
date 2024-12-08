@@ -14,6 +14,7 @@ part 'repo_objects.g.dart';
 part 'repo_objects.freezed.dart';
 
 class RepoObjects {
+
   final Repository repository;
   final Sha1 sha1;
   final String relativePathToRepository;

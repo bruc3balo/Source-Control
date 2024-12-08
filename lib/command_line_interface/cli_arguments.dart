@@ -71,12 +71,10 @@ enum CliCommandsEnum {
       CommandOption(
         optionEnum: CliCommandOptionsEnum.branch,
         mandatory: true,
-        defaultValue: null,
       ),
       CommandOption(
         optionEnum: CliCommandOptionsEnum.sha,
         mandatory: false,
-        defaultValue: null,
       ),
     ],
   ),
@@ -119,7 +117,6 @@ enum CliCommandsEnum {
       CommandOption(
         optionEnum: CliCommandOptionsEnum.branch,
         mandatory: true,
-        defaultValue: null,
       )
     ],
   ),
@@ -138,7 +135,49 @@ enum CliCommandsEnum {
       CommandOption(
         optionEnum: CliCommandOptionsEnum.remoteUrl,
         mandatory: false,
-        defaultValue: null,
+      ),
+    ],
+  ),
+  clone(
+    command: "clone",
+    description: "Downloads a repository from the remote repository to the local one",
+    options: [
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.remoteUrl,
+        mandatory: true,
+      ),
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.branch,
+        mandatory: false,
+        defaultValue: defaultBranch,
+      ),
+    ],
+  ),
+  push(
+    command: "push",
+    description: "Uploads a repository from the local repository to the remote one",
+    options: [
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.remoteName,
+        mandatory: true,
+      ),
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.branch,
+        mandatory: false,
+      ),
+    ],
+  ),
+  pull(
+    command: "pull",
+    description: "Updated local repository changes from remote repository",
+    options: [
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.remoteName,
+        mandatory: true,
+      ),
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.branch,
+        mandatory: false,
       ),
     ],
   );
@@ -195,14 +234,27 @@ enum CliCommandOptionsEnum {
     description: "Provide a commit or operation message",
     valueHelp: '"commit_message"',
   ),
+  remoteName(
+    option: "name",
+    abbreviation: "n",
+    aliases: ["name", "remote-name"],
+    description: "Provide a remote name",
+    valueHelp: 'remote_name',
+  ),
   remoteUrl(
-      option: "url",
-      abbreviation: "u",
-      aliases: ["url", "remote-path"],
-      description: "Provide a remote path (local) or url",
-      valueHelp: '"remote_url"'),
+    option: "url",
+    abbreviation: "u",
+    aliases: ["url", "remote-path"],
+    description: "Provide a remote path (local) or url",
+    valueHelp: 'remote_url',
+  ),
   path(
-      option: "path", abbreviation: "p", aliases: ["dir, directory"], description: "Specify the file path for the operation", valueHelp: "file_path"),
+    option: "path",
+    abbreviation: "p",
+    aliases: ["dir, directory"],
+    description: "Specify the file path for the operation",
+    valueHelp: "file_path",
+  ),
   filePattern(
       option: "file",
       abbreviation: "f",

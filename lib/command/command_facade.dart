@@ -5,6 +5,7 @@ import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/remote/remote.dart';
+import 'package:balo/repository/remote_branch/remote_branch.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
@@ -327,7 +328,6 @@ class MergeBranchInitializer implements CommandFacade {
 }
 
 class AddRemoteInitializer implements CommandFacade {
-
   final String name;
   final String url;
 
@@ -341,12 +341,9 @@ class AddRemoteInitializer implements CommandFacade {
       AddRemoteCommand(repository, remote),
     ];
   }
-
 }
 
-
 class RemoveRemoteInitializer implements CommandFacade {
-
   final String name;
 
   RemoveRemoteInitializer(this.name);
@@ -359,12 +356,9 @@ class RemoveRemoteInitializer implements CommandFacade {
       RemoveRemoteCommand(repository, remote),
     ];
   }
-
 }
 
-
 class ListAllRemoteInitializer implements CommandFacade {
-
   ListAllRemoteInitializer();
 
   @override
@@ -374,5 +368,113 @@ class ListAllRemoteInitializer implements CommandFacade {
       ListRemoteCommand(repository),
     ];
   }
+}
 
+class CloneRepositoryInitializer implements CommandFacade {
+  final String path;
+  final String branchName;
+
+  CloneRepositoryInitializer(this.path, String? branchName) : branchName = branchName ?? defaultBranch;
+
+  @override
+  List<UndoableCommand> initialize() {
+    Repository localRepository = Repository(Directory.current.path);
+    Repository remoteRepository = Repository(path);
+    Remote remote = Remote(remoteRepository, branchName, path);
+    RemoteBranch remoteBranch = RemoteBranch(Branch(branchName, remoteRepository), remote);
+    return [
+      CloneBranchCommitCommand(localRepository, remoteBranch),
+    ];
+  }
+}
+
+class PullRepositoryInitializer implements CommandFacade {
+  final String remoteName;
+  final String? branchName;
+
+  PullRepositoryInitializer(this.remoteName, this.branchName);
+
+  @override
+  List<UndoableCommand> initialize() {
+    Repository localRepository = Repository(Directory.current.path);
+    State state = localRepository.state;
+
+    Branch? currentBranch = branchName == null ? state.getCurrentBranch() : Branch(branchName!, localRepository);
+    if (currentBranch == null) {
+      return [ShowErrorCommand("Provide a branch name")];
+    }
+
+    RemoteMetaData? remoteMetaData = localRepository.remoteMetaData;
+    if (remoteMetaData == null) {
+      return [ShowErrorCommand("No remotes")];
+    }
+
+    RemoteData? remoteData = remoteMetaData.remotes[remoteName];
+    if (remoteData == null) {
+      return [ShowErrorCommand("Remote $remoteName not found")];
+    }
+
+    Repository remoteRepository = Repository(remoteData.url);
+    RemoteBranch remoteBranch = RemoteBranch(
+      Branch(
+        currentBranch.branchName,
+        remoteRepository,
+      ),
+      Remote(
+        remoteRepository,
+        remoteData.name,
+        remoteData.url,
+      ),
+    );
+
+    return [
+      PullBranchCommitCommand(localRepository, remoteBranch),
+    ];
+  }
+}
+
+
+class PushRepositoryInitializer implements CommandFacade {
+  final String remoteName;
+  final String? branchName;
+
+  PushRepositoryInitializer(this.remoteName, this.branchName);
+
+  @override
+  List<UndoableCommand> initialize() {
+    Repository localRepository = Repository(Directory.current.path);
+    State state = localRepository.state;
+
+    Branch? currentBranch = branchName == null ? state.getCurrentBranch() : Branch(branchName!, localRepository);
+    if (currentBranch == null) {
+      return [ShowErrorCommand("Provide a branch name")];
+    }
+
+    RemoteMetaData? remoteMetaData = localRepository.remoteMetaData;
+    if (remoteMetaData == null) {
+      return [ShowErrorCommand("No remotes")];
+    }
+
+    RemoteData? remoteData = remoteMetaData.remotes[remoteName];
+    if (remoteData == null) {
+      return [ShowErrorCommand("Remote $remoteName not found")];
+    }
+
+    Repository remoteRepository = Repository(remoteData.url);
+    RemoteBranch remoteBranch = RemoteBranch(
+      Branch(
+        currentBranch.branchName,
+        remoteRepository,
+      ),
+      Remote(
+        remoteRepository,
+        remoteData.name,
+        remoteData.url,
+      ),
+    );
+
+    return [
+      PushBranchCommitCommand(localRepository, remoteBranch),
+    ];
+  }
 }

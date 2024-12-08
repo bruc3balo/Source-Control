@@ -9,6 +9,7 @@ import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/remote/remote.dart';
+import 'package:balo/repository/remote_branch/remote_branch.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
@@ -657,6 +658,7 @@ class RemoveRemoteCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
+/// ListRemoteCommand
 class ListRemoteCommand extends UndoableCommand {
   final Repository repository;
 
@@ -674,13 +676,65 @@ class ListRemoteCommand extends UndoableCommand {
       return;
     }
 
-    for(RemoteData r in remoteMetaData.remotes.values) {
+    for (RemoteData r in remoteMetaData.remotes.values) {
       printToConsole(
         message: "(${r.name}) ${r.url}",
         color: CliColor.cyan,
         newLine: true,
       );
     }
+  }
+
+  @override
+  Future<void> undo() async {}
+}
+
+class CloneBranchCommitCommand extends UndoableCommand {
+  final Repository localRepository;
+  final RemoteBranch remoteBranch;
+
+  CloneBranchCommitCommand(this.localRepository, this.remoteBranch);
+
+  @override
+  Future<void> execute() async {
+    await remoteBranch.clone(localRepository: localRepository);
+  }
+
+  @override
+  Future<void> undo() async {
+    localRepository.unInitializeRepository();
+  }
+}
+
+class PushBranchCommitCommand extends UndoableCommand {
+  final Repository localRepository;
+  final RemoteBranch remoteBranch;
+
+  PushBranchCommitCommand(this.localRepository, this.remoteBranch);
+
+  @override
+  Future<void> execute() async {
+    await remoteBranch.push(
+      localRepository: localRepository,
+      onNoCommits: () => debugPrintToConsole(message: "Nothing to commit"),
+      onRemoteUrlNotSupported: () => debugPrintToConsole(message: "Unsupported remote"),
+      onSuccessfulPush: () => printToConsole(message: "Pushed successfully")
+    );
+  }
+
+  @override
+  Future<void> undo() async {}
+}
+
+class PullBranchCommitCommand extends UndoableCommand {
+  final Repository localRepository;
+  final RemoteBranch remoteBranch;
+
+  PullBranchCommitCommand(this.localRepository, this.remoteBranch);
+
+  @override
+  Future<void> execute() async {
+    await remoteBranch.pull(localRepository: localRepository);
   }
 
   @override

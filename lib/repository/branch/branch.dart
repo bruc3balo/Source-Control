@@ -194,12 +194,11 @@ extension BranchCreation on Branch {
       String fileDestinationPath = join(workingDir.path, o.filePathRelativeToRepository.replaceFirst(Platform.pathSeparator, ""));
       debugPrintToConsole(message: "File is at destination ${fileDestinationPath}");
 
-      File(fileDestinationPath)
-        .writeAsBytesSync(
-          repoObject.blob,
-          mode: FileMode.writeOnly,
-          flush: true,
-        );
+      File(fileDestinationPath).writeAsBytesSync(
+        repoObject.blob,
+        mode: FileMode.writeOnly,
+        flush: true,
+      );
 
       debugPrintToConsole(message: "cp ${repoObject.objectFilePath} -> $fileDestinationPath");
     }
@@ -264,8 +263,11 @@ extension BranchTreeMetaDataStorage on Branch {
       return;
     }
 
-    managerFile.createSync(recursive: true);
-    managerFile.writeAsStringSync(jsonEncode(BranchTreeMetaData(name: branchName, commits: HashMap())));
+    managerFile.writeAsStringSync(
+      jsonEncode(BranchTreeMetaData(name: branchName, commits: HashMap())),
+      mode: FileMode.writeOnly,
+      flush: true,
+    );
 
     onCreateFile?.call();
   }
