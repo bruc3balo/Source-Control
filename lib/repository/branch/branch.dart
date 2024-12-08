@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:balo/repository/commit.dart';
+import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
@@ -11,7 +12,6 @@ import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
-import 'package:dart_console/dart_console.dart';
 import 'package:path/path.dart';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -36,7 +36,7 @@ extension BranchStatus on Branch {
 
     //WorkingDirFiles
     List<FileSystemEntity> workingDirFiles =
-        repository.repositoryDirectory.parent.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).toList();
+        repository.workingDirectory.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).toList();
 
     //Staged files
     HashSet<String> stagedPaths = HashSet.of(staging.stagingData?.filesToBeStaged ?? []);
@@ -82,7 +82,7 @@ extension BranchCreation on Branch {
         recursive: true,
       );
 
-      createMetaDataFile();
+      createTreeMetaDataFile();
 
       onBranchCreated?.call(branchDirectory);
     } on FileSystemException catch (e, trace) {
@@ -91,14 +91,16 @@ extension BranchCreation on Branch {
   }
 
   Future<void> checkoutToBranch({
-    Function()? onSameBranch,
+    String? commitSha,
+    Function()? onNoCommitFound,
+    Function()? onSameCommit,
     Function()? onBranchMetaDataDoesntExists,
     Function()? onStateDoesntExists,
     Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
   }) async {
     try {
-      if (!branchMetaDataExists) {
+      if (!branchTreeMetaDataExists) {
         await createBranch(
           isValidBranchName: isValidBranchName,
           onFileSystemException: (e) => debugPrintToConsole(
@@ -121,50 +123,48 @@ extension BranchCreation on Branch {
       }
 
       State state = State(repository);
-      StateData? stateData = state.stateInfo;
 
+      StateData? stateData = state.stateInfo;
       if (stateData == null) {
         onStateDoesntExists?.call();
         return;
       }
 
-      if (branchName == stateData.currentBranch) {
-        onSameBranch?.call();
-        return;
-      }
+      StateData updatedStateData = stateData;
 
-      stateData = stateData.copyWith(currentBranch: branchName);
-
-      BranchMetaData? branchData = branchMetaData;
+      BranchTreeMetaData? branchData = branchTreeMetaData;
       if (branchData == null) {
         onBranchMetaDataDoesntExists?.call();
         return;
       }
 
-      if (branchData.commits.isNotEmpty) {
-        List<CommitMetaData> allBranchCommits = branchData.sortedBranchCommits;
+      //Change branch
+      updatedStateData = updatedStateData.copyWith(currentBranch: branchName);
 
-        //Get latest commit
-        CommitMetaData commitMetaData = allBranchCommits.first;
-        String latestCommitDirPath = join(branchDirectoryPath, branchCommitFolder, commitMetaData.sha);
-        Directory latestCommitDir = Directory(latestCommitDirPath);
-
-        //Move files from latest commit to current working dir
-        List<File> files =
-            latestCommitDir.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).map((e) => File(e.path)).toList();
-
-        copyFiles(
-          files: files,
-          destinationDir: repository.repositoryDirectory.parent,
-          sourceDir: latestCommitDir,
-        );
-
-        //Point to latest commit
-        stateData = stateData.copyWith(currentCommit: commitMetaData.sha);
+      //Change commit
+      CommitMetaData? commitMetaData = commitSha != null ? branchData.commits[commitSha.trim()] : branchData.latestBranchCommits;
+      if (commitSha != null && commitMetaData == null) {
+        onNoCommitFound?.call();
+        return;
       }
 
-      state.saveStateData(
-        stateData: stateData,
+      //Update commit pointer
+      updatedStateData = updatedStateData.copyWith(currentCommit: commitMetaData?.sha);
+      if (updatedStateData == stateData) {
+        onSameCommit?.call();
+        return;
+      }
+
+      //Move files from latest commit to current working dir
+      if (commitMetaData != null) {
+        copyFilesToWorkingDir(
+          objects: commitMetaData.commitedObjects.values.toList(),
+          workingDir: repository.workingDirectory,
+        );
+      }
+
+      await state.saveStateData(
+        stateData: updatedStateData,
         onFileSystemException: (e) => debugPrintToConsole(
           message: e.message,
           color: CliColor.red,
@@ -177,7 +177,31 @@ extension BranchCreation on Branch {
         ),
       );
     } on FileSystemException catch (e, trace) {
+      debugPrintToConsole(message: trace.toString(), color: CliColor.red);
       onFileSystemException?.call(e);
+    }
+  }
+
+  void copyFilesToWorkingDir({
+    required List<RepoObjectsData> objects,
+    required Directory workingDir,
+  }) {
+    printToConsole(message: "copying ${objects.length} files to ${workingDir.path}");
+    for (RepoObjectsData o in objects) {
+      RepoObjects? repoObject = o.fetchObject(repository);
+      if (repoObject == null) continue;
+
+      String fileDestinationPath = join(workingDir.path, o.filePathRelativeToRepository.replaceFirst(Platform.pathSeparator, ""));
+      debugPrintToConsole(message: "File is at destination ${fileDestinationPath}");
+
+      File(fileDestinationPath)
+        .writeAsBytesSync(
+          repoObject.blob,
+          mode: FileMode.writeOnly,
+          flush: true,
+        );
+
+      debugPrintToConsole(message: "cp ${repoObject.objectFilePath} -> $fileDestinationPath");
     }
   }
 
@@ -214,40 +238,40 @@ extension BranchCommons on Branch {
   Staging get staging => Staging(this);
 }
 
-extension BranchMetaDataStorage on Branch {
-  String get managerPath => join(branchDirectoryPath, branchMetaDataFileName);
+extension BranchTreeMetaDataStorage on Branch {
+  String get managerPath => join(branchDirectoryPath, branchTreeMetaDataFileName);
 
   File get managerFile => File(managerPath);
 
-  bool get branchMetaDataExists => managerFile.existsSync();
+  bool get branchTreeMetaDataExists => managerFile.existsSync();
 
-  BranchMetaData? get branchMetaData {
-    if (!branchMetaDataExists) return null;
+  BranchTreeMetaData? get branchTreeMetaData {
+    if (!branchTreeMetaDataExists) return null;
 
     String fileData = managerFile.readAsStringSync();
     if (fileData.isEmpty) return null;
 
     Map<String, dynamic> json = jsonDecode(fileData);
-    return BranchMetaData.fromJson(json);
+    return BranchTreeMetaData.fromJson(json);
   }
 
-  Future<void> createMetaDataFile({
+  Future<void> createTreeMetaDataFile({
     Function()? onDuplicateFile,
     Function()? onCreateFile,
   }) async {
-    if (branchMetaDataExists) {
+    if (branchTreeMetaDataExists) {
       onDuplicateFile?.call();
       return;
     }
 
     managerFile.createSync(recursive: true);
-    managerFile.writeAsStringSync(jsonEncode(BranchMetaData(name: branchName, commits: HashMap())));
+    managerFile.writeAsStringSync(jsonEncode(BranchTreeMetaData(name: branchName, commits: HashMap())));
 
     onCreateFile?.call();
   }
 
-  void saveBranchMetaData(BranchMetaData metaData) {
-    if (!branchMetaDataExists) createMetaDataFile();
+  void saveBranchTreeMetaData(BranchTreeMetaData metaData) {
+    if (!branchTreeMetaDataExists) createTreeMetaDataFile();
 
     managerFile.writeAsStringSync(
       jsonEncode(metaData.toJson()),
@@ -263,20 +287,21 @@ extension BranchManager on Branch {
     Function(CommitMetaData)? onCommitCreated,
     Function()? onNoMetaData,
   }) async {
-    if (!branchMetaDataExists) {
+    if (!branchTreeMetaDataExists) {
       onMissingManager?.call();
       return;
     }
 
-    BranchMetaData? metaData = branchMetaData;
+    BranchTreeMetaData? metaData = branchTreeMetaData;
     if (metaData == null) {
       onNoMetaData?.call();
       return;
     }
 
     CommitMetaData commitMetaData = CommitMetaData(
-      sha: commit.sha,
+      sha: commit.sha.hash,
       message: commit.message,
+      commitedObjects: commit.objects,
       commitedAt: commit.commitedAt,
     );
 
@@ -284,7 +309,7 @@ extension BranchManager on Branch {
     mutableCommits.putIfAbsent(commitMetaData.sha, () => commitMetaData);
     metaData = metaData.copyWith(commits: mutableCommits);
 
-    saveBranchMetaData(metaData);
+    saveBranchTreeMetaData(metaData);
 
     onCommitCreated?.call(commitMetaData);
   }
@@ -312,7 +337,7 @@ extension BranchMerge on Branch {
     }
 
     //Get all files from otherBranch latest commit
-    BranchMetaData? otherBranchData = otherBranch.branchMetaData;
+    BranchTreeMetaData? otherBranchData = otherBranch.branchTreeMetaData;
     if (otherBranchData == null) {
       onNoOtherBranchMetaData?.call();
       return;
@@ -325,9 +350,10 @@ extension BranchMerge on Branch {
       return;
     }
     Commit otherCommit = Commit(
-      commitMetaData.sha,
+      Sha1(commitMetaData.sha),
       otherBranch,
       commitMetaData.message,
+      {},
       commitMetaData.commitedAt,
     );
     List<File> otherCommitFiles = otherCommit.getCommitFiles(
@@ -337,7 +363,7 @@ extension BranchMerge on Branch {
         [];
 
     //Get all files from this current working branch
-    Directory workingBranchDir = repository.repositoryDirectory.parent;
+    Directory workingBranchDir = repository.workingDirectory;
     List<File> workingBranchFiles =
         workingBranchDir.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).map((e) => File(e.path)).toList();
 
@@ -345,7 +371,7 @@ extension BranchMerge on Branch {
     String otherBranchPrefix = join(
       otherBranch.branchDirectoryPath,
       branchCommitFolder,
-      otherCommit.sha,
+      otherCommit.sha.hash,
     );
     Map<String, File> otherBranchFilesMap = {for (var f in otherCommitFiles) f.path.replaceAll(otherBranchPrefix, ""): f};
 
@@ -515,22 +541,24 @@ extension BranchMerge on Branch {
   }
 }
 
-///BranchMetaData
+///BranchTreeMetaData
 @freezed
-class BranchMetaData with _$BranchMetaData {
-  factory BranchMetaData({
+class BranchTreeMetaData with _$BranchTreeMetaData {
+  factory BranchTreeMetaData({
     required String name,
     required Map<String, CommitMetaData> commits,
   }) = _BranchMetaData;
 
-  factory BranchMetaData.fromJson(Map<String, Object?> json) => _$BranchMetaDataFromJson(json);
+  factory BranchTreeMetaData.fromJson(Map<String, Object?> json) => _$BranchTreeMetaDataFromJson(json);
 }
 
-extension BranchMetaDataX on BranchMetaData {
+extension BranchMetaDataX on BranchTreeMetaData {
   List<CommitMetaData> get sortedBranchCommits => commits.values.toList()
     ..sort(
       (a, b) => -a.commitedAt.compareTo(b.commitedAt),
     );
+
+  CommitMetaData? get latestBranchCommits => sortedBranchCommits.firstOrNull;
 }
 
 ///CommitMetaData
@@ -539,6 +567,7 @@ class CommitMetaData with _$CommitMetaData {
   factory CommitMetaData({
     required String sha,
     required String message,
+    required Map<String, RepoObjectsData> commitedObjects,
     required DateTime commitedAt,
   }) = _CommitMetaData;
 

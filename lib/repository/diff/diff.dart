@@ -56,23 +56,20 @@ class CommitDiff {
     otherFiles ??= [];
 
     //Get other files map
-    String otherDirPrefix =
-        join(otherCommit.branch.branchDirectoryPath, branchCommitFolder, otherCommit.sha);
-    Map<String, File> otherFilesMap = {
-      for (var f in otherFiles) f.path.replaceAll(otherDirPrefix, ""): f
-    };
+    String otherDirPrefix = join(
+      otherCommit.branch.branchDirectoryPath,
+      branchCommitFolder,
+      otherCommit.sha.hash,
+    );
+    Map<String, File> otherFilesMap = {for (var f in otherFiles) f.path.replaceAll(otherDirPrefix, ""): f};
 
     //Get this files map
-    String thisDirPrefix =
-        join(thisCommit.branch.branchDirectoryPath, branchCommitFolder, thisCommit.sha);
-    Map<String, File> thisFilesMap = {
-      for (var f in thisFiles) f.path.replaceAll(thisDirPrefix, ""): f
-    };
+    String thisDirPrefix = join(thisCommit.branch.branchDirectoryPath, branchCommitFolder, thisCommit.sha.hash);
+    Map<String, File> thisFilesMap = {for (var f in thisFiles) f.path.replaceAll(thisDirPrefix, ""): f};
 
     //Compare this with other
     debugPrintToConsole(
-      message:
-          "Comparing files from ${thisCommit.sha} commit (${thisFiles.length} files) to ${otherCommit.sha} commit (${otherFiles.length} files)",
+      message: "Comparing files from ${thisCommit.sha} commit (${thisFiles.length} files) to ${otherCommit.sha} commit (${otherFiles.length} files)",
     );
 
     List<FileDiff> filesDiff = [];
@@ -322,8 +319,7 @@ extension CommitDiffPrint on CommitDiff {
     for (var a in filesDiff) {
       a.printDiff();
 
-      for (var b
-          in a.linesDiff.values.where((e) => e.diffType != DiffType.same)) {
+      for (var b in a.linesDiff.values.where((e) => e.diffType != DiffType.same)) {
         b.printDiff();
       }
     }
@@ -343,8 +339,7 @@ extension CommitDiffPrint on CommitDiff {
     );
 
     printToConsole(
-      message:
-          "Statistics: ${statistic.entries.map((e) => "${e.key.color.color}${e.key.title} ${e.value}${CliColor.defaultColor.color}").join()}",
+      message: "Statistics: ${statistic.entries.map((e) => "${e.key.color.color}${e.key.title} ${e.value}${CliColor.defaultColor.color}").join()}",
       color: CliColor.blue,
     );
   }
@@ -362,10 +357,7 @@ extension FileDiffPrint on FileDiff {
   }
 
   void printDiff() {
-    int differences = diffCount.entries
-        .where((e) => e.key != DiffType.same)
-        .map((e) => e.value)
-        .fold(0, (a, b) => a + b);
+    int differences = diffCount.entries.where((e) => e.key != DiffType.same).map((e) => e.value).fold(0, (a, b) => a + b);
     printToConsole(
       message:
           "Files: a -> ${basename(thisFile.path)}, b -> ${basename(otherFile.path)} = ${diffType.title} ($differences difference${differences == 1 ? '' : 's'})",

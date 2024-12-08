@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:balo/repository/branch/branch.dart';
+import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
@@ -12,6 +13,7 @@ part 'state.g.dart';
 
 part 'state.freezed.dart';
 
+///Known as head in git
 class State {
   final Repository repository;
 

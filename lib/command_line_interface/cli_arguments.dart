@@ -73,7 +73,12 @@ enum CliCommandsEnum {
         optionEnum: CliCommandOptionsEnum.branch,
         mandatory: true,
         defaultValue: null,
-      )
+      ),
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.sha,
+        mandatory: false,
+        defaultValue: null,
+      ),
     ],
   ),
   commit(
@@ -158,6 +163,13 @@ enum CliCommandOptionsEnum {
     aliases: ["br", "branch-name"],
     description: "Specify a branch to operate on",
     valueHelp: "branch_name",
+  ),
+  sha(
+    option: "sha",
+    abbreviation: "s",
+    aliases: ["sha1", "commit-hash"],
+    description: "Provide a commit sha",
+    valueHelp: "commit_sha1",
   ),
   message(
     option: "message",

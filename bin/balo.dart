@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:balo/command/command_facade.dart';
+import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/command_line_interface/cli_execution.dart';
 import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/command_line_interface/user_input.dart';
@@ -21,10 +22,22 @@ Future<void> main(List<String> arguments) async {
     );
     code = await runner.runCommand(commandFacade.initialize());
   } on UsageException catch (e, trace) {
+    if (!isVerboseMode) {
+      printToConsole(
+        message: "An error has occurred. Run with ${CliCommandOptionsEnum.verbose.option} to see more details",
+        color: CliColor.cyan,
+      );
+    }
     debugPrintToConsole(message: e.toString(), color: CliColor.red);
     debugPrintToConsole(message: trace.toString(), color: CliColor.red);
     code = 400;
   } catch (e, trace) {
+    if (!isVerboseMode) {
+      printToConsole(
+        message: "An error has occurred. Run with -${CliCommandOptionsEnum.verbose.abbreviation} to see more details",
+        color: CliColor.red,
+      );
+    }
     debugPrintToConsole(message: e.toString(), color: CliColor.red);
     debugPrintToConsole(message: trace.toString(), color: CliColor.red);
     code = 500;

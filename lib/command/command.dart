@@ -345,7 +345,10 @@ class ListBranchesCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    Branch? currentBranch = repository.state.getCurrentBranch(
+
+    State state = repository.state;
+
+    Branch? currentBranch = state.getCurrentBranch(
       onRepositoryNotInitialized: () => debugPrintToConsole(
         message: "Repository not initialized",
         color: CliColor.red,
@@ -358,7 +361,7 @@ class ListBranchesCommand extends UndoableCommand {
     for (Branch b in repository.allBranches) {
       bool isCurrentBranch = b.branchName == currentBranch?.branchName;
       printToConsole(
-        message: "${b.branchName} ${isCurrentBranch ? "*" : ''}",
+        message: "${b.branchName} ${isCurrentBranch ? "*" : ''} ${isCurrentBranch ? "-> ${state.stateInfo?.currentCommit}" : ''}",
         style: isCurrentBranch ? null : CliStyle.bold,
         alignment: TextAlignment.left,
         color: isCurrentBranch ? CliColor.brightCyan : CliColor.white,
@@ -378,11 +381,19 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
 
   @override
   Future<void> execute() async {
+    if (!repository.isInitialized) {
+      printToConsole(
+        message: "Repository is not initialized at path ${repository.repositoryPath}",
+        alignment: TextAlignment.left,
+        color: CliColor.red,
+      );
+      return;
+    }
+
     StateData? stateData = repository.state.stateInfo;
     if (stateData == null) {
       printToConsole(
-        message: "Unable to get branch info",
-        style: CliStyle.bold,
+        message: "Repository is doesn't have state data at ${repository.state.stateFilePath}",
         alignment: TextAlignment.left,
         color: CliColor.red,
       );
@@ -393,10 +404,8 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
 
     Map<BranchFileStatus, HashSet<String>> status = branch.getBranchStatus();
     printToConsole(
-      message: "checking status of ${branch.branchName} branch",
-      alignment: TextAlignment.left,
+      message: "On branch ${branch.branchName}",
       color: CliColor.defaultColor,
-      newLine: true,
     );
 
     for (MapEntry<BranchFileStatus, HashSet<String>> e in status.entries) {
@@ -488,9 +497,17 @@ class GetBranchCommitHistoryCommand extends UndoableCommand {
   @override
   Future<void> execute() async {
     Branch branch = Branch(branchName, repository);
-    BranchMetaData? metaData = branch.branchMetaData;
+
+    printToConsole(message: "On branch $branchName", color: CliColor.defaultColor);
+
+    BranchTreeMetaData? metaData = branch.branchTreeMetaData;
     if (metaData == null) {
       printToConsole(message: "Branch out of sync", color: CliColor.brightRed);
+      return;
+    }
+
+    if (metaData.commits.isEmpty) {
+      printToConsole(message: "No commits found", newLine: true, color: CliColor.brightRed);
       return;
     }
 
@@ -512,15 +529,18 @@ class GetBranchCommitHistoryCommand extends UndoableCommand {
 class CheckoutToBranchCommand extends UndoableCommand {
   final Repository repository;
   final Branch branch;
+  final String? commitSha;
 
-  CheckoutToBranchCommand(this.repository, this.branch);
+  CheckoutToBranchCommand(this.repository, this.branch, this.commitSha);
 
   @override
   Future<void> execute() async {
     await Isolate.run(() async {
       await branch.checkoutToBranch(
+        commitSha: commitSha,
         onRepositoryNotInitialized: () => debugPrintToConsole(message: "Repository not initialized"),
-        onSameBranch: () => debugPrintToConsole(message: "Cannot checkout to same branch"),
+        onNoCommitFound: () => debugPrintToConsole(message: "Commit not found"),
+        onSameCommit: () => debugPrintToConsole(message: "Cannot check out to same commit"),
         onStateDoesntExists: () => debugPrintToConsole(message: "State doesn't exist"),
         onBranchMetaDataDoesntExists: () => debugPrintToConsole(message: "Branch meta data doesn't exists"),
         onFileSystemException: (e) => debugPrintToConsole(message: e.message, color: CliColor.red),

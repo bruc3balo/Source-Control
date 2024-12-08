@@ -7,7 +7,8 @@ const stateFileName = "state.json";
 const defaultBranch = "default";
 const branchStage = "stage.json";
 const branchCommitFolder = "commits";
-const branchMetaDataFileName = "meta.json";
+const branchTreeMetaDataFileName = "tree.json";
+const objectsStore = "objects";
 
 const stagedAtKey = "staged_at";
 const filePathsKey = "file_paths";

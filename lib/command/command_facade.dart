@@ -200,14 +200,21 @@ class GetCommitHistoryInitializer implements CommandFacade {
 
 class CheckoutToBranchInitializer implements CommandFacade {
   final String branchName;
+  final String? commitSha;
 
-  CheckoutToBranchInitializer(this.branchName);
+  CheckoutToBranchInitializer(this.branchName, this.commitSha);
 
   @override
   List<UndoableCommand> initialize() {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
-    return [CheckoutToBranchCommand(repository, Branch(branchName, repository))];
+    return [
+      CheckoutToBranchCommand(
+        repository,
+        Branch(branchName, repository),
+        commitSha,
+      ),
+    ];
   }
 }
 
@@ -240,7 +247,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
       return [ShowErrorCommand("Unable to get current branch info and has not been provided")];
     }
 
-    BranchMetaData? thisBranchMetaData = thisBranch.branchMetaData;
+    BranchTreeMetaData? thisBranchMetaData = thisBranch.branchTreeMetaData;
     if (thisBranchMetaData == null) {
       return [ShowErrorCommand("This branch $thisBranchName has no meta data")];
     }
@@ -253,7 +260,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
     }
 
     Branch otherBranch = Branch(otherBranchName, repository);
-    BranchMetaData? otherBranchMetaData = otherBranch.branchMetaData;
+    BranchTreeMetaData? otherBranchMetaData = otherBranch.branchTreeMetaData;
     if (otherBranchMetaData == null) {
       debugPrintToConsole(message: "branchBMetaData == null");
 
@@ -268,16 +275,18 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
     }
 
     Commit thisCommit = Commit(
-      thisCommitMetaData.sha,
+      Sha1(thisCommitMetaData.sha),
       thisBranch,
       thisCommitMetaData.message,
+      thisCommitMetaData.commitedObjects,
       thisCommitMetaData.commitedAt,
     );
 
     Commit otherCommit = Commit(
-      otherCommitMetaData.sha,
+      Sha1(otherCommitMetaData.sha),
       otherBranch,
       otherCommitMetaData.message,
+      otherCommitMetaData.commitedObjects,
       otherCommitMetaData.commitedAt,
     );
 

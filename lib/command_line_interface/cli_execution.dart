@@ -92,7 +92,14 @@ abstract class UndoableCommandExecutor {
           return ErrorInitializer("Branch required");
         }
 
-        return CheckoutToBranchInitializer(branch);
+        String? commitSha = parsedCommands.getOption(
+          CliCommandOptionsEnum.sha,
+        );
+
+        printToConsole(message: "Branch $branch, commit $commitSha");
+
+
+        return CheckoutToBranchInitializer(branch, commitSha);
       case CliCommandsEnum.merge:
         String? branch = parsedCommands.getOption(
           CliCommandOptionsEnum.branch,
@@ -113,7 +120,6 @@ abstract class UndoableCommandExecutor {
           CliCommandOptionsEnum.thisSha,
         );
 
-
         String? otherBranchName = parsedCommands.getOption(
           CliCommandOptionsEnum.otherBranch,
         );
@@ -125,7 +131,6 @@ abstract class UndoableCommandExecutor {
         String? otherSha = parsedCommands.getOption(
           CliCommandOptionsEnum.otherSha,
         );
-
 
         return ShowDiffBetweenCommitsInitializer(
           thisBranchName: thisBranchName,
@@ -148,7 +153,7 @@ abstract class UndoableCommandExecutor {
       while (i < commands.length) {
         UndoableCommand c = commands[i++];
         debugPrintToConsole(
-          message: "Executing ${c.runtimeType}",
+          message: "Executing $i: ${c.runtimeType}",
         );
         await c.execute();
       }
@@ -160,7 +165,7 @@ abstract class UndoableCommandExecutor {
       while (i > 0) {
         UndoableCommand c = commands[--i];
         debugPrintToConsole(
-          message: "Undoing ${c.runtimeType}",
+          message: "Undoing $i: ${c.runtimeType}",
         );
         await commands[--i].undo();
       }

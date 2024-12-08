@@ -1,13 +1,15 @@
+import 'dart:convert';
 import 'dart:io';
-import 'package:balo/repository/ignore.dart';
-import 'package:balo/utils/variables.dart';
+import 'dart:typed_data';
+
+import 'package:balo/repository/commit.dart';
+import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/view/terminal.dart';
+import 'package:crypto/crypto.dart';
 
 String filePatternToRegex(String pattern) {
   return pattern.replaceAll('.', r'\.').replaceAll('**', r'.*').replaceAll('*', r'[^/]*').replaceAll('?', r'[^/]');
 }
-
-
 
 bool isValidBranchName(String? branchName) {
   // Check if the branch name is null or empty
@@ -28,27 +30,20 @@ bool isValidBranchName(String? branchName) {
   return true;
 }
 
-void copyFiles({
-  required List<File> files,
-  required Directory sourceDir,
-  required Directory destinationDir,
+///Sha1 algorithm
+Sha1 createBranchSha({
+  required String branchName,
+  required String message,
+  required int noOfObjects,
+  required DateTime commitedAt,
 }) {
-  printToConsole(message: "copying ${files.length} files from ${sourceDir.path} to ${destinationDir.path}");
-
-  for (File sourceFile in files) {
-    String fileDestinationPath = sourceFile.path.replaceAll(
-      sourceDir.path,
-      destinationDir.path,
-    );
-
-    File(fileDestinationPath)
-      ..createSync(recursive: true)
-      ..writeAsBytesSync(
-        sourceFile.readAsBytesSync(),
-        mode: FileMode.writeOnly,
-        flush: true,
-      );
-
-    debugPrintToConsole(message: "cp ${sourceFile.path} -> $fileDestinationPath");
-  }
+  return computeSha1Hash(
+    utf8.encode(
+      [branchName, message, noOfObjects, commitedAt].join(),
+    ),
+  );
 }
+
+Future<Sha1> computeFileSha1Hash(File file) async => computeSha1Hash(await file.readAsBytes());
+
+Sha1 computeSha1Hash(Uint8List bytes) => Sha1(sha1.convert(bytes).toString());

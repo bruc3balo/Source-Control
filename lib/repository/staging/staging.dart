@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/ignore.dart';
+import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/utils.dart';
@@ -18,7 +19,7 @@ part 'staging.freezed.dart';
 
 part 'staging.g.dart';
 
-///Pre-[Commit] area on a [Branch] with files ready to be commited
+///Pre-[Commit] area in a [Branch] with files ready to be commited
 class Staging {
   final Branch branch;
 
@@ -32,17 +33,6 @@ extension StagingActions on Staging {
   }) async {
     Repository r = repository;
     Branch b = branch;
-    String sha = Random().nextInt(1000000).toString();
-
-    //Create dir
-    Directory commitDir = Directory(
-      join(
-        b.branchDirectoryPath,
-        branchCommitFolder,
-        sha,
-      ),
-    );
-    commitDir.createSync(recursive: true);
 
     StagingData? data = stagingData;
     if (data == null) {
@@ -51,16 +41,19 @@ extension StagingActions on Staging {
     }
 
     List<File> filesToBeStaged = data.filesToBeStaged.map((e) => File(e)).toList();
-
-    //Move files to be staged
-    copyFiles(
-      files: filesToBeStaged,
-      sourceDir: r.repositoryDirectory.parent,
-      destinationDir: commitDir,
-    );
+    Map<String, RepoObjectsData> repoObjects = {
+      for(var o in filesToBeStaged.map((e) => RepoObjects.createFromFile(r, e).store())) o.sha : o
+    };
 
     //Save Commit
-    Commit commit = Commit(sha, branch, message, DateTime.now());
+    DateTime commitedAt = DateTime.now();
+    Sha1 sha1 = createBranchSha(
+      branchName: branch.branchName,
+      message: message,
+      noOfObjects: repoObjects.length,
+      commitedAt: commitedAt,
+    );
+    Commit commit = Commit(sha1, branch, message, repoObjects, commitedAt);
     b.addCommit(commit: commit);
 
     //Delete staging
@@ -70,9 +63,9 @@ extension StagingActions on Staging {
     State state = State(repository);
     StateData? stateData = state.stateInfo;
     if (stateData == null) {
-      stateData = StateData(currentBranch: branch.branchName, currentCommit: commit.sha);
+      stateData = StateData(currentBranch: branch.branchName, currentCommit: commit.sha.hash);
     } else {
-      stateData = stateData.copyWith(currentCommit: commit.sha);
+      stateData = stateData.copyWith(currentCommit: commit.sha.hash);
     }
 
     await state.saveStateData(stateData: stateData);
@@ -97,8 +90,8 @@ extension StagingActions on Staging {
       );
 
       //List files for staging
-      String repositoryParent = repository.repositoryDirectory.parent.path;
-      List<FileSystemEntity> filesToBeStaged = repository.repositoryDirectory.parent
+      String repositoryParent = repository.workingDirectory.path;
+      List<FileSystemEntity> filesToBeStaged = repository.workingDirectory
           .listSync(recursive: true, followLinks: false)
 
           //Files only

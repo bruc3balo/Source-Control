@@ -2,20 +2,34 @@ import 'dart:io';
 
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/diff/diff.dart';
+import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
 ///Snapshot of a working directory
+
+class Sha1 {
+  final String hash;
+
+  Sha1(this.hash) : assert(hash.length == 40);
+
+  String get sub => hash.substring(0, 2);
+
+  String get short => hash.substring(0, 6);
+}
+
 class Commit {
   final Branch branch;
-  final String sha;
+  final Sha1 sha;
   final String message;
+  final Map<String, RepoObjectsData> objects;
   final DateTime commitedAt;
 
   Commit(
     this.sha,
     this.branch,
     this.message,
+    this.objects,
     this.commitedAt,
   );
 }
@@ -27,7 +41,7 @@ extension CommitActions on Commit {
   }) {
     Branch commitBranch = branch;
 
-    BranchMetaData? branchCommitMetaData = commitBranch.branchMetaData;
+    BranchTreeMetaData? branchCommitMetaData = commitBranch.branchTreeMetaData;
     if (branchCommitMetaData == null) {
       onNoCommitBranchMetaData?.call();
       return null;
@@ -42,15 +56,11 @@ extension CommitActions on Commit {
     String commitDirPath = join(
       commitBranch.branchDirectoryPath,
       branchCommitFolder,
-      sha,
+      sha.hash,
     );
     Directory commitDir = Directory(commitDirPath);
 
-    return commitDir
-        .listSync(recursive: true)
-        .where((e) => e.statSync().type == FileSystemEntityType.file)
-        .map((e) => File(e.path))
-        .toList();
+    return commitDir.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).map((e) => File(e.path)).toList();
   }
 
   Future<void> compareCommitDiff({

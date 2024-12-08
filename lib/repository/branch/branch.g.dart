@@ -26,6 +26,10 @@ _$CommitMetaDataImpl _$$CommitMetaDataImplFromJson(Map<String, dynamic> json) =>
     _$CommitMetaDataImpl(
       sha: json['sha'] as String,
       message: json['message'] as String,
+      commitedObjects: (json['commitedObjects'] as Map<String, dynamic>).map(
+        (k, e) =>
+            MapEntry(k, RepoObjectsData.fromJson(e as Map<String, dynamic>)),
+      ),
       commitedAt: DateTime.parse(json['commitedAt'] as String),
     );
 
@@ -34,5 +38,6 @@ Map<String, dynamic> _$$CommitMetaDataImplToJson(
     <String, dynamic>{
       'sha': instance.sha,
       'message': instance.message,
+      'commitedObjects': instance.commitedObjects,
       'commitedAt': instance.commitedAt.toIso8601String(),
     };
