@@ -16,3 +16,6 @@
 - Command line parsing upgrade using args package
 - Store objects only when changed
 - Add / Remove a remote
+- Push command
+- Pull command
+- Clone command
