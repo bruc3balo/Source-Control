@@ -1,4 +1,3 @@
-
 ///Representation of what a user inputs
 abstract class UserInput {
   List<String> get originalUserInput;
@@ -8,8 +7,10 @@ abstract class UserInput {
 
 ///Implementation of [UserInput] from the command line
 class CliUserInput extends UserInput {
+
+  ///This list should not be modified
   @override
   final List<String> originalUserInput;
 
-  CliUserInput(this.originalUserInput);
+  CliUserInput(List<String> originalUserInput) : originalUserInput = List.unmodifiable(originalUserInput);
 }

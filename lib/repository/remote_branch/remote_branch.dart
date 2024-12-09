@@ -23,6 +23,7 @@ extension RemoteBranchCommon on RemoteBranch {
 
   Future<void> pull({
     required Repository localRepository,
+    Function()? onNoChanges,
     Function()? onNoStateData,
     Function()? onNoRemoteData,
     Function()? onSuccessfulPull,
@@ -32,10 +33,10 @@ extension RemoteBranchCommon on RemoteBranch {
       onNoRemoteData?.call();
       return;
     }
+
     List<CommitMetaData> remoteCommits = remoteTreeData.commits.values.toList();
 
     State state = localRepository.state;
-
     StateData? stateData = state.stateInfo;
     if (stateData == null) {
       onNoStateData?.call();
@@ -45,6 +46,10 @@ extension RemoteBranchCommon on RemoteBranch {
     Branch localBranch = Branch(branch.branchName, localRepository);
     BranchTreeMetaData? localTreeMetaData = localBranch.branchTreeMetaData;
     CommitMetaData? localLatestCommit = localTreeMetaData?.latestBranchCommits;
+    if(remoteTreeData.latestBranchCommits == localLatestCommit) {
+      onNoChanges?.call();
+      return;
+    }
 
     //Get commits needed to pull
     List<CommitMetaData> commitsToPull = [];
@@ -188,7 +193,7 @@ extension RemoteBranchCommon on RemoteBranch {
       onNoCommits?.call();
       return;
     }
-    List<CommitMetaData> localCommits = localBranchTree.sortedBranchCommits;
+    List<CommitMetaData> localCommits = localBranchTree.sortedBranchCommitsFromLatest;
 
     //Compare latest commit on both ends
     Repository remoteRepository = Repository(remote.url);

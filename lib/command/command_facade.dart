@@ -4,6 +4,7 @@ import 'package:balo/command/command.dart';
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
+import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/remote_branch/remote_branch.dart';
 import 'package:balo/repository/repository.dart';
@@ -13,10 +14,12 @@ import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:path/path.dart';
 
+///Basic aggregation of commands abstracted to run user known [UndoableCommand]s
 abstract class CommandFacade {
   List<UndoableCommand> initialize();
 }
 
+///[CommandFacade] to show an error to a user
 class ErrorInitializer implements CommandFacade {
   final String error;
 
@@ -26,6 +29,7 @@ class ErrorInitializer implements CommandFacade {
   List<UndoableCommand> initialize() => [ShowErrorCommand(error)];
 }
 
+///[CommandFacade] to show help for a [CliCommandsEnum] to a user
 class HelpInitializer implements CommandFacade {
   final CliCommandsEnum? command;
 
@@ -35,6 +39,8 @@ class HelpInitializer implements CommandFacade {
   List<UndoableCommand> initialize() => [ShowHelpCommand(command: command)];
 }
 
+///[CommandFacade] to show create a [Repository] and all that is needed
+///e.g. [Ignore] file, default [Branch] and a [State] for the [Repository]
 class RepositoryInitializer implements CommandFacade {
   final String? path;
 
@@ -62,6 +68,7 @@ class RepositoryInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to create a [Staging] in preparation for a [Commit]
 class StageFilesInitializer implements CommandFacade {
   final String pattern;
 
@@ -94,6 +101,7 @@ class StageFilesInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to add or remove an entry from the [Ignore] file in a [Repository]
 class ModifyIgnoreFileInitializer implements CommandFacade {
   final String? patternToAdd;
   final String? patternToRemove;
@@ -129,6 +137,7 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to list all [Branch]es in a local [Repository]
 class ListBranchesInitializer implements CommandFacade {
   @override
   List<UndoableCommand> initialize() {
@@ -138,6 +147,7 @@ class ListBranchesInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to display the current status of the current [Branch] in a [State] file
 class PrintStatusOfCurrentBranchInitializer implements CommandFacade {
   @override
   List<UndoableCommand> initialize() {
@@ -147,6 +157,7 @@ class PrintStatusOfCurrentBranchInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to [Commit] files in [Staging] of a branch
 class CommitStagedFilesInitializer implements CommandFacade {
   final String message;
 
@@ -160,6 +171,7 @@ class CommitStagedFilesInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to get [Commit] history of a [Branch]
 class GetCommitHistoryInitializer implements CommandFacade {
   final String? branchName;
 
@@ -201,6 +213,8 @@ class GetCommitHistoryInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to checkout of a [Branch] to a new one or a specific [Commit]
+///This will also change files in the working directory
 class CheckoutToBranchInitializer implements CommandFacade {
   final String branchName;
   final String? commitSha;
@@ -221,6 +235,7 @@ class CheckoutToBranchInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to show differences between 2 [Commit]s in the same or different [Branch]es
 class ShowDiffBetweenCommitsInitializer implements CommandFacade {
   final String? thisBranchName;
   final String? thisCommitSha;
@@ -256,7 +271,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
     }
 
     CommitMetaData? thisCommitMetaData =
-        thisCommitSha == null ? thisBranchMetaData.sortedBranchCommits.firstOrNull : thisBranchMetaData.commits[thisCommitSha];
+        thisCommitSha == null ? thisBranchMetaData.sortedBranchCommitsFromLatest.firstOrNull : thisBranchMetaData.commits[thisCommitSha];
     if (thisCommitMetaData == null) {
       debugPrintToConsole(message: "commitAMetaData == null");
       return [ShowErrorCommand("Commit $thisCommitSha has no meta data")];
@@ -271,7 +286,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
     }
 
     CommitMetaData? otherCommitMetaData =
-        otherCommitSha == null ? otherBranchMetaData.sortedBranchCommits.firstOrNull : otherBranchMetaData.commits[otherCommitSha];
+        otherCommitSha == null ? otherBranchMetaData.sortedBranchCommitsFromLatest.firstOrNull : otherBranchMetaData.commits[otherCommitSha];
     if (otherCommitMetaData == null) {
       debugPrintToConsole(message: "commitBMetaData == null");
       return [ShowErrorCommand("Commit $otherCommitSha has no meta data")];
@@ -297,6 +312,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to merge a [Branch] from one [Commit] from a local [Repository] to the current working directory in a local [Repository]
 class MergeBranchInitializer implements CommandFacade {
   final String otherBranchName;
 
@@ -328,6 +344,7 @@ class MergeBranchInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to add a [Remote] to a local [Repository]
 class AddRemoteInitializer implements CommandFacade {
   final String name;
   final String url;
@@ -344,6 +361,7 @@ class AddRemoteInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to remove a [Remote] from a local [Repository]
 class RemoveRemoteInitializer implements CommandFacade {
   final String name;
 
@@ -359,6 +377,7 @@ class RemoveRemoteInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to list all [Remote]s in a local [Repository]
 class ListAllRemoteInitializer implements CommandFacade {
   ListAllRemoteInitializer();
 
@@ -371,6 +390,7 @@ class ListAllRemoteInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to clone a [RemoteBranch]s from a remote [Repository] into a local [Repository]
 class CloneRepositoryInitializer implements CommandFacade {
   final String path;
   final String branchName;
@@ -390,6 +410,7 @@ class CloneRepositoryInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to update changes from a [RemoteBranch]s [Commit]s into a local [Branch] into a [Repository]
 class PullRepositoryInitializer implements CommandFacade {
   final String remoteName;
   final String? branchName;
@@ -435,7 +456,7 @@ class PullRepositoryInitializer implements CommandFacade {
   }
 }
 
-
+///[CommandFacade] to update changes from a local [Branch]s [Commit]s into a [RemoteBranch] in a remote [Repository]
 class PushRepositoryInitializer implements CommandFacade {
   final String remoteName;
   final String? branchName;

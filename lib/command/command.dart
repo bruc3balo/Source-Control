@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:balo/command/command_facade.dart';
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/repository/branch/branch.dart';
@@ -18,13 +19,14 @@ import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 import 'package:dart_console/dart_console.dart';
 
+/// Basic executable command by a [CommandFacade]
 abstract class UndoableCommand {
   Future<void> execute();
 
   Future<void> undo();
 }
 
-///Command to show help
+/// [UndoableCommand] to show usage of commands in [CliCommandsEnum] and their options [CliCommandOptionsEnum]
 class ShowHelpCommand extends UndoableCommand {
   final CliCommandsEnum? command;
 
@@ -39,7 +41,7 @@ class ShowHelpCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-///Command to show help
+/// [UndoableCommand] to show an error to the
 class ShowErrorCommand extends UndoableCommand {
   final String error;
 
@@ -60,7 +62,7 @@ class ShowErrorCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-///Command to initialize a repository
+/// [UndoableCommand] to create a new [Repository] in a [Directory]
 class InitializeRepositoryCommand extends UndoableCommand {
   final Repository repository;
 
@@ -98,7 +100,7 @@ class InitializeRepositoryCommand extends UndoableCommand {
   }
 }
 
-///Command to create state file
+/// [UndoableCommand] to create a new [State] file in a local [Repository]
 class CreateStateFileCommand extends UndoableCommand {
   final Repository repository;
   final Branch currentBranch;
@@ -145,7 +147,7 @@ class CreateStateFileCommand extends UndoableCommand {
   }
 }
 
-///Command to create an ignore file
+/// [UndoableCommand] to create a new [Ignore] file in a local [Repository]
 class CreateIgnoreFileCommand extends UndoableCommand {
   final Repository repository;
 
@@ -190,7 +192,7 @@ class CreateIgnoreFileCommand extends UndoableCommand {
   }
 }
 
-///Command to create a branch
+/// [UndoableCommand] to create a new [Branch] in a local [Repository]
 class CreateNewBranchCommand extends UndoableCommand {
   final Repository repository;
   final Branch branch;
@@ -247,7 +249,7 @@ class CreateNewBranchCommand extends UndoableCommand {
   }
 }
 
-///Command to stage files
+/// [UndoableCommand] to add [File]'s to [Staging] ready to be commited
 class StageFilesCommand extends UndoableCommand {
   final Staging staging;
   final String pattern;
@@ -287,7 +289,7 @@ class StageFilesCommand extends UndoableCommand {
   }
 }
 
-///Command to add ignore pattern
+/// [UndoableCommand] to add a pattern from [Ignore] file
 class AddIgnorePatternCommand extends UndoableCommand {
   final Repository repository;
   final String pattern;
@@ -315,7 +317,7 @@ class AddIgnorePatternCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-///Command to remove ignore pattern
+/// [UndoableCommand] to remove a pattern from [Ignore] file
 class RemoveIgnorePatternCommand extends UndoableCommand {
   final Repository repository;
   final String pattern;
@@ -339,7 +341,7 @@ class RemoveIgnorePatternCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-///Command to print the current [Branch]
+/// [UndoableCommand] to list the current [Branch]es in the [Repository]
 class ListBranchesCommand extends UndoableCommand {
   final Repository repository;
 
@@ -374,7 +376,7 @@ class ListBranchesCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-///Command to get status of current [Branch]
+/// [UndoableCommand] to get the current status of a [Branch] returns staged and unstaged files
 class GetStatusOfCurrentBranch extends UndoableCommand {
   final Repository repository;
 
@@ -429,7 +431,7 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-///Command to commit staged files
+/// [UndoableCommand] to [Commit] all files at [Staging]
 class CommitStagedFilesCommand extends UndoableCommand {
   final Repository repository;
   final String message;
@@ -488,7 +490,7 @@ class CommitStagedFilesCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-///Command to get branch commits
+/// [UndoableCommand] to get all [Commit]s in a [Branch]
 class GetBranchCommitHistoryCommand extends UndoableCommand {
   final Repository repository;
   final String branchName;
@@ -526,7 +528,7 @@ class GetBranchCommitHistoryCommand extends UndoableCommand {
   }
 }
 
-///Command to checkout to branch
+/// [UndoableCommand] to switch to a new or existing [Branch] from [State]
 class CheckoutToBranchCommand extends UndoableCommand {
   final Repository repository;
   final Branch branch;
@@ -553,7 +555,7 @@ class CheckoutToBranchCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-///Command to diff between 2 commits
+/// [UndoableCommand] to show differences between a [Commit] in a [Branch] with another [Commit] in another [Branch]
 class ShowCommitDiffCommand extends UndoableCommand {
   final Repository repository;
   final Commit thisCommit;
@@ -587,7 +589,7 @@ class ShowCommitDiffCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-///Command to merge a branch with a working dir
+/// [UndoableCommand] to merge a local repository [Branch] with a [Commit] to a working directory [Branch]
 class MergeBranchCommand extends UndoableCommand {
   final Repository repository;
   final Branch thisBranch;
@@ -597,7 +599,8 @@ class MergeBranchCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await thisBranch.mergeFromOtherBranchIntoThis(
+    //TODO: FIx merge branch command
+    /*await thisBranch.mergeFromOtherBranchIntoThis(
       otherBranch: otherBranch,
       onSameBranchMerge: () => debugPrintToConsole(
         message: "Cannot merge from the same branch",
@@ -617,13 +620,14 @@ class MergeBranchCommand extends UndoableCommand {
       onNoCommitBranchMetaData: () => debugPrintToConsole(
         message: "No commit branch meta data",
       ),
-    );
+    );*/
   }
 
   @override
   Future<void> undo() async {}
 }
 
+/// [UndoableCommand] to add a remote [Remote] to a local [Repository]
 class AddRemoteCommand extends UndoableCommand {
   final Repository repository;
   late Remote remote;
@@ -641,6 +645,7 @@ class AddRemoteCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
+/// [UndoableCommand] to remove a remote [Remote] from a local [Repository]
 class RemoveRemoteCommand extends UndoableCommand {
   final Repository repository;
   late Remote remote;
@@ -658,7 +663,7 @@ class RemoveRemoteCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
-/// ListRemoteCommand
+/// [UndoableCommand] to list all [Remote]'s in local [Repository]
 class ListRemoteCommand extends UndoableCommand {
   final Repository repository;
 
@@ -689,6 +694,7 @@ class ListRemoteCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
+///[UndoableCommand] to clone a [Repository] from a [RemoteBranch] to the local [Repository]
 class CloneBranchCommitCommand extends UndoableCommand {
   final Repository localRepository;
   final RemoteBranch remoteBranch;
@@ -706,6 +712,7 @@ class CloneBranchCommitCommand extends UndoableCommand {
   }
 }
 
+///[UndoableCommand] to push latest changes from a [Branch] to a [RemoteBranch]
 class PushBranchCommitCommand extends UndoableCommand {
   final Repository localRepository;
   final RemoteBranch remoteBranch;
@@ -726,6 +733,7 @@ class PushBranchCommitCommand extends UndoableCommand {
   Future<void> undo() async {}
 }
 
+///[UndoableCommand] to pull changes from the [RemoteBranch]
 class PullBranchCommitCommand extends UndoableCommand {
   final Repository localRepository;
   final RemoteBranch remoteBranch;
@@ -734,9 +742,28 @@ class PullBranchCommitCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await remoteBranch.pull(localRepository: localRepository, onSuccessfulPull: () => debugPrintToConsole(message: "Pulled success"));
+    await remoteBranch.pull(
+      localRepository: localRepository,
+      onNoRemoteData: () => debugPrintToConsole(
+        message: "No data to pull on remote branch",
+        newLine: true,
+      ),
+      onNoStateData: () => debugPrintToConsole(
+        message: "Missing state data",
+        newLine: true,
+      ),
+      onSuccessfulPull: () => debugPrintToConsole(
+        message: "Pulled success",
+        newLine: true,
+      ),
+      onNoChanges: () => debugPrintToConsole(
+        message: "No changes to pull",
+        newLine: true,
+      ),
+    );
   }
 
   @override
   Future<void> undo() async {}
+
 }

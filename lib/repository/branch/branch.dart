@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
 
@@ -20,7 +21,7 @@ part 'branch.freezed.dart';
 
 part 'branch.g.dart';
 
-///Named reference to a commit
+///Named reference to a [Commit]
 class Branch {
   final Repository repository;
   final String branchName;
@@ -28,9 +29,11 @@ class Branch {
   Branch(this.branchName, this.repository);
 }
 
+///State of a file status
 enum BranchFileStatus { staged, unstaged }
 
 extension BranchStatus on Branch {
+  ///List stages and unstaged files in a working directory on a local [Repository]
   Map<BranchFileStatus, HashSet<String>> getBranchStatus() {
     final Map<BranchFileStatus, HashSet<String>> fileStatus = {};
 
@@ -52,6 +55,8 @@ extension BranchStatus on Branch {
 }
 
 extension BranchCreation on Branch {
+
+  ///Create a new [Branch] on a local [Repository]
   Future<void> createBranch({
     bool Function(String name)? isValidBranchName,
     Function(String name)? onInvalidBranchName,
@@ -90,6 +95,8 @@ extension BranchCreation on Branch {
     }
   }
 
+  ///Checkout to new [Branch] on a local [Repository]
+  ///If the [Branch] doesn't exist, it will create a new [Branch] and copy the [File]s from the exising branch to the current one
   Future<void> checkoutToBranch({
     String? commitSha,
     Function()? onNoCommitFound,
@@ -157,7 +164,7 @@ extension BranchCreation on Branch {
 
       //Move files from latest commit to current working dir
       if (commitMetaData != null) {
-        copyFilesToWorkingDir(
+        _copyFilesToWorkingDir(
           objects: commitMetaData.commitedObjects.values.toList(),
           workingDir: repository.workingDirectory,
         );
@@ -182,7 +189,9 @@ extension BranchCreation on Branch {
     }
   }
 
-  void copyFilesToWorkingDir({
+  
+  
+  void _copyFilesToWorkingDir({
     required List<RepoObjectsData> objects,
     required Directory workingDir,
   }) {
@@ -204,6 +213,8 @@ extension BranchCreation on Branch {
     }
   }
 
+  ///Delete a [Branch] from a local [Repository] 
+  ///It doesn't delete the [RepoObjects]
   Future<void> deleteBranch({
     Function()? onBranchDoesntExist,
     Function()? onBranchDeleted,
@@ -230,20 +241,30 @@ extension BranchCreation on Branch {
 }
 
 extension BranchCommons on Branch {
+  
+  ///Path of the branch with the [branchName] in a [Repository]
   String get branchDirectoryPath => join(repository.repositoryDirectory.path, branchFolderName, branchName);
 
+  ///[Directory] of the [branchDirectoryPath]
   Directory get branchDirectory => Directory(branchDirectoryPath);
 
+  ///[Staging] file in a [Branch]
   Staging get staging => Staging(this);
 }
 
 extension BranchTreeMetaDataStorage on Branch {
-  String get managerPath => join(branchDirectoryPath, branchTreeMetaDataFileName);
+  
+  ///Path to [BranchTreeMetaData] file in a [Branch]
+  String get branchTreeFilePath => join(branchDirectoryPath, branchTreeMetaDataFileName);
 
-  File get managerFile => File(managerPath);
+  ///Actual [File] of the [BranchTreeMetaData] of a [Branch]
+  File get managerFile => File(branchTreeFilePath);
 
+  /// Check if [managerFile] exists
   bool get branchTreeMetaDataExists => managerFile.existsSync();
 
+  /// Returns a [BranchTreeMetaData] for the current [Branch]
+  /// If the file is not found it returns null
   BranchTreeMetaData? get branchTreeMetaData {
     if (!branchTreeMetaDataExists) return null;
 
@@ -254,6 +275,8 @@ extension BranchTreeMetaDataStorage on Branch {
     return BranchTreeMetaData.fromJson(json);
   }
 
+  /// Creates a [BranchTreeMetaData] only if it doesn't exist
+  /// If it exists it will call [onDuplicateFile] and when created 
   Future<void> createTreeMetaDataFile({
     Function()? onDuplicateFile,
     Function()? onCreateFile,
@@ -274,6 +297,7 @@ extension BranchTreeMetaDataStorage on Branch {
     onCreateFile?.call();
   }
 
+  ///Update a [managerFile] with the latest [metaData]
   void saveBranchTreeMetaData(BranchTreeMetaData metaData) {
     if (!branchTreeMetaDataExists) createTreeMetaDataFile();
 
@@ -285,6 +309,8 @@ extension BranchTreeMetaDataStorage on Branch {
 }
 
 extension BranchManager on Branch {
+  
+  ///Adds a [commit] to a [managerFile] and performs
   Future<void> addCommit({
     required Commit commit,
     Function()? onMissingManager,
@@ -319,231 +345,7 @@ extension BranchManager on Branch {
   }
 }
 
-extension BranchMerge on Branch {
-  Future<void> mergeFromOtherBranchIntoThis({
-    required Branch otherBranch,
-    Function()? onSameBranchMerge,
-    Function()? onRepositoryNotInitialized,
-    Function()? onNoOtherBranchMetaData,
-    Function()? onNoCommit,
-    Function()? onNoCommitBranchMetaData,
-    Function()? onNoCommitMetaData,
-  }) async {
-    //Ensure merging from repository
-    if (!repository.isInitialized) {
-      onRepositoryNotInitialized?.call();
-      return;
-    }
 
-    if (otherBranch == this) {
-      onSameBranchMerge?.call();
-      return;
-    }
-
-    //Get all files from otherBranch latest commit
-    BranchTreeMetaData? otherBranchData = otherBranch.branchTreeMetaData;
-    if (otherBranchData == null) {
-      onNoOtherBranchMetaData?.call();
-      return;
-    }
-
-    CommitMetaData? commitMetaData = otherBranchData.sortedBranchCommits.firstOrNull;
-
-    if (commitMetaData == null) {
-      onNoCommit?.call();
-      return;
-    }
-    Commit otherCommit = Commit(
-      Sha1(commitMetaData.sha),
-      otherBranch,
-      commitMetaData.message,
-      {},
-      commitMetaData.commitedAt,
-    );
-    List<File> otherCommitFiles = otherCommit.getCommitFiles(
-          onNoCommitMetaData: onNoCommitMetaData,
-          onNoCommitBranchMetaData: onNoCommitBranchMetaData,
-        ) ??
-        [];
-
-    //Get all files from this current working branch
-    Directory workingBranchDir = repository.workingDirectory;
-    List<File> workingBranchFiles =
-        workingBranchDir.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).map((e) => File(e.path)).toList();
-
-    //Get other branch files map
-    String otherBranchPrefix = join(
-      otherBranch.branchDirectoryPath,
-      branchCommitFolder,
-      otherCommit.sha.hash,
-    );
-    Map<String, File> otherBranchFilesMap = {for (var f in otherCommitFiles) f.path.replaceAll(otherBranchPrefix, ""): f};
-
-    //Get this branch files map
-    String workingBranchPrefix = workingBranchDir.path;
-    Map<String, File> workingBranchFilesMap = {for (var f in workingBranchFiles) f.path.replaceAll(workingBranchPrefix, ""): f};
-
-    HashSet<String> filePaths = HashSet.of(otherBranchFilesMap.keys);
-
-    List<File> mergeResult = await _doMerge(
-      filePaths: filePaths,
-      workingBranchFilesMap: workingBranchFilesMap,
-      otherBranchFilesMap: otherBranchFilesMap,
-    );
-
-    await _addMergedFilesToWorkingDir(
-      otherBranchPath: otherBranchPrefix,
-      workingDirPath: workingBranchPrefix,
-      mergeResult: mergeResult,
-    );
-  }
-
-  Future<void> _addMergedFilesToWorkingDir({
-    required String otherBranchPath,
-    required String workingDirPath,
-    required List<File> mergeResult,
-  }) async {
-    debugPrintToConsole(
-      message: "Merging ${mergeResult.length} files to $workingDirPath",
-    );
-
-    for (File file in mergeResult) {
-      String path = file.path;
-      String prefixPath = path.startsWith(otherBranchPath) ? otherBranchPath : workingDirPath;
-      String newPath = file.path.replaceAll(prefixPath, workingDirPath);
-      file.copySync(newPath);
-
-      debugPrintToConsole(
-        message: "Copying to ${basename(newPath)} to $newPath",
-      );
-    }
-
-    debugPrintToConsole(
-      message: "Done merging ${mergeResult.length} files to $workingDirPath",
-    );
-  }
-
-  Future<List<File>> _doMerge({
-    required HashSet<String> filePaths,
-    required Map<String, File> workingBranchFilesMap,
-    required Map<String, File> otherBranchFilesMap,
-  }) async {
-    debugPrintToConsole(
-      message: "Starting file comparison for ${filePaths.length} files",
-    );
-
-    List<File> mergeResult = [];
-
-    //Compare file by file
-    for (String key in filePaths) {
-      bool conflict = false;
-      // same -> Pick other
-      // insert -> Fast Forward
-      // delete -> pick mine
-      // modify -> conflict [theirs] [mine]
-      File? otherFile = otherBranchFilesMap[key];
-      File? thisFile = workingBranchFilesMap[key];
-
-      if (otherFile == null) {
-        //Keep this
-        mergeResult.add(thisFile!);
-        debugPrintToConsole(
-          message: "Auto merging for ${basename(thisFile.path)}",
-          color: CliColor.defaultColor,
-        );
-        continue;
-      } else if (thisFile == null) {
-        //Keep other
-        mergeResult.add(otherFile);
-        debugPrintToConsole(
-          message: "Auto merging for ${basename(otherFile.path)}",
-          color: CliColor.defaultColor,
-        );
-        continue;
-      } else {
-        //Compare line by line and write to file
-        List<String> linesToWrite = [];
-
-        List<String> otherLines = otherFile.readAsLinesSync();
-        int otherLength = otherLines.length;
-
-        List<String> thisLines = thisFile.readAsLinesSync();
-        int thisLength = thisLines.length;
-
-        int maxLines = max(otherLength, thisLength);
-        debugPrintToConsole(
-          message: "Checking $maxLines lines for $key",
-        );
-
-        lineLoop:
-        for (int line = 0; line < maxLines; line++) {
-          if (line > otherLength - 1) {
-            //out of bounds
-            //keep this line
-            linesToWrite.add(thisLines[line]);
-          } else if (line > thisLength - 1) {
-            //out of bounds
-            //keep other line
-            linesToWrite.add(otherLines[line]);
-          } else {
-            //Compare lines
-
-            String otherLine = otherLines[line];
-            String thisLine = thisLines[line];
-
-            //int diffScore = await levenshteinDistance(otherLine, thisLine);
-            int diffScore = otherLine.length.compareTo(thisLine.length);
-            debugPrintToConsole(
-              message: "Lines $line compares $diffScore",
-            );
-
-            if (diffScore == 0) {
-              //add either
-              linesToWrite.add(otherLine);
-              continue lineLoop;
-            }
-
-            //Merge conflict detected
-            conflict = true;
-
-            //include both
-            linesToWrite.add("$otherLine >> @@other@@");
-            linesToWrite.add("$thisLine >> @@this@@");
-          }
-        }
-
-        //Modify this file to show conflicts
-        if (conflict) {
-          thisFile.writeAsStringSync(
-            linesToWrite.join("\n"),
-            mode: FileMode.write,
-            flush: true,
-          );
-
-          debugPrintToConsole(
-            message: "CONFLICT for ${basename(thisFile.path)}",
-            color: CliColor.brightRed,
-            style: CliStyle.bold,
-          );
-        } else {
-          debugPrintToConsole(
-            message: "Auto merging for ${basename(otherFile.path)}",
-            color: CliColor.brightRed,
-            style: CliStyle.bold,
-          );
-        }
-
-        mergeResult.add(thisFile);
-      }
-    }
-
-    debugPrintToConsole(
-      message: "Completed file comparison for ${mergeResult.length} files",
-    );
-
-    return mergeResult;
-  }
-}
 
 ///BranchTreeMetaData
 @freezed
@@ -557,12 +359,12 @@ class BranchTreeMetaData with _$BranchTreeMetaData {
 }
 
 extension BranchMetaDataX on BranchTreeMetaData {
-  List<CommitMetaData> get sortedBranchCommits => commits.values.toList()
+  List<CommitMetaData> get sortedBranchCommitsFromLatest => commits.values.toList()
     ..sort(
       (a, b) => -a.commitedAt.compareTo(b.commitedAt),
     );
 
-  CommitMetaData? get latestBranchCommits => sortedBranchCommits.firstOrNull;
+  CommitMetaData? get latestBranchCommits => sortedBranchCommitsFromLatest.firstOrNull;
 }
 
 ///CommitMetaData

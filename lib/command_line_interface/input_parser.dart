@@ -34,8 +34,11 @@ class ParsedCommands {
 
 ///A Basic definition of what a command parser would do
 abstract class CommandParser {
+
+  ///Transform [UserInput] into [ParsedCommands]
   ParsedCommands parseUserInput(UserInput userInput);
 
+  ///Display the use of one [CliCommandsEnum]
   void printHelp({CliCommandsEnum? command});
 }
 

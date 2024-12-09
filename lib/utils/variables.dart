@@ -11,6 +11,7 @@ const branchTreeMetaDataFileName = "tree.json";
 const objectsStore = "objects";
 const remoteFileName = "remotes.json";
 const defaultRemote = "origin";
+const branchMergeFileName = "merge.json";
 
 const stagedAtKey = "staged_at";
 const filePathsKey = "file_paths";

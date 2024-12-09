@@ -222,8 +222,8 @@ abstract class UndoableCommandExecutor {
     }
   }
 
-  ///Runs a list of contiguous [UndoableCommand] and return an exit code
-  ///If one command throws an [Exception] they will all be undone
+  ///Runs a list of contiguous [UndoableCommand] and return an [exit] code
+  ///If one command throws an [Exception] they will all be undone by calling the undo [Function] in [UndoableCommand]
   FutureOr<int> runCommand(List<UndoableCommand> commands) async {
     debugPrintToConsole(message: "Executing ${commands.length} commands");
 
