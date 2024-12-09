@@ -14,11 +14,11 @@ class Repository {
 }
 
 extension RepositoryActions on Repository {
-  Future<void> unInitializeRepository({
+  void unInitializeRepository({
     Function()? onRepositoryNotInitialized,
     Function()? onSuccessfullyUninitialized,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       //idempotent
       if (!isInitialized) {
@@ -33,11 +33,11 @@ extension RepositoryActions on Repository {
     }
   }
 
-  Future<void> initializeRepository({
+  void initializeRepository({
     Function()? onAlreadyInitialized,
     Function()? onSuccessfullyInitialized,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       //idempotent
       if (isInitialized) {

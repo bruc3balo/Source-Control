@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/ignore.dart';
+import 'package:balo/repository/merge/merge.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/state/state.dart';
@@ -27,12 +28,12 @@ class Staging {
 }
 
 extension StagingActions on Staging {
-  Future<void> commitStagedFiles({
+  void commitStagedFiles({
     required String message,
     Function()? onNoStagingData,
-  }) async {
-    Repository r = repository;
-    Branch b = branch;
+  }) {
+    Repository localRepository = repository;
+    Branch commitingBranch = branch;
 
     StagingData? data = stagingData;
     if (data == null) {
@@ -42,8 +43,28 @@ extension StagingActions on Staging {
 
     List<File> filesToBeStaged = data.filesToBeStaged.map((e) => File(e)).toList();
     Map<String, RepoObjectsData> repoObjects = {
-      for(var o in filesToBeStaged.map((e) => RepoObjects.createFromFile(r, e).store())) o.sha : o
+      for (var o in filesToBeStaged.map((e) => RepoObjects.createFromFile(localRepository, e).store())) o.sha: o,
     };
+
+    //If has pending merge, add previous commits
+    Merge merge = Merge(repository, branch);
+    if (merge.hasPendingMerge) {
+      MergeCommitMetaData mergeData = merge.pendingMergeCommitMetaData!;
+      for (CommitTreeMetaData commit in mergeData.commitsToMerge.values) {
+        Branch fromBranch = Branch(commit.originalBranch, repository);
+        commitingBranch.addCommit(
+          commit: Commit(
+            Sha1(commit.sha),
+            branch,
+            message,
+            repoObjects,
+            fromBranch,
+            commit.commitedAt,
+          ),
+        );
+      }
+      merge.deleteCommitMergeData();
+    }
 
     //Save Commit
     DateTime commitedAt = DateTime.now();
@@ -53,8 +74,8 @@ extension StagingActions on Staging {
       noOfObjects: repoObjects.length,
       commitedAt: commitedAt,
     );
-    Commit commit = Commit(sha1, branch, message, repoObjects, commitedAt);
-    b.addCommit(commit: commit);
+    Commit commit = Commit(sha1, branch, message, repoObjects, branch, commitedAt);
+    commitingBranch.addCommit(commit: commit);
 
     //Delete staging
     deleteStagingData();
@@ -68,14 +89,14 @@ extension StagingActions on Staging {
       stateData = stateData.copyWith(currentCommit: commit.sha.hash);
     }
 
-    await state.saveStateData(stateData: stateData);
+    state.saveStateData(stateData: stateData);
   }
 
-  Future<void> stageFiles({
+  void stageFiles({
     required String pattern,
     Function()? onUninitializedRepository,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       if (!repository.isInitialized) {
         onUninitializedRepository?.call();
@@ -98,10 +119,10 @@ extension StagingActions on Staging {
           .where((f) => FileSystemEntityType.file == f.statSync().type)
 
           //To add
-          .where((f) => shouldAddPath(f.path.replaceAll(repositoryParent, ""), pattern: pattern))
+          .where((f) => shouldAddPath(relativePathFromDir(path: f.path, directoryPath: repositoryParent), pattern: pattern))
 
           //Ignore
-          .where((f) => !shouldIgnorePath(f.path.replaceAll(repositoryParent, ""), patternsToIgnore))
+          .where((f) => !shouldIgnorePath(relativePathFromDir(path: f.path, directoryPath: repositoryParent), patternsToIgnore))
           .toList();
 
       //Clear previous staging
@@ -123,11 +144,11 @@ extension StagingActions on Staging {
     }
   }
 
-  Future<void> unstageFiles({
+  void unstageFiles({
     Function()? onUninitializedRepository,
     Function()? onStagingFileDoesntExist,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       if (!repository.isInitialized) {
         onUninitializedRepository?.call();
@@ -163,8 +184,13 @@ extension StagingStorage on Staging {
     return StagingData.fromJson(info);
   }
 
-  void saveStagingData(StagingData data) {
-    stagingFile.writeAsStringSync(jsonEncode(data), flush: true);
+  StagingData saveStagingData(StagingData data) {
+    stagingFile.writeAsStringSync(
+      jsonEncode(data),
+      flush: true,
+      mode: FileMode.writeOnly,
+    );
+    return data;
   }
 
   void deleteStagingData() {
@@ -179,7 +205,6 @@ extension StagingCommons on Staging {
 }
 
 extension StagingIgnore on Staging {
-
   ///[path] starts with [Platform.pathSeparator] as a relative path from the [Repository]parent dir
   bool shouldAddPath(String path, {String pattern = star}) {
     debugPrintToConsole(message: "Checking if should add Path: $path", newLine: true);
@@ -190,25 +215,25 @@ extension StagingIgnore on Staging {
     final IgnorePatternRules rule = IgnorePatternRules.detectRule(pattern);
     final bool matched = switch (rule) {
       IgnorePatternRules.pathFromRoot => rule.patternMatches(
-        testPattern: pattern,
-        inputPattern: path,
-      ),
+          testPattern: pattern,
+          inputPattern: path,
+        ),
       IgnorePatternRules.suffix => rule.patternMatches(
-        testPattern: pattern,
-        inputPattern: path,
-      ),
+          testPattern: pattern,
+          inputPattern: path,
+        ),
       IgnorePatternRules.single => rule.patternMatches(
-        testPattern: pattern,
-        inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
-      ),
+          testPattern: pattern,
+          inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
+        ),
       IgnorePatternRules.contains => rule.patternMatches(
-        testPattern: pattern,
-        inputPattern: path,
-      ),
+          testPattern: pattern,
+          inputPattern: path,
+        ),
       IgnorePatternRules.exactMatch => rule.patternMatches(
-        testPattern: pattern,
-        inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
-      ),
+          testPattern: pattern,
+          inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
+        ),
     };
 
     debugPrintToConsole(message: "Result: $matched");
@@ -226,25 +251,25 @@ extension StagingIgnore on Staging {
 
       final bool matched = switch (rule) {
         IgnorePatternRules.pathFromRoot => rule.patternMatches(
-          testPattern: ignorePattern,
-          inputPattern: path,
-        ),
+            testPattern: ignorePattern,
+            inputPattern: path,
+          ),
         IgnorePatternRules.suffix => rule.patternMatches(
-          testPattern: ignorePattern,
-          inputPattern: path,
-        ),
+            testPattern: ignorePattern,
+            inputPattern: path,
+          ),
         IgnorePatternRules.single => rule.patternMatches(
-          testPattern: ignorePattern,
-          inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
-        ),
+            testPattern: ignorePattern,
+            inputPattern: path.startsWith(Platform.pathSeparator) ? path.replaceFirst(Platform.pathSeparator, "") : path,
+          ),
         IgnorePatternRules.contains => rule.patternMatches(
-          testPattern: ignorePattern,
-          inputPattern: path,
-        ),
+            testPattern: ignorePattern,
+            inputPattern: path,
+          ),
         IgnorePatternRules.exactMatch => rule.patternMatches(
-          testPattern: ignorePattern,
-          inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
-        ),
+            testPattern: ignorePattern,
+            inputPattern: path.startsWith(Platform.pathSeparator) ? path.replaceFirst(Platform.pathSeparator, "") : path,
+          ),
       };
 
       if (matched) {

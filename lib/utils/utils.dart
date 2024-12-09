@@ -6,6 +6,7 @@ import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:crypto/crypto.dart';
+import 'package:path/path.dart';
 
 String filePatternToRegex(String pattern) {
   return pattern.replaceAll('.', r'\.').replaceAll('**', r'.*').replaceAll('*', r'[^/]*').replaceAll('?', r'[^/]');
@@ -47,3 +48,11 @@ Sha1 createBranchSha({
 Future<Sha1> computeFileSha1Hash(File file) async => computeSha1Hash(await file.readAsBytes());
 
 Sha1 computeSha1Hash(Uint8List bytes) => Sha1(sha1.convert(bytes).toString());
+
+String stripBeginningPathSeparatorPath(String path, {String? pathSeparator}) => path.startsWith(pathSeparator ?? Platform.pathSeparator) ? path.replaceFirst(pathSeparator ?? Platform.pathSeparator, "") : path;
+String relativePathFromDir({ required String directoryPath, required String path}) => path.replaceAll(directoryPath, "");
+
+String fullPathFromDir({required String relativePath, required String directoryPath}) => join(
+      directoryPath,
+      stripBeginningPathSeparatorPath(relativePath),
+    );

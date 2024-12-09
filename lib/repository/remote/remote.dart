@@ -33,12 +33,13 @@ extension RemoteCommons on Remote {
 }
 
 extension RemoteStorage on Remote {
-  void saveRemoteData(RemoteMetaData metaData) {
+  RemoteMetaData saveRemoteData(RemoteMetaData metaData) {
     remoteFile.writeAsStringSync(
       jsonEncode(metaData),
       mode: FileMode.writeOnly,
       flush: true,
     );
+    return metaData;
   }
 
   RemoteMetaData get remoteData {

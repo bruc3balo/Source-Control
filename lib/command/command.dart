@@ -70,7 +70,7 @@ class InitializeRepositoryCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await repository.initializeRepository(
+    repository.initializeRepository(
       onAlreadyInitialized: () => printToConsole(
         message: "Balo repository is already initialized",
       ),
@@ -85,7 +85,7 @@ class InitializeRepositoryCommand extends UndoableCommand {
 
   @override
   Future<void> undo() async {
-    await repository.unInitializeRepository(
+    repository.unInitializeRepository(
       onRepositoryNotInitialized: () => printToConsole(
         message: "Balo repository is not initialized",
       ),
@@ -109,7 +109,7 @@ class CreateStateFileCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await repository.state.createStateFile(
+    repository.state.createStateFile(
       currentBranch: currentBranch,
       onAlreadyExists: () => debugPrintToConsole(
         message: "Ignore file already exists",
@@ -129,7 +129,7 @@ class CreateStateFileCommand extends UndoableCommand {
 
   @override
   Future<void> undo() async {
-    await repository.state.deleteStateFile(
+    repository.state.deleteStateFile(
       onDoesntExists: () => debugPrintToConsole(
         message: "State file doesn't exists",
       ),
@@ -155,7 +155,7 @@ class CreateIgnoreFileCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await repository.ignore.createIgnoreFile(
+    repository.ignore.createIgnoreFile(
       onFileSystemException: (e) => debugPrintToConsole(
         message: e.message,
         color: CliColor.red,
@@ -174,7 +174,7 @@ class CreateIgnoreFileCommand extends UndoableCommand {
 
   @override
   Future<void> undo() async {
-    await repository.ignore.deleteIgnoreFile(
+    repository.ignore.deleteIgnoreFile(
       onFileSystemException: (e) => debugPrintToConsole(
         message: e.message,
         color: CliColor.red,
@@ -201,7 +201,7 @@ class CreateNewBranchCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await branch.createBranch(
+    branch.createBranch(
       isValidBranchName: isValidBranchName,
       onFileSystemException: (e) => debugPrintToConsole(
         message: e.message,
@@ -228,7 +228,7 @@ class CreateNewBranchCommand extends UndoableCommand {
 
   @override
   Future<void> undo() async {
-    await branch.deleteBranch(
+    branch.deleteBranch(
       onFileSystemException: (e) => debugPrintToConsole(
         message: e.message,
         color: CliColor.red,
@@ -259,7 +259,7 @@ class StageFilesCommand extends UndoableCommand {
   @override
   Future<void> execute() async {
     await Isolate.run(
-      () async => await staging.stageFiles(
+      () => staging.stageFiles(
         pattern: pattern,
         onFileSystemException: (e) => debugPrintToConsole(
           message: e.message,
@@ -274,7 +274,7 @@ class StageFilesCommand extends UndoableCommand {
 
   @override
   Future<void> undo() async {
-    await staging.unstageFiles(
+    staging.unstageFiles(
       onUninitializedRepository: () => debugPrintToConsole(
         message: "Repository not initialized",
       ),
@@ -298,7 +298,7 @@ class AddIgnorePatternCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await repository.ignore.addIgnore(
+    repository.ignore.addIgnore(
       pattern: pattern,
       onFileSystemException: (e) => debugPrintToConsole(
         message: e.message,
@@ -326,7 +326,7 @@ class RemoveIgnorePatternCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await repository.ignore.removeIgnore(
+    repository.ignore.removeIgnore(
       pattern: pattern,
       onRemoved: () => debugPrintToConsole(
         message: "Pattern $pattern has been removed from ignore file",
@@ -473,7 +473,7 @@ class CommitStagedFilesCommand extends UndoableCommand {
     }
     await Isolate.run(
       () async {
-        await staging.commitStagedFiles(
+        staging.commitStagedFiles(
           message: message,
           onNoStagingData: () => debugPrintToConsole(
             message: "Files not staged",
@@ -539,7 +539,7 @@ class CheckoutToBranchCommand extends UndoableCommand {
   @override
   Future<void> execute() async {
     await Isolate.run(() async {
-      await branch.checkoutToBranch(
+      branch.checkoutToBranch(
         commitSha: commitSha,
         onRepositoryNotInitialized: () => debugPrintToConsole(message: "Repository not initialized"),
         onNoCommitFound: () => debugPrintToConsole(message: "Commit not found"),
@@ -703,7 +703,7 @@ class CloneBranchCommitCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await remoteBranch.clone(localRepository: localRepository);
+    remoteBranch.clone(localRepository: localRepository);
   }
 
   @override
@@ -721,7 +721,7 @@ class PushBranchCommitCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await remoteBranch.push(
+    remoteBranch.push(
       localRepository: localRepository,
       onNoCommits: () => debugPrintToConsole(message: "Nothing to commit"),
       onRemoteUrlNotSupported: () => debugPrintToConsole(message: "Unsupported remote"),
@@ -742,7 +742,7 @@ class PullBranchCommitCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await remoteBranch.pull(
+    remoteBranch.pull(
       localRepository: localRepository,
       onNoRemoteData: () => debugPrintToConsole(
         message: "No data to pull on remote branch",

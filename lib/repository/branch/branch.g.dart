@@ -11,7 +11,7 @@ _$BranchMetaDataImpl _$$BranchMetaDataImplFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String,
       commits: (json['commits'] as Map<String, dynamic>).map(
         (k, e) =>
-            MapEntry(k, CommitMetaData.fromJson(e as Map<String, dynamic>)),
+            MapEntry(k, CommitTreeMetaData.fromJson(e as Map<String, dynamic>)),
       ),
     );
 
@@ -22,8 +22,10 @@ Map<String, dynamic> _$$BranchMetaDataImplToJson(
       'commits': instance.commits,
     };
 
-_$CommitMetaDataImpl _$$CommitMetaDataImplFromJson(Map<String, dynamic> json) =>
-    _$CommitMetaDataImpl(
+_$CommitTreeMetaDataImpl _$$CommitTreeMetaDataImplFromJson(
+        Map<String, dynamic> json) =>
+    _$CommitTreeMetaDataImpl(
+      originalBranch: json['originalBranch'] as String,
       sha: json['sha'] as String,
       message: json['message'] as String,
       commitedObjects: (json['commitedObjects'] as Map<String, dynamic>).map(
@@ -33,9 +35,10 @@ _$CommitMetaDataImpl _$$CommitMetaDataImplFromJson(Map<String, dynamic> json) =>
       commitedAt: DateTime.parse(json['commitedAt'] as String),
     );
 
-Map<String, dynamic> _$$CommitMetaDataImplToJson(
-        _$CommitMetaDataImpl instance) =>
+Map<String, dynamic> _$$CommitTreeMetaDataImplToJson(
+        _$CommitTreeMetaDataImpl instance) =>
     <String, dynamic>{
+      'originalBranch': instance.originalBranch,
       'sha': instance.sha,
       'message': instance.message,
       'commitedObjects': instance.commitedObjects,

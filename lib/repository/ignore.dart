@@ -27,12 +27,12 @@ extension IgnoreCommons on Ignore {
 }
 
 extension IgnoreActions on Ignore{
-  Future<void> createIgnoreFile({
+  void createIgnoreFile({
     Function()? onAlreadyExists,
     Function()? onSuccessfullyCreated,
     Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       if (!repository.isInitialized) {
         onRepositoryNotInitialized?.call();
@@ -44,19 +44,19 @@ extension IgnoreActions on Ignore{
         return;
       }
 
-      await ignoreFile.create(recursive: true, exclusive: true);
+      ignoreFile.createSync(recursive: true, exclusive: true);
       onSuccessfullyCreated?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
   }
 
-  Future<void> deleteIgnoreFile({
+  void deleteIgnoreFile({
     Function()? onDoesntExists,
     Function()? onSuccessfullyDeleted,
     Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  })  {
     try {
       if (!repository.isInitialized) {
         onRepositoryNotInitialized?.call();
@@ -68,19 +68,19 @@ extension IgnoreActions on Ignore{
         return;
       }
 
-      await ignoreFile.delete(recursive: true);
+      ignoreFile.deleteSync(recursive: true);
       onSuccessfullyDeleted?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
   }
 
-  Future<void> addIgnore({
+  void addIgnore({
     required String pattern,
     Function()? onAlreadyPresent,
     Function()? onAdded,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       List<String> ignores = ignoreFile.readAsLinesSync();
       if (ignores.contains(pattern)) {
@@ -101,12 +101,12 @@ extension IgnoreActions on Ignore{
     }
   }
 
-  Future<void> removeIgnore({
+  void removeIgnore({
     required String pattern,
     Function()? onNotFoundPresent,
     Function()? onRemoved,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       List<String> ignores = ignoreFile.readAsLinesSync();
       if (!ignores.contains(pattern)) {

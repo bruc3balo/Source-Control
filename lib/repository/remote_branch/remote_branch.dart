@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:balo/command/command.dart';
@@ -7,6 +8,7 @@ import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/state/state.dart';
+import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
@@ -18,169 +20,193 @@ class RemoteBranch {
 }
 
 extension RemoteBranchCommon on RemoteBranch {
-
   String get workingDirName => basenameWithoutExtension(remote.url);
 
-  Future<void> pull({
+  void pull({
     required Repository localRepository,
     Function()? onNoChanges,
     Function()? onNoStateData,
     Function()? onNoRemoteData,
+    Function()? onRepositoryNotInitialized,
     Function()? onSuccessfulPull,
-  }) async {
+  }) {
+    //Must be in an initialized
+    if (localRepository.isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return;
+    }
+
+    //Get remote branch data
+    Repository remoteRepository = branch.repository;
     BranchTreeMetaData? remoteTreeData = branch.branchTreeMetaData;
     if (remoteTreeData == null) {
       onNoRemoteData?.call();
       return;
     }
 
-    List<CommitMetaData> remoteCommits = remoteTreeData.commits.values.toList();
+    //remoteCommits
+    List<CommitTreeMetaData> remoteCommits = remoteTreeData.sortedBranchCommitsFromLatest;
 
-    State state = localRepository.state;
-    StateData? stateData = state.stateInfo;
-    if (stateData == null) {
+    State localState = localRepository.state;
+    StateData? localStateData = localState.stateInfo;
+    if (localStateData == null) {
       onNoStateData?.call();
       return;
     }
 
     Branch localBranch = Branch(branch.branchName, localRepository);
     BranchTreeMetaData? localTreeMetaData = localBranch.branchTreeMetaData;
-    CommitMetaData? localLatestCommit = localTreeMetaData?.latestBranchCommits;
-    if(remoteTreeData.latestBranchCommits == localLatestCommit) {
+    localTreeMetaData ??= localBranch.saveBranchTreeMetaData(BranchTreeMetaData(name: localBranch.branchName, commits: HashMap()));
+    CommitTreeMetaData? localLatestCommit = localTreeMetaData.latestBranchCommits;
+    if (remoteTreeData.latestBranchCommits?.sha == localLatestCommit?.sha) {
       onNoChanges?.call();
       return;
     }
 
     //Get commits needed to pull
-    List<CommitMetaData> commitsToPull = [];
-    if (localTreeMetaData != null && localLatestCommit != null) {
-      for (int i = remoteCommits.length - 1; i >= 0; i--) {
-        CommitMetaData c = remoteCommits[i];
-        commitsToPull.add(c);
-        if (c.sha == localLatestCommit.sha) break;
-      }
-    } else {
-      localTreeMetaData = remoteTreeData;
+    List<CommitTreeMetaData> commitsToPull = [];
+    for (int i = remoteCommits.length - 1; i >= 0; i--) {
+      CommitTreeMetaData c = remoteCommits[i];
+      commitsToPull.add(c);
+
+      bool isMergeBase = c.sha == localLatestCommit?.sha;
+      if (isMergeBase) break;
     }
 
-    //Objects needed to push
-    List<RepoObjectsData> objectsToBePushed = filterObjectsPresent(
+    //Objects needed to pull
+    List<RepoObjectsData> objectsToBePulled = extractRepoObjectsNotPresentInAggregateBranchTree(
       commitsWithRepoObject: commitsToPull,
       aggregateBranchTree: localTreeMetaData,
     );
 
-    //push commits then push objects
-    List<RepoObjects> objectsToBePulledData = objectsToBePushed
-        .map((e) => e.fetchObject(localRepository))
-        .where((e) => e != null)
-        .map(
-          (e) => RepoObjects(
-            repository: localRepository,
-            sha1: e!.sha1,
-            relativePathToRepository: e.relativePathToRepository,
-            commitedAt: e.commitedAt,
-            blob: e.blob,
-          ),
-        )
-        .toList();
+    //pull objects
+    objectsToBePulled.map((e) => e.fetchObject(remoteRepository)).where((e) => e != null).forEach(
+      (remoteObject) {
+        //RepoObjects
+        RepoObjects o = RepoObjects(
+          repository: localRepository,
+          sha1: remoteObject!.sha1,
+          relativePathToRepository: remoteObject.relativePathToRepository,
+          commitedAt: remoteObject.commitedAt,
+          blob: remoteObject.blob,
+        );
 
-    //Write all the commits
+        //Store to local repository
+        RepoObjectsData data = o.store();
+
+        //write file to working dir
+        String objectFilePath = fullPathFromDir(
+          relativePath: data.filePathRelativeToRepository,
+          directoryPath: localRepository.workingDirectory.path,
+        );
+
+        File(objectFilePath).writeAsBytesSync(
+          o.blob,
+          flush: true,
+          mode: FileMode.writeOnly,
+        );
+      },
+    );
+
+    //pull commits
+    localTreeMetaData.commits.addAll({for (var c in commitsToPull) c.sha: c});
     localBranch.saveBranchTreeMetaData(localTreeMetaData);
-
-    //Write remote objects
-    for (var e in objectsToBePulledData) {
-      e.store();
-      File(join(localRepository.workingDirectory.path, e.relativePathToRepository.substring(1, e.relativePathToRepository.length - 1)))
-          .writeAsBytesSync(e.blob, flush: true, mode: FileMode.writeOnly);
-    }
 
     onSuccessfulPull?.call();
   }
 
-  Future<void> clone({
+  void clone({
     required Repository localRepository,
     Function()? onRepositoryNotFound,
     Function()? onNoCommitFound,
     Function()? onSuccessfulPush,
-  }) async {
+  }) {
+
+    //Get remote repository
     Repository remoteRepository = branch.repository;
 
+    //Get remote branch data
     BranchTreeMetaData? remoteBranchMetaData = branch.branchTreeMetaData;
     if (remoteBranchMetaData == null) {
       onRepositoryNotFound?.call();
       return;
     }
 
-    CommitMetaData? latestCommit = remoteBranchMetaData.latestBranchCommits;
+    //Get latest commit to clone
+    CommitTreeMetaData? latestCommit = remoteBranchMetaData.latestBranchCommits;
     if (latestCommit == null) {
       onNoCommitFound?.call();
       return;
     }
 
-    // RepoObjects
-    List<RepoObjects> objectsToDownload = latestCommit.commitedObjects.values
-        .map((e) => e.fetchObject(remoteRepository))
-        .where((e) => e != null)
-        .map(
-          (e) => RepoObjects(
-            repository: localRepository,
-            sha1: e!.sha1,
-            relativePathToRepository: e.relativePathToRepository,
-            commitedAt: e.commitedAt,
-            blob: e.blob,
-          ),
-        )
-        .toList();
-
     // Create Repository
-    if (!localRepository.isInitialized) {
-      createRepositoryFacade(
-        initializeRepository: () async => await localRepository.initializeRepository(),
-        createIgnoreFile: () async {
-          //Copy ignore file
-          if (remoteRepository.ignore.ignoreFile.existsSync()) {
-            remoteRepository.ignore.ignoreFile.copySync(localRepository.ignore.ignoreFile.path);
-            return;
-          }
+    createRepositoryTemplate(
+      initializeRepository: () async => localRepository.initializeRepository(),
+      createIgnoreFile: () async {
+        //Copy ignore file
+        if (remoteRepository.ignore.ignoreFile.existsSync()) {
+          remoteRepository.ignore.ignoreFile.copySync(localRepository.ignore.ignoreFile.path);
+          return;
+        }
 
-          localRepository.ignore.ignoreFile.createSync();
-        },
-        addIgnoreFile: () async => localRepository.ignore.addIgnore(pattern: repositoryIgnoreFileName),
-        createNewBranch: () async => Branch(branch.branchName, localRepository),
-        createNewStateFile: () async => localRepository.state.createStateFile(currentBranch: branch),
-      );
+        localRepository.ignore.ignoreFile.createSync();
+      },
+      addIgnoreFile: () async => localRepository.ignore.addIgnore(pattern: repositoryIgnoreFileName),
+      createNewBranch: () async => Branch(branch.branchName, localRepository),
+      createNewStateFile: () async => localRepository.state.saveStateData(stateData: StateData(currentBranch: branch.branchName, currentCommit: latestCommit.sha)),
+    );
 
-      //add remote file
-      Remote(localRepository, remote.name, remote.url).addRemote();
-    }
+    //Add remote file
+    Remote(localRepository, remote.name, remote.url).addRemote();
 
     //Copy commits
     Branch localBranch = Branch(branch.branchName, localRepository);
     localBranch.saveBranchTreeMetaData(remoteBranchMetaData);
 
-    //Save state
-    State state = State(localRepository);
-    state.saveStateData(stateData: StateData(currentBranch: localBranch.branchName, currentCommit: latestCommit.sha));
+    // Copy objects
+    latestCommit.commitedObjects.values
+        .map((e) => e.fetchObject(remoteRepository))
+        .where((e) => e != null)
+        .forEach(
+          (remoteObject) {
 
-    //Copy objects
-    for (var e in objectsToDownload) {
-      e.store();
-      File(join(localRepository.workingDirectory.path, e.relativePathToRepository.substring(1, e.relativePathToRepository.length - 1)))
-          .writeAsBytesSync(e.blob, flush: true, mode: FileMode.writeOnly);
-    }
+            //RepoObjects
+            RepoObjects o = RepoObjects(
+              repository: localRepository,
+              sha1: remoteObject!.sha1,
+              relativePathToRepository: remoteObject.relativePathToRepository,
+              commitedAt: remoteObject.commitedAt,
+              blob: remoteObject.blob,
+            );
 
-    //Add remote
-    remote.addRemote();
+            //Store to local repository
+            RepoObjectsData data = o.store();
+
+            //write file to working dir
+            String objectFilePath = fullPathFromDir(
+              relativePath: data.filePathRelativeToRepository,
+              directoryPath: localRepository.workingDirectory.path,
+            );
+
+            File(objectFilePath).writeAsBytesSync(
+              o.blob,
+              flush: true,
+              mode: FileMode.writeOnly,
+            );
+          },
+        );
+
 
     onSuccessfulPush?.call();
   }
 
-  Future<void> push({
+  void push({
     required Repository localRepository,
     Function()? onNoCommits,
     Function()? onRemoteUrlNotSupported,
     Function()? onSuccessfulPush,
-  }) async {
+  }) {
+    //Only path remotes
     if (!remote.isPath) {
       onRemoteUrlNotSupported?.call();
       return;
@@ -193,81 +219,74 @@ extension RemoteBranchCommon on RemoteBranch {
       onNoCommits?.call();
       return;
     }
-    List<CommitMetaData> localCommits = localBranchTree.sortedBranchCommitsFromLatest;
+
+    //localCommits
+    List<CommitTreeMetaData> localCommits = localBranchTree.sortedBranchCommitsFromLatest;
 
     //Compare latest commit on both ends
     Repository remoteRepository = Repository(remote.url);
     if (!remoteRepository.isInitialized) {
-      createRepositoryFacade(
-        initializeRepository: () async => await remoteRepository.initializeRepository(),
-        createIgnoreFile: () async => remoteRepository.ignore.createIgnoreFile(),
-        addIgnoreFile: () async => remoteRepository.ignore.addIgnore(pattern: repositoryIgnoreFileName),
-        createNewBranch: () async => branch.createBranch(),
-        createNewStateFile: () async => remoteRepository.state.createStateFile(currentBranch: branch),
+      createRepositoryTemplate(
+        initializeRepository: () => remoteRepository.initializeRepository(),
+        createIgnoreFile: () => remoteRepository.ignore.createIgnoreFile(),
+        addIgnoreFile: () => remoteRepository.ignore.addIgnore(pattern: repositoryIgnoreFileName),
+        createNewBranch: () => branch.createBranch(),
+        createNewStateFile: () => remoteRepository.state.createStateFile(currentBranch: branch),
       );
     }
 
     //Get remote branch data
     BranchTreeMetaData? remoteBranchTree = branch.branchTreeMetaData;
-    CommitMetaData? latestRemoteCommit = remoteBranchTree?.latestBranchCommits;
+    CommitTreeMetaData? latestRemoteCommit = remoteBranchTree?.latestBranchCommits;
 
     //Get commits needed to push
-    List<CommitMetaData> commitsToPush = [];
-    if (latestRemoteCommit != null) {
-      for (int i = 0; i < localCommits.length; i++) {
-        CommitMetaData c = localCommits[i];
-        commitsToPush.add(c);
-        if (c.sha == latestRemoteCommit.sha) break;
-      }
-    } else {
-      commitsToPush.addAll(localCommits);
+    List<CommitTreeMetaData> commitsToPush = [];
+    for (int i = 0; i < localCommits.length; i++) {
+      CommitTreeMetaData c = localCommits[i];
+      commitsToPush.add(c);
+
+      bool isMergeBase = c.sha == latestRemoteCommit?.sha;
+      if (isMergeBase) break;
     }
 
     //Objects needed to push
-    List<RepoObjectsData> objectsToBePushed = filterObjectsPresent(
+    List<RepoObjectsData> objectsToBePushed = extractRepoObjectsNotPresentInAggregateBranchTree(
       commitsWithRepoObject: commitsToPush,
       aggregateBranchTree: remoteBranchTree,
     );
 
-    //push commits then push objects
-    List<RepoObjects> objectsToBePushedData = objectsToBePushed
-        .map((e) => e.fetchObject(localRepository))
-        .where((e) => e != null)
-        .map(
-          (e) => RepoObjects(
-            repository: remoteRepository,
-            sha1: e!.sha1,
-            relativePathToRepository: e.relativePathToRepository,
-            commitedAt: e.commitedAt,
-            blob: e.blob,
-          ),
-        )
-        .toList();
+    //push objects
+    objectsToBePushed.map((e) => e.fetchObject(localRepository)).where((e) => e != null).forEach(
+      (localObject) {
+        //RepoObjects
+        RepoObjects o = RepoObjects(
+          repository: remoteRepository,
+          sha1: localObject!.sha1,
+          relativePathToRepository: localObject.relativePathToRepository,
+          commitedAt: localObject.commitedAt,
+          blob: localObject.blob,
+        );
+
+        //Store to remote repository
+        RepoObjectsData data = o.store();
+      },
+    );
 
     //Write all the commits
     if (remoteBranchTree == null) {
-      await branch.createBranch();
-      await branch.createTreeMetaDataFile();
+      branch.createBranch();
       remoteBranchTree = branch.branchTreeMetaData!;
     }
 
-    //Write remote commits
-    Map<String, CommitMetaData> remoteCommits = Map.from(remoteBranchTree.commits);
-    remoteCommits.addAll({for (var c in commitsToPush) c.sha: c});
-
-    remoteBranchTree = remoteBranchTree.copyWith(commits: remoteCommits);
+    //push commits
+    remoteBranchTree.commits.addAll({for (var c in commitsToPush) c.sha: c});
     branch.saveBranchTreeMetaData(remoteBranchTree);
-
-    //Write remote objects
-    for (var e in objectsToBePushedData) {
-      e.store();
-    }
 
     onSuccessfulPush?.call();
   }
 
-  List<RepoObjectsData> filterObjectsPresent({
-    required List<CommitMetaData> commitsWithRepoObject,
+  List<RepoObjectsData> extractRepoObjectsNotPresentInAggregateBranchTree({
+    required List<CommitTreeMetaData> commitsWithRepoObject,
     BranchTreeMetaData? aggregateBranchTree,
   }) {
     Map<String, RepoObjectsData> allCommitObjects = {
@@ -285,7 +304,9 @@ extension RemoteBranchCommon on RemoteBranch {
   }
 }
 
-void createRepositoryFacade({
+///Template pattern
+///Steps to create a repository
+void createRepositoryTemplate({
   required Function() initializeRepository,
   required Function() createIgnoreFile,
   required Function() addIgnoreFile,

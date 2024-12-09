@@ -21,7 +21,8 @@ BranchTreeMetaData _$BranchTreeMetaDataFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$BranchTreeMetaData {
   String get name => throw _privateConstructorUsedError;
-  Map<String, CommitMetaData> get commits => throw _privateConstructorUsedError;
+  Map<String, CommitTreeMetaData> get commits =>
+      throw _privateConstructorUsedError;
 
   /// Serializes this BranchTreeMetaData to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -39,7 +40,7 @@ abstract class $BranchTreeMetaDataCopyWith<$Res> {
           BranchTreeMetaData value, $Res Function(BranchTreeMetaData) then) =
       _$BranchTreeMetaDataCopyWithImpl<$Res, BranchTreeMetaData>;
   @useResult
-  $Res call({String name, Map<String, CommitMetaData> commits});
+  $Res call({String name, Map<String, CommitTreeMetaData> commits});
 }
 
 /// @nodoc
@@ -68,7 +69,7 @@ class _$BranchTreeMetaDataCopyWithImpl<$Res, $Val extends BranchTreeMetaData>
       commits: null == commits
           ? _value.commits
           : commits // ignore: cast_nullable_to_non_nullable
-              as Map<String, CommitMetaData>,
+              as Map<String, CommitTreeMetaData>,
     ) as $Val);
   }
 }
@@ -81,7 +82,7 @@ abstract class _$$BranchMetaDataImplCopyWith<$Res>
       __$$BranchMetaDataImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String name, Map<String, CommitMetaData> commits});
+  $Res call({String name, Map<String, CommitTreeMetaData> commits});
 }
 
 /// @nodoc
@@ -108,7 +109,7 @@ class __$$BranchMetaDataImplCopyWithImpl<$Res>
       commits: null == commits
           ? _value._commits
           : commits // ignore: cast_nullable_to_non_nullable
-              as Map<String, CommitMetaData>,
+              as Map<String, CommitTreeMetaData>,
     ));
   }
 }
@@ -117,7 +118,8 @@ class __$$BranchMetaDataImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$BranchMetaDataImpl implements _BranchMetaData {
   _$BranchMetaDataImpl(
-      {required this.name, required final Map<String, CommitMetaData> commits})
+      {required this.name,
+      required final Map<String, CommitTreeMetaData> commits})
       : _commits = commits;
 
   factory _$BranchMetaDataImpl.fromJson(Map<String, dynamic> json) =>
@@ -125,9 +127,9 @@ class _$BranchMetaDataImpl implements _BranchMetaData {
 
   @override
   final String name;
-  final Map<String, CommitMetaData> _commits;
+  final Map<String, CommitTreeMetaData> _commits;
   @override
-  Map<String, CommitMetaData> get commits {
+  Map<String, CommitTreeMetaData> get commits {
     if (_commits is EqualUnmodifiableMapView) return _commits;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableMapView(_commits);
@@ -172,7 +174,7 @@ class _$BranchMetaDataImpl implements _BranchMetaData {
 abstract class _BranchMetaData implements BranchTreeMetaData {
   factory _BranchMetaData(
           {required final String name,
-          required final Map<String, CommitMetaData> commits}) =
+          required final Map<String, CommitTreeMetaData> commits}) =
       _$BranchMetaDataImpl;
 
   factory _BranchMetaData.fromJson(Map<String, dynamic> json) =
@@ -181,7 +183,7 @@ abstract class _BranchMetaData implements BranchTreeMetaData {
   @override
   String get name;
   @override
-  Map<String, CommitMetaData> get commits;
+  Map<String, CommitTreeMetaData> get commits;
 
   /// Create a copy of BranchTreeMetaData
   /// with the given fields replaced by the non-null parameter values.
@@ -191,62 +193,69 @@ abstract class _BranchMetaData implements BranchTreeMetaData {
       throw _privateConstructorUsedError;
 }
 
-CommitMetaData _$CommitMetaDataFromJson(Map<String, dynamic> json) {
-  return _CommitMetaData.fromJson(json);
+CommitTreeMetaData _$CommitTreeMetaDataFromJson(Map<String, dynamic> json) {
+  return _CommitTreeMetaData.fromJson(json);
 }
 
 /// @nodoc
-mixin _$CommitMetaData {
+mixin _$CommitTreeMetaData {
+  String get originalBranch => throw _privateConstructorUsedError;
   String get sha => throw _privateConstructorUsedError;
   String get message => throw _privateConstructorUsedError;
   Map<String, RepoObjectsData> get commitedObjects =>
       throw _privateConstructorUsedError;
   DateTime get commitedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this CommitMetaData to a JSON map.
+  /// Serializes this CommitTreeMetaData to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
-  /// Create a copy of CommitMetaData
+  /// Create a copy of CommitTreeMetaData
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $CommitMetaDataCopyWith<CommitMetaData> get copyWith =>
+  $CommitTreeMetaDataCopyWith<CommitTreeMetaData> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $CommitMetaDataCopyWith<$Res> {
-  factory $CommitMetaDataCopyWith(
-          CommitMetaData value, $Res Function(CommitMetaData) then) =
-      _$CommitMetaDataCopyWithImpl<$Res, CommitMetaData>;
+abstract class $CommitTreeMetaDataCopyWith<$Res> {
+  factory $CommitTreeMetaDataCopyWith(
+          CommitTreeMetaData value, $Res Function(CommitTreeMetaData) then) =
+      _$CommitTreeMetaDataCopyWithImpl<$Res, CommitTreeMetaData>;
   @useResult
   $Res call(
-      {String sha,
+      {String originalBranch,
+      String sha,
       String message,
       Map<String, RepoObjectsData> commitedObjects,
       DateTime commitedAt});
 }
 
 /// @nodoc
-class _$CommitMetaDataCopyWithImpl<$Res, $Val extends CommitMetaData>
-    implements $CommitMetaDataCopyWith<$Res> {
-  _$CommitMetaDataCopyWithImpl(this._value, this._then);
+class _$CommitTreeMetaDataCopyWithImpl<$Res, $Val extends CommitTreeMetaData>
+    implements $CommitTreeMetaDataCopyWith<$Res> {
+  _$CommitTreeMetaDataCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CommitMetaData
+  /// Create a copy of CommitTreeMetaData
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? originalBranch = null,
     Object? sha = null,
     Object? message = null,
     Object? commitedObjects = null,
     Object? commitedAt = null,
   }) {
     return _then(_value.copyWith(
+      originalBranch: null == originalBranch
+          ? _value.originalBranch
+          : originalBranch // ignore: cast_nullable_to_non_nullable
+              as String,
       sha: null == sha
           ? _value.sha
           : sha // ignore: cast_nullable_to_non_nullable
@@ -268,39 +277,45 @@ class _$CommitMetaDataCopyWithImpl<$Res, $Val extends CommitMetaData>
 }
 
 /// @nodoc
-abstract class _$$CommitMetaDataImplCopyWith<$Res>
-    implements $CommitMetaDataCopyWith<$Res> {
-  factory _$$CommitMetaDataImplCopyWith(_$CommitMetaDataImpl value,
-          $Res Function(_$CommitMetaDataImpl) then) =
-      __$$CommitMetaDataImplCopyWithImpl<$Res>;
+abstract class _$$CommitTreeMetaDataImplCopyWith<$Res>
+    implements $CommitTreeMetaDataCopyWith<$Res> {
+  factory _$$CommitTreeMetaDataImplCopyWith(_$CommitTreeMetaDataImpl value,
+          $Res Function(_$CommitTreeMetaDataImpl) then) =
+      __$$CommitTreeMetaDataImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
-      {String sha,
+      {String originalBranch,
+      String sha,
       String message,
       Map<String, RepoObjectsData> commitedObjects,
       DateTime commitedAt});
 }
 
 /// @nodoc
-class __$$CommitMetaDataImplCopyWithImpl<$Res>
-    extends _$CommitMetaDataCopyWithImpl<$Res, _$CommitMetaDataImpl>
-    implements _$$CommitMetaDataImplCopyWith<$Res> {
-  __$$CommitMetaDataImplCopyWithImpl(
-      _$CommitMetaDataImpl _value, $Res Function(_$CommitMetaDataImpl) _then)
+class __$$CommitTreeMetaDataImplCopyWithImpl<$Res>
+    extends _$CommitTreeMetaDataCopyWithImpl<$Res, _$CommitTreeMetaDataImpl>
+    implements _$$CommitTreeMetaDataImplCopyWith<$Res> {
+  __$$CommitTreeMetaDataImplCopyWithImpl(_$CommitTreeMetaDataImpl _value,
+      $Res Function(_$CommitTreeMetaDataImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CommitMetaData
+  /// Create a copy of CommitTreeMetaData
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? originalBranch = null,
     Object? sha = null,
     Object? message = null,
     Object? commitedObjects = null,
     Object? commitedAt = null,
   }) {
-    return _then(_$CommitMetaDataImpl(
+    return _then(_$CommitTreeMetaDataImpl(
+      originalBranch: null == originalBranch
+          ? _value.originalBranch
+          : originalBranch // ignore: cast_nullable_to_non_nullable
+              as String,
       sha: null == sha
           ? _value.sha
           : sha // ignore: cast_nullable_to_non_nullable
@@ -323,17 +338,20 @@ class __$$CommitMetaDataImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$CommitMetaDataImpl implements _CommitMetaData {
-  _$CommitMetaDataImpl(
-      {required this.sha,
+class _$CommitTreeMetaDataImpl implements _CommitTreeMetaData {
+  _$CommitTreeMetaDataImpl(
+      {required this.originalBranch,
+      required this.sha,
       required this.message,
       required final Map<String, RepoObjectsData> commitedObjects,
       required this.commitedAt})
       : _commitedObjects = commitedObjects;
 
-  factory _$CommitMetaDataImpl.fromJson(Map<String, dynamic> json) =>
-      _$$CommitMetaDataImplFromJson(json);
+  factory _$CommitTreeMetaDataImpl.fromJson(Map<String, dynamic> json) =>
+      _$$CommitTreeMetaDataImplFromJson(json);
 
+  @override
+  final String originalBranch;
   @override
   final String sha;
   @override
@@ -351,14 +369,16 @@ class _$CommitMetaDataImpl implements _CommitMetaData {
 
   @override
   String toString() {
-    return 'CommitMetaData(sha: $sha, message: $message, commitedObjects: $commitedObjects, commitedAt: $commitedAt)';
+    return 'CommitTreeMetaData(originalBranch: $originalBranch, sha: $sha, message: $message, commitedObjects: $commitedObjects, commitedAt: $commitedAt)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$CommitMetaDataImpl &&
+            other is _$CommitTreeMetaDataImpl &&
+            (identical(other.originalBranch, originalBranch) ||
+                other.originalBranch == originalBranch) &&
             (identical(other.sha, sha) || other.sha == sha) &&
             (identical(other.message, message) || other.message == message) &&
             const DeepCollectionEquality()
@@ -369,36 +389,39 @@ class _$CommitMetaDataImpl implements _CommitMetaData {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, sha, message,
+  int get hashCode => Object.hash(runtimeType, originalBranch, sha, message,
       const DeepCollectionEquality().hash(_commitedObjects), commitedAt);
 
-  /// Create a copy of CommitMetaData
+  /// Create a copy of CommitTreeMetaData
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$CommitMetaDataImplCopyWith<_$CommitMetaDataImpl> get copyWith =>
-      __$$CommitMetaDataImplCopyWithImpl<_$CommitMetaDataImpl>(
+  _$$CommitTreeMetaDataImplCopyWith<_$CommitTreeMetaDataImpl> get copyWith =>
+      __$$CommitTreeMetaDataImplCopyWithImpl<_$CommitTreeMetaDataImpl>(
           this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$CommitMetaDataImplToJson(
+    return _$$CommitTreeMetaDataImplToJson(
       this,
     );
   }
 }
 
-abstract class _CommitMetaData implements CommitMetaData {
-  factory _CommitMetaData(
-      {required final String sha,
+abstract class _CommitTreeMetaData implements CommitTreeMetaData {
+  factory _CommitTreeMetaData(
+      {required final String originalBranch,
+      required final String sha,
       required final String message,
       required final Map<String, RepoObjectsData> commitedObjects,
-      required final DateTime commitedAt}) = _$CommitMetaDataImpl;
+      required final DateTime commitedAt}) = _$CommitTreeMetaDataImpl;
 
-  factory _CommitMetaData.fromJson(Map<String, dynamic> json) =
-      _$CommitMetaDataImpl.fromJson;
+  factory _CommitTreeMetaData.fromJson(Map<String, dynamic> json) =
+      _$CommitTreeMetaDataImpl.fromJson;
 
+  @override
+  String get originalBranch;
   @override
   String get sha;
   @override
@@ -408,10 +431,10 @@ abstract class _CommitMetaData implements CommitMetaData {
   @override
   DateTime get commitedAt;
 
-  /// Create a copy of CommitMetaData
+  /// Create a copy of CommitTreeMetaData
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$CommitMetaDataImplCopyWith<_$CommitMetaDataImpl> get copyWith =>
+  _$$CommitTreeMetaDataImplCopyWith<_$CommitTreeMetaDataImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

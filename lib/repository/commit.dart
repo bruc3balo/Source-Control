@@ -19,6 +19,7 @@ class Sha1 {
 }
 
 class Commit {
+  final Branch fromBranch;
   final Branch branch;
   final Sha1 sha;
   final String message;
@@ -30,6 +31,7 @@ class Commit {
     this.branch,
     this.message,
     this.objects,
+    this.fromBranch,
     this.commitedAt,
   );
 }
@@ -47,7 +49,7 @@ extension CommitActions on Commit {
       return null;
     }
 
-    CommitMetaData? commitMetaData = branchCommitMetaData.commits[sha];
+    CommitTreeMetaData? commitMetaData = branchCommitMetaData.commits[sha];
     if (commitMetaData == null) {
       onNoCommitMetaData?.call();
       return null;

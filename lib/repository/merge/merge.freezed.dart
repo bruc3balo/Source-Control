@@ -14,67 +14,67 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-MergeMetaData _$MergeMetaDataFromJson(Map<String, dynamic> json) {
-  return _MergeMetaData.fromJson(json);
+MergeCommitMetaData _$MergeCommitMetaDataFromJson(Map<String, dynamic> json) {
+  return _MergeCommitMetaData.fromJson(json);
 }
 
 /// @nodoc
-mixin _$MergeMetaData {
-  String get message => throw _privateConstructorUsedError;
-  Map<String, CommitMetaData> get commitsToMerge =>
+mixin _$MergeCommitMetaData {
+  String get fromBranchName => throw _privateConstructorUsedError;
+  Map<String, CommitTreeMetaData> get commitsToMerge =>
       throw _privateConstructorUsedError;
   DateTime get mergedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this MergeMetaData to a JSON map.
+  /// Serializes this MergeCommitMetaData to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
-  /// Create a copy of MergeMetaData
+  /// Create a copy of MergeCommitMetaData
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $MergeMetaDataCopyWith<MergeMetaData> get copyWith =>
+  $MergeCommitMetaDataCopyWith<MergeCommitMetaData> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $MergeMetaDataCopyWith<$Res> {
-  factory $MergeMetaDataCopyWith(
-          MergeMetaData value, $Res Function(MergeMetaData) then) =
-      _$MergeMetaDataCopyWithImpl<$Res, MergeMetaData>;
+abstract class $MergeCommitMetaDataCopyWith<$Res> {
+  factory $MergeCommitMetaDataCopyWith(
+          MergeCommitMetaData value, $Res Function(MergeCommitMetaData) then) =
+      _$MergeCommitMetaDataCopyWithImpl<$Res, MergeCommitMetaData>;
   @useResult
   $Res call(
-      {String message,
-      Map<String, CommitMetaData> commitsToMerge,
+      {String fromBranchName,
+      Map<String, CommitTreeMetaData> commitsToMerge,
       DateTime mergedAt});
 }
 
 /// @nodoc
-class _$MergeMetaDataCopyWithImpl<$Res, $Val extends MergeMetaData>
-    implements $MergeMetaDataCopyWith<$Res> {
-  _$MergeMetaDataCopyWithImpl(this._value, this._then);
+class _$MergeCommitMetaDataCopyWithImpl<$Res, $Val extends MergeCommitMetaData>
+    implements $MergeCommitMetaDataCopyWith<$Res> {
+  _$MergeCommitMetaDataCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of MergeMetaData
+  /// Create a copy of MergeCommitMetaData
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? message = null,
+    Object? fromBranchName = null,
     Object? commitsToMerge = null,
     Object? mergedAt = null,
   }) {
     return _then(_value.copyWith(
-      message: null == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
+      fromBranchName: null == fromBranchName
+          ? _value.fromBranchName
+          : fromBranchName // ignore: cast_nullable_to_non_nullable
               as String,
       commitsToMerge: null == commitsToMerge
           ? _value.commitsToMerge
           : commitsToMerge // ignore: cast_nullable_to_non_nullable
-              as Map<String, CommitMetaData>,
+              as Map<String, CommitTreeMetaData>,
       mergedAt: null == mergedAt
           ? _value.mergedAt
           : mergedAt // ignore: cast_nullable_to_non_nullable
@@ -84,45 +84,45 @@ class _$MergeMetaDataCopyWithImpl<$Res, $Val extends MergeMetaData>
 }
 
 /// @nodoc
-abstract class _$$MergeMetaDataImplCopyWith<$Res>
-    implements $MergeMetaDataCopyWith<$Res> {
-  factory _$$MergeMetaDataImplCopyWith(
-          _$MergeMetaDataImpl value, $Res Function(_$MergeMetaDataImpl) then) =
-      __$$MergeMetaDataImplCopyWithImpl<$Res>;
+abstract class _$$MergeCommitMetaDataImplCopyWith<$Res>
+    implements $MergeCommitMetaDataCopyWith<$Res> {
+  factory _$$MergeCommitMetaDataImplCopyWith(_$MergeCommitMetaDataImpl value,
+          $Res Function(_$MergeCommitMetaDataImpl) then) =
+      __$$MergeCommitMetaDataImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
-      {String message,
-      Map<String, CommitMetaData> commitsToMerge,
+      {String fromBranchName,
+      Map<String, CommitTreeMetaData> commitsToMerge,
       DateTime mergedAt});
 }
 
 /// @nodoc
-class __$$MergeMetaDataImplCopyWithImpl<$Res>
-    extends _$MergeMetaDataCopyWithImpl<$Res, _$MergeMetaDataImpl>
-    implements _$$MergeMetaDataImplCopyWith<$Res> {
-  __$$MergeMetaDataImplCopyWithImpl(
-      _$MergeMetaDataImpl _value, $Res Function(_$MergeMetaDataImpl) _then)
+class __$$MergeCommitMetaDataImplCopyWithImpl<$Res>
+    extends _$MergeCommitMetaDataCopyWithImpl<$Res, _$MergeCommitMetaDataImpl>
+    implements _$$MergeCommitMetaDataImplCopyWith<$Res> {
+  __$$MergeCommitMetaDataImplCopyWithImpl(_$MergeCommitMetaDataImpl _value,
+      $Res Function(_$MergeCommitMetaDataImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MergeMetaData
+  /// Create a copy of MergeCommitMetaData
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? message = null,
+    Object? fromBranchName = null,
     Object? commitsToMerge = null,
     Object? mergedAt = null,
   }) {
-    return _then(_$MergeMetaDataImpl(
-      message: null == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
+    return _then(_$MergeCommitMetaDataImpl(
+      fromBranchName: null == fromBranchName
+          ? _value.fromBranchName
+          : fromBranchName // ignore: cast_nullable_to_non_nullable
               as String,
       commitsToMerge: null == commitsToMerge
           ? _value._commitsToMerge
           : commitsToMerge // ignore: cast_nullable_to_non_nullable
-              as Map<String, CommitMetaData>,
+              as Map<String, CommitTreeMetaData>,
       mergedAt: null == mergedAt
           ? _value.mergedAt
           : mergedAt // ignore: cast_nullable_to_non_nullable
@@ -133,21 +133,21 @@ class __$$MergeMetaDataImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$MergeMetaDataImpl implements _MergeMetaData {
-  _$MergeMetaDataImpl(
-      {required this.message,
-      required final Map<String, CommitMetaData> commitsToMerge,
+class _$MergeCommitMetaDataImpl implements _MergeCommitMetaData {
+  _$MergeCommitMetaDataImpl(
+      {required this.fromBranchName,
+      required final Map<String, CommitTreeMetaData> commitsToMerge,
       required this.mergedAt})
       : _commitsToMerge = commitsToMerge;
 
-  factory _$MergeMetaDataImpl.fromJson(Map<String, dynamic> json) =>
-      _$$MergeMetaDataImplFromJson(json);
+  factory _$MergeCommitMetaDataImpl.fromJson(Map<String, dynamic> json) =>
+      _$$MergeCommitMetaDataImplFromJson(json);
 
   @override
-  final String message;
-  final Map<String, CommitMetaData> _commitsToMerge;
+  final String fromBranchName;
+  final Map<String, CommitTreeMetaData> _commitsToMerge;
   @override
-  Map<String, CommitMetaData> get commitsToMerge {
+  Map<String, CommitTreeMetaData> get commitsToMerge {
     if (_commitsToMerge is EqualUnmodifiableMapView) return _commitsToMerge;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableMapView(_commitsToMerge);
@@ -158,15 +158,16 @@ class _$MergeMetaDataImpl implements _MergeMetaData {
 
   @override
   String toString() {
-    return 'MergeMetaData(message: $message, commitsToMerge: $commitsToMerge, mergedAt: $mergedAt)';
+    return 'MergeCommitMetaData(fromBranchName: $fromBranchName, commitsToMerge: $commitsToMerge, mergedAt: $mergedAt)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$MergeMetaDataImpl &&
-            (identical(other.message, message) || other.message == message) &&
+            other is _$MergeCommitMetaDataImpl &&
+            (identical(other.fromBranchName, fromBranchName) ||
+                other.fromBranchName == fromBranchName) &&
             const DeepCollectionEquality()
                 .equals(other._commitsToMerge, _commitsToMerge) &&
             (identical(other.mergedAt, mergedAt) ||
@@ -175,45 +176,46 @@ class _$MergeMetaDataImpl implements _MergeMetaData {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, message,
+  int get hashCode => Object.hash(runtimeType, fromBranchName,
       const DeepCollectionEquality().hash(_commitsToMerge), mergedAt);
 
-  /// Create a copy of MergeMetaData
+  /// Create a copy of MergeCommitMetaData
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$MergeMetaDataImplCopyWith<_$MergeMetaDataImpl> get copyWith =>
-      __$$MergeMetaDataImplCopyWithImpl<_$MergeMetaDataImpl>(this, _$identity);
+  _$$MergeCommitMetaDataImplCopyWith<_$MergeCommitMetaDataImpl> get copyWith =>
+      __$$MergeCommitMetaDataImplCopyWithImpl<_$MergeCommitMetaDataImpl>(
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$MergeMetaDataImplToJson(
+    return _$$MergeCommitMetaDataImplToJson(
       this,
     );
   }
 }
 
-abstract class _MergeMetaData implements MergeMetaData {
-  factory _MergeMetaData(
-      {required final String message,
-      required final Map<String, CommitMetaData> commitsToMerge,
-      required final DateTime mergedAt}) = _$MergeMetaDataImpl;
+abstract class _MergeCommitMetaData implements MergeCommitMetaData {
+  factory _MergeCommitMetaData(
+      {required final String fromBranchName,
+      required final Map<String, CommitTreeMetaData> commitsToMerge,
+      required final DateTime mergedAt}) = _$MergeCommitMetaDataImpl;
 
-  factory _MergeMetaData.fromJson(Map<String, dynamic> json) =
-      _$MergeMetaDataImpl.fromJson;
+  factory _MergeCommitMetaData.fromJson(Map<String, dynamic> json) =
+      _$MergeCommitMetaDataImpl.fromJson;
 
   @override
-  String get message;
+  String get fromBranchName;
   @override
-  Map<String, CommitMetaData> get commitsToMerge;
+  Map<String, CommitTreeMetaData> get commitsToMerge;
   @override
   DateTime get mergedAt;
 
-  /// Create a copy of MergeMetaData
+  /// Create a copy of MergeCommitMetaData
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$MergeMetaDataImplCopyWith<_$MergeMetaDataImpl> get copyWith =>
+  _$$MergeCommitMetaDataImplCopyWith<_$MergeCommitMetaDataImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

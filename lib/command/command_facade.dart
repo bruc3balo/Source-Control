@@ -270,7 +270,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
       return [ShowErrorCommand("This branch $thisBranchName has no meta data")];
     }
 
-    CommitMetaData? thisCommitMetaData =
+    CommitTreeMetaData? thisCommitMetaData =
         thisCommitSha == null ? thisBranchMetaData.sortedBranchCommitsFromLatest.firstOrNull : thisBranchMetaData.commits[thisCommitSha];
     if (thisCommitMetaData == null) {
       debugPrintToConsole(message: "commitAMetaData == null");
@@ -285,7 +285,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
       return [ShowErrorCommand("Branch $otherBranchName has no meta data")];
     }
 
-    CommitMetaData? otherCommitMetaData =
+    CommitTreeMetaData? otherCommitMetaData =
         otherCommitSha == null ? otherBranchMetaData.sortedBranchCommitsFromLatest.firstOrNull : otherBranchMetaData.commits[otherCommitSha];
     if (otherCommitMetaData == null) {
       debugPrintToConsole(message: "commitBMetaData == null");
@@ -297,6 +297,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
       thisBranch,
       thisCommitMetaData.message,
       thisCommitMetaData.commitedObjects,
+      Branch(otherCommitMetaData.originalBranch, repository),
       thisCommitMetaData.commitedAt,
     );
 
@@ -305,6 +306,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
       otherBranch,
       otherCommitMetaData.message,
       otherCommitMetaData.commitedObjects,
+      Branch(otherCommitMetaData.originalBranch, repository),
       otherCommitMetaData.commitedAt,
     );
 

@@ -8,6 +8,7 @@ import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
+import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
@@ -37,29 +38,32 @@ extension MergeStorage on Merge {
   ///Represents if a merge is in a pending state
   bool get hasPendingMerge => mergeFile.existsSync();
 
-  ///Get pending merge data [MergeMetaData] from [mergeFile]
+  ///Get pending merge data [MergeCommitMetaData] from [mergeFile]
   ///If the [mergeFile] doesn't exist, it will return null
-  MergeMetaData? get pendingMergeData {
+  MergeCommitMetaData? get pendingMergeCommitMetaData {
     if (!hasPendingMerge) return null;
 
     String data = mergeFile.readAsStringSync();
-    return MergeMetaData.fromJson(jsonDecode(data));
+    return MergeCommitMetaData.fromJson(jsonDecode(data));
   }
 
   ///Save [mergeData] to [mergeFile]
-  void saveMergeData(MergeMetaData mergeData) {
+  MergeCommitMetaData saveCommitMergeData(MergeCommitMetaData mergeData) {
     String data = jsonEncode(mergeData);
     mergeFile.writeAsStringSync(
       jsonEncode(data),
       flush: true,
       mode: FileMode.writeOnly,
     );
+    return mergeData;
   }
+
+  void deleteCommitMergeData() => mergeFile.deleteSync();
 }
 
 extension BranchMerge on Merge {
   ///Merges [otherBranch] to the current [branch]
-  Future<void> mergeFromOtherBranchIntoThis({
+  Future<StagingData?> mergeFromOtherBranchIntoThis({
     required Branch otherBranch,
     Function()? onPendingCommit,
     Function()? onPendingMerge,
@@ -73,87 +77,80 @@ extension BranchMerge on Merge {
     Staging staging = branch.staging;
     if (staging.isStaged) {
       onPendingCommit?.call();
-      return;
+      return null;
     }
 
     //Do not create another merge
     if (hasPendingMerge) {
       onPendingMerge?.call();
-      return;
+      return null;
     }
 
     //Ensure merging from repository
     if (!repository.isInitialized) {
       onRepositoryNotInitialized?.call();
-      return;
+      return null;
     }
 
     //Cannot merge from same branch
     if (otherBranch.branchName == branch.branchName) {
       onSameBranchMerge?.call();
-      return;
+      return null;
     }
 
     //Other branch data
     BranchTreeMetaData? otherBranchData = otherBranch.branchTreeMetaData;
     if (otherBranchData == null) {
       onNoOtherBranchMetaData?.call();
-      return;
+      return null;
     }
 
     //Other branch commits
-    List<CommitMetaData> otherBranchCommits = otherBranchData.sortedBranchCommitsFromLatest;
+    List<CommitTreeMetaData> otherBranchCommits = otherBranchData.sortedBranchCommitsFromLatest;
     if (otherBranchCommits.isEmpty) {
       onNoCommit?.call();
-      return;
+      return null;
     }
 
     //This branch data
-    BranchTreeMetaData? thisBranchData = branch.branchTreeMetaData;
+    //create new branch tree
+    BranchTreeMetaData thisBranchData = branch.branchTreeMetaData ?? BranchTreeMetaData(name: branch.branchName, commits: HashMap());
 
     //List of commits to merge into current branch
-    List<CommitMetaData> commitsToMerge = [];
-
-    if (thisBranchData != null) {
-      CommitMetaData? thisLatestBranchCommits = thisBranchData.latestBranchCommits;
-      for (CommitMetaData c in otherBranchCommits) {
-        //Stop when commits meet
-        if (c.sha == thisLatestBranchCommits?.sha) break;
-        commitsToMerge.add(c);
+    List<CommitTreeMetaData> commitsToMerge = [];
+    CommitTreeMetaData? thisLatestBranchCommits = thisBranchData.latestBranchCommits;
+    for (CommitTreeMetaData c in otherBranchCommits) {
+      //Locate the common ancestor i.e.
+      bool isMergeBase = c.sha == thisLatestBranchCommits?.sha;
+      if (isMergeBase) {
+        debugPrintToConsole(message: "Common ancestor is ${c.sha}");
+        break;
       }
-    } else {
-      commitsToMerge.addAll(otherBranchCommits);
-      await branch.createTreeMetaDataFile();
-    }
 
-    //The this branch data should be created at this point
-    assert(thisBranchData != null);
+      //add to merge
+      commitsToMerge.add(c);
+    }
 
     //Cannot merge when there are no commits to merge
     if (commitsToMerge.isEmpty) {
       onNoCommit?.call();
-      return;
+      return null;
     }
 
     //Start the actual merge
-    MergeMetaData mergeData = MergeMetaData(
-      fromBranchName: otherBranch.branchName,
-      commitsToMerge: {for (var c in commitsToMerge) c.sha: c},
-      mergedAt: DateTime.now(),
+    MergeCommitMetaData mergeData = saveCommitMergeData(
+      MergeCommitMetaData(
+        fromBranchName: otherBranch.branchName,
+        commitsToMerge: {for (var c in commitsToMerge) c.sha: c},
+        mergedAt: DateTime.now(),
+      ),
     );
 
-    saveMergeData(mergeData);
-
-    //Detect conflicts from latest commit
+    //Detect conflicts from latest commit (desired state to role model)
     commitsToMerge.sort((a, b) => -a.commitedAt.compareTo(b.commitedAt));
-    CommitMetaData latestCommit = commitsToMerge.first;
-
-    latestCommit.commitedObjects.values
-        .map(
-          (o) {
-            return o.fetchObject(repository);
-          },
-        )
+    CommitTreeMetaData latestCommit = commitsToMerge.first;
+    List<RepoObjects> latestCommitObjects = latestCommit.commitedObjects.values
+        .map((o) => o.fetchObject(repository))
         .where((o) => o != null)
         .map(
           (o) => RepoObjects(
@@ -163,211 +160,208 @@ extension BranchMerge on Merge {
             commitedAt: o.commitedAt,
             blob: o.blob,
           ),
-        );
+        )
+        .toList();
 
-    /*Commit otherCommit = Commit(
-      Sha1(commitMetaData.sha),
-      otherBranch,
-      commitMetaData.message,
-      {},
-      commitMetaData.commitedAt,
+    Map<String, RepoObjects> otherBranchObjectsMap = {
+      for (var o in latestCommitObjects) o.relativePathToRepository: o,
+    };
+
+    //Generate patches (otherCommit + thisWorkingDir = merge)
+    Directory workingDirectory = repository.workingDirectory;
+    Directory patchesDirectory = _generatePatches(
+      workingDirectory: workingDirectory,
+      otherBranchObjectsMap: otherBranchObjectsMap,
     );
-    List<File> otherCommitFiles = otherCommit.getCommitFiles(
-      onNoCommitMetaData: onNoCommitMetaData,
-      onNoCommitBranchMetaData: onNoCommitBranchMetaData,
-    ) ??
-        [];
 
-    //Get all files from this current working branch
-    Directory workingBranchDir = repository.workingDirectory;
+    //Apply patches generated above
+    List<File> mergedFiles = _applyPatches(
+      patchesDirectory: patchesDirectory,
+      workingDir: workingDirectory,
+    );
+
+    debugPrintToConsole(
+      message: "Deleting $mergeFilePath",
+    );
+
+    //Stage files for commit
+    StagingData stagingData = staging.saveStagingData(
+      StagingData(
+        stagedAt: DateTime.now(),
+        filesToBeStaged: mergedFiles.map((s) => s.path).toList(),
+      ),
+    );
+
+    return stagingData;
+  }
+
+  ///Generates temporary [Directory] with how the merge should look like
+  Directory _generatePatches({
+    required Directory workingDirectory,
+    required Map<String, RepoObjects> otherBranchObjectsMap,
+  }) {
+    Directory temporaryDirectory = Directory.systemTemp;
+    String patchDirectoryPath = join(temporaryDirectory.path, dirname(workingDirectory.path));
+    Directory patchDirectory = Directory(patchDirectoryPath);
+
     List<File> workingBranchFiles =
-    workingBranchDir.listSync(recursive: true).where((e) =>
-    e
-        .statSync()
-        .type == FileSystemEntityType.file).map((e) => File(e.path)).toList();
-
-    //Get other branch files map
-    String otherBranchPrefix = join(
-      otherBranch.branchDirectoryPath,
-      branchCommitFolder,
-      otherCommit.sha.hash,
-    );
-    Map<String, File> otherBranchFilesMap = {for (var f in otherCommitFiles) f.path.replaceAll(otherBranchPrefix, ""): f};
-
-    //Get this branch files map
-    String workingBranchPrefix = workingBranchDir.path;
-    Map<String, File> workingBranchFilesMap = {for (var f in workingBranchFiles) f.path.replaceAll(workingBranchPrefix, ""): f};
-
-    HashSet<String> filePaths = HashSet.of(otherBranchFilesMap.keys);
-
-    List<File> mergeResult = await _doMerge(
-      filePaths: filePaths,
-      workingBranchFilesMap: workingBranchFilesMap,
-      otherBranchFilesMap: otherBranchFilesMap,
-    );
-
-    await _addMergedFilesToWorkingDir(
-      otherBranchPath: otherBranchPrefix,
-      workingDirPath: workingBranchPrefix,
-      mergeResult: mergeResult,
-    );*/
-  }
-
-  Future<void> _addMergedFilesToWorkingDir({
-    required String otherBranchPath,
-    required String workingDirPath,
-    required List<File> mergeResult,
-  }) async {
-    debugPrintToConsole(
-      message: "Merging ${mergeResult.length} files to $workingDirPath",
-    );
-
-    for (File file in mergeResult) {
-      String path = file.path;
-      String prefixPath = path.startsWith(otherBranchPath) ? otherBranchPath : workingDirPath;
-      String newPath = file.path.replaceAll(prefixPath, workingDirPath);
-      file.copySync(newPath);
-
-      debugPrintToConsole(
-        message: "Copying to ${basename(newPath)} to $newPath",
-      );
-    }
+        workingDirectory.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).map((e) => File(e.path)).toList();
 
     debugPrintToConsole(
-      message: "Done merging ${mergeResult.length} files to $workingDirPath",
+      message: "Starting file comparison for ${workingBranchFiles.length} files",
     );
-  }
-
-  Future<List<File>> _doMerge({
-    required HashSet<String> filePaths,
-    required Map<String, File> workingBranchFilesMap,
-    required Map<String, File> otherBranchFilesMap,
-  }) async {
-    debugPrintToConsole(
-      message: "Starting file comparison for ${filePaths.length} files",
-    );
-
-    List<File> mergeResult = [];
 
     //Compare file by file
-    for (String key in filePaths) {
+    int mergeFileCount = 0;
+    for (File thisFile in workingBranchFiles) {
+      mergeFileCount++;
+      String thisFileName = basename(thisFile.path);
       bool conflict = false;
       // same -> Pick other
       // insert -> Fast Forward
       // delete -> pick mine
       // modify -> conflict [theirs] [mine]
-      File? otherFile = otherBranchFilesMap[key];
-      File? thisFile = workingBranchFilesMap[key];
-
+      String thisRelativePathToRepository = relativePathFromDir(directoryPath: workingDirectory.path, path: thisFile.path);
+      RepoObjects? otherFile = otherBranchObjectsMap[thisRelativePathToRepository];
       if (otherFile == null) {
         //Keep this
-        mergeResult.add(thisFile!);
+        String temporaryThisFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectoryPath);
+        File finalFile = thisFile.copySync(temporaryThisFilePath);
+
         debugPrintToConsole(
-          message: "Auto merging for ${basename(thisFile.path)}",
+          message: "Auto merging for ${basename(finalFile.path)}",
           color: CliColor.defaultColor,
         );
         continue;
-      } else if (thisFile == null) {
-        //Keep other
-        mergeResult.add(otherFile);
-        debugPrintToConsole(
-          message: "Auto merging for ${basename(otherFile.path)}",
-          color: CliColor.defaultColor,
-        );
-        continue;
-      } else {
-        //Compare line by line and write to file
-        List<String> linesToWrite = [];
-
-        List<String> otherLines = otherFile.readAsLinesSync();
-        int otherLength = otherLines.length;
-
-        List<String> thisLines = thisFile.readAsLinesSync();
-        int thisLength = thisLines.length;
-
-        int maxLines = max(otherLength, thisLength);
-        debugPrintToConsole(
-          message: "Checking $maxLines lines for $key",
-        );
-
-        lineLoop:
-        for (int line = 0; line < maxLines; line++) {
-          if (line > otherLength - 1) {
-            //out of bounds
-            //keep this line
-            linesToWrite.add(thisLines[line]);
-          } else if (line > thisLength - 1) {
-            //out of bounds
-            //keep other line
-            linesToWrite.add(otherLines[line]);
-          } else {
-            //Compare lines
-
-            String otherLine = otherLines[line];
-            String thisLine = thisLines[line];
-
-            //int diffScore = await levenshteinDistance(otherLine, thisLine);
-            int diffScore = otherLine.length.compareTo(thisLine.length);
-            debugPrintToConsole(
-              message: "Lines $line compares $diffScore",
-            );
-
-            if (diffScore == 0) {
-              //add either
-              linesToWrite.add(otherLine);
-              continue lineLoop;
-            }
-
-            //Merge conflict detected
-            conflict = true;
-
-            //include both
-            linesToWrite.add("$otherLine >> @@other@@");
-            linesToWrite.add("$thisLine >> @@this@@");
-          }
-        }
-
-        //Modify this file to show conflicts
-        if (conflict) {
-          thisFile.writeAsStringSync(
-            linesToWrite.join("\n"),
-            mode: FileMode.write,
-            flush: true,
-          );
-
-          debugPrintToConsole(
-            message: "CONFLICT for ${basename(thisFile.path)}",
-            color: CliColor.brightRed,
-            style: CliStyle.bold,
-          );
-        } else {
-          debugPrintToConsole(
-            message: "Auto merging for ${basename(otherFile.path)}",
-            color: CliColor.brightRed,
-            style: CliStyle.bold,
-          );
-        }
-
-        mergeResult.add(thisFile);
       }
+
+      //Compare line by line and write to file
+      List<String> linesToWrite = [];
+
+      String otherTempFilePath = fullPathFromDir(
+        directoryPath: temporaryDirectory.path,
+        relativePath: otherFile.relativePathToRepository,
+      );
+
+      File otherTempFile = File(otherTempFilePath)..writeAsBytesSync(otherFile.blob);
+      List<String> otherLines = otherTempFile.readAsLinesSync();
+      int otherLength = otherLines.length;
+
+      List<String> thisLines = thisFile.readAsLinesSync();
+      int thisLength = thisLines.length;
+
+      int maxLines = max(otherLength, thisLength);
+      debugPrintToConsole(
+        message: "Checking $maxLines lines for $thisFileName",
+      );
+
+      lineLoop:
+      for (int line = 0; line < maxLines; line++) {
+        if (line > otherLength - 1) {
+          //out of bounds
+          //keep this line
+          linesToWrite.add(thisLines[line]);
+        } else if (line > thisLength - 1) {
+          //out of bounds
+          //keep other line
+          linesToWrite.add(otherLines[line]);
+        } else {
+          //Compare lines
+
+          String otherLine = otherLines[line];
+          String thisLine = thisLines[line];
+
+          //int diffScore = await levenshteinDistance(otherLine, thisLine);
+          bool divergence = otherLine == thisLine;
+          debugPrintToConsole(
+            message: "Lines $line has divergence $divergence",
+          );
+
+          if (!divergence) {
+            //add either
+            linesToWrite.add(otherLine);
+            continue lineLoop;
+          }
+
+          //Merge conflict detected
+          conflict = true;
+
+          //include both
+          linesToWrite.add("$otherLine >> @@other@@");
+          linesToWrite.add("$thisLine >> @@this@@");
+        }
+      }
+
+      if (!conflict) {
+        debugPrintToConsole(
+          message: "Auto merging for $thisFileName",
+          color: CliColor.cyan,
+          style: CliStyle.bold,
+        );
+
+        String temporaryNewFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectoryPath);
+        thisFile.copySync(temporaryNewFilePath);
+        continue;
+      }
+
+      //Modify this file to show conflicts
+      String temporaryNewFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectoryPath);
+      File(temporaryNewFilePath).writeAsStringSync(
+        linesToWrite.join("\n"),
+        mode: FileMode.write,
+        flush: true,
+      );
+
+      debugPrintToConsole(
+        message: "CONFLICT for $thisFileName",
+        color: CliColor.brightRed,
+        style: CliStyle.bold,
+      );
     }
 
     debugPrintToConsole(
-      message: "Completed file comparison for ${mergeResult.length} files",
+      message: "Completed file comparison for $mergeFileCount files",
     );
 
-    return mergeResult;
+    return patchDirectory;
+  }
+
+  /// Moves patch files stored in [patchesDirectory] to [workingDir]
+  /// and returns all [File]s merged into working dir
+  List<File> _applyPatches({
+    required Directory patchesDirectory,
+    required Directory workingDir,
+  }) {
+    debugPrintToConsole(
+      message: "Merging files from $patchesDirectory to $workingDir",
+      newLine: true,
+    );
+
+    List<File> mergedFiles = [];
+    patchesDirectory.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).forEach((file) {
+      String relativePath = relativePathFromDir(directoryPath: patchesDirectory.path, path: file.path);
+      String newPath = fullPathFromDir(directoryPath: workingDir.path, relativePath: relativePath);
+      File mergedFile = File(file.path).copySync(newPath);
+      mergedFiles.add(mergedFile);
+      debugPrintToConsole(message: "Copying to ${basename(file.path)} to $newPath");
+    });
+
+    debugPrintToConsole(
+      message: "Done merging ${mergedFiles.length} files to $workingDir",
+    );
+
+    return mergedFiles;
   }
 }
 
 ///MergeMetaData
 @freezed
-class MergeMetaData with _$MergeMetaData {
-  factory MergeMetaData({
+class MergeCommitMetaData with _$MergeCommitMetaData {
+  factory MergeCommitMetaData({
     required String fromBranchName,
-    required Map<String, CommitMetaData> commitsToMerge,
+    required Map<String, CommitTreeMetaData> commitsToMerge,
     required DateTime mergedAt,
-  }) = _MergeMetaData;
+  }) = _MergeCommitMetaData;
 
-  factory MergeMetaData.fromJson(Map<String, Object?> json) => _$MergeMetaDataFromJson(json);
+  factory MergeCommitMetaData.fromJson(Map<String, Object?> json) => _$MergeCommitMetaDataFromJson(json);
 }

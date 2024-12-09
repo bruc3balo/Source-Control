@@ -55,16 +55,15 @@ extension BranchStatus on Branch {
 }
 
 extension BranchCreation on Branch {
-
   ///Create a new [Branch] on a local [Repository]
-  Future<void> createBranch({
+  void createBranch({
     bool Function(String name)? isValidBranchName,
     Function(String name)? onInvalidBranchName,
     Function()? onBranchAlreadyExists,
     Function()? onRepositoryNotInitialized,
     Function(Directory)? onBranchCreated,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       if (!repository.isInitialized) {
         onRepositoryNotInitialized?.call();
@@ -87,7 +86,7 @@ extension BranchCreation on Branch {
         recursive: true,
       );
 
-      createTreeMetaDataFile();
+      saveBranchTreeMetaData(BranchTreeMetaData(name: branchName, commits: HashMap()));
 
       onBranchCreated?.call(branchDirectory);
     } on FileSystemException catch (e, trace) {
@@ -97,7 +96,7 @@ extension BranchCreation on Branch {
 
   ///Checkout to new [Branch] on a local [Repository]
   ///If the [Branch] doesn't exist, it will create a new [Branch] and copy the [File]s from the exising branch to the current one
-  Future<void> checkoutToBranch({
+  void checkoutToBranch({
     String? commitSha,
     Function()? onNoCommitFound,
     Function()? onSameCommit,
@@ -105,10 +104,10 @@ extension BranchCreation on Branch {
     Function()? onStateDoesntExists,
     Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       if (!branchTreeMetaDataExists) {
-        await createBranch(
+        createBranch(
           isValidBranchName: isValidBranchName,
           onFileSystemException: (e) => debugPrintToConsole(
             message: e.message,
@@ -128,7 +127,6 @@ extension BranchCreation on Branch {
           ),
         );
       }
-
       State state = State(repository);
 
       StateData? stateData = state.stateInfo;
@@ -149,7 +147,7 @@ extension BranchCreation on Branch {
       updatedStateData = updatedStateData.copyWith(currentBranch: branchName);
 
       //Change commit
-      CommitMetaData? commitMetaData = commitSha != null ? branchData.commits[commitSha.trim()] : branchData.latestBranchCommits;
+      CommitTreeMetaData? commitMetaData = commitSha != null ? branchData.commits[commitSha.trim()] : branchData.latestBranchCommits;
       if (commitSha != null && commitMetaData == null) {
         onNoCommitFound?.call();
         return;
@@ -170,14 +168,11 @@ extension BranchCreation on Branch {
         );
       }
 
-      await state.saveStateData(
+      state.saveStateData(
         stateData: updatedStateData,
         onFileSystemException: (e) => debugPrintToConsole(
           message: e.message,
           color: CliColor.red,
-        ),
-        onRepositoryNotInitialized: () => debugPrintToConsole(
-          message: "Repository not initialized",
         ),
         onSuccessfullySaved: () => debugPrintToConsole(
           message: "State saved",
@@ -189,8 +184,6 @@ extension BranchCreation on Branch {
     }
   }
 
-  
-  
   void _copyFilesToWorkingDir({
     required List<RepoObjectsData> objects,
     required Directory workingDir,
@@ -200,8 +193,11 @@ extension BranchCreation on Branch {
       RepoObjects? repoObject = o.fetchObject(repository);
       if (repoObject == null) continue;
 
-      String fileDestinationPath = join(workingDir.path, o.filePathRelativeToRepository.replaceFirst(Platform.pathSeparator, ""));
-      debugPrintToConsole(message: "File is at destination ${fileDestinationPath}");
+      String fileDestinationPath = fullPathFromDir(
+        relativePath: o.filePathRelativeToRepository,
+        directoryPath: workingDir.path,
+      );
+      debugPrintToConsole(message: "File is at destination $fileDestinationPath");
 
       File(fileDestinationPath).writeAsBytesSync(
         repoObject.blob,
@@ -213,14 +209,14 @@ extension BranchCreation on Branch {
     }
   }
 
-  ///Delete a [Branch] from a local [Repository] 
+  ///Delete a [Branch] from a local [Repository]
   ///It doesn't delete the [RepoObjects]
-  Future<void> deleteBranch({
+  void deleteBranch({
     Function()? onBranchDoesntExist,
     Function()? onBranchDeleted,
     Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       if (!repository.isInitialized) {
         onRepositoryNotInitialized?.call();
@@ -241,7 +237,6 @@ extension BranchCreation on Branch {
 }
 
 extension BranchCommons on Branch {
-  
   ///Path of the branch with the [branchName] in a [Repository]
   String get branchDirectoryPath => join(repository.repositoryDirectory.path, branchFolderName, branchName);
 
@@ -253,7 +248,6 @@ extension BranchCommons on Branch {
 }
 
 extension BranchTreeMetaDataStorage on Branch {
-  
   ///Path to [BranchTreeMetaData] file in a [Branch]
   String get branchTreeFilePath => join(branchDirectoryPath, branchTreeMetaDataFileName);
 
@@ -276,47 +270,25 @@ extension BranchTreeMetaDataStorage on Branch {
   }
 
   /// Creates a [BranchTreeMetaData] only if it doesn't exist
-  /// If it exists it will call [onDuplicateFile] and when created 
-  Future<void> createTreeMetaDataFile({
-    Function()? onDuplicateFile,
-    Function()? onCreateFile,
-  }) async {
-    if (branchTreeMetaDataExists) {
-      onDuplicateFile?.call();
-      return;
-    }
-
-    managerFile.createSync(recursive: true);
-
+  ///Update a [managerFile] with the latest [metaData]
+  BranchTreeMetaData saveBranchTreeMetaData(BranchTreeMetaData metaData) {
     managerFile.writeAsStringSync(
-      jsonEncode(BranchTreeMetaData(name: branchName, commits: HashMap())),
+      jsonEncode(metaData.toJson()),
       mode: FileMode.writeOnly,
       flush: true,
     );
-
-    onCreateFile?.call();
-  }
-
-  ///Update a [managerFile] with the latest [metaData]
-  void saveBranchTreeMetaData(BranchTreeMetaData metaData) {
-    if (!branchTreeMetaDataExists) createTreeMetaDataFile();
-
-    managerFile.writeAsStringSync(
-      jsonEncode(metaData.toJson()),
-      flush: true,
-    );
+    return metaData;
   }
 }
 
 extension BranchManager on Branch {
-  
   ///Adds a [commit] to a [managerFile] and performs
-  Future<void> addCommit({
+  void addCommit({
     required Commit commit,
     Function()? onMissingManager,
-    Function(CommitMetaData)? onCommitCreated,
+    Function(CommitTreeMetaData)? onCommitCreated,
     Function()? onNoMetaData,
-  }) async {
+  }) {
     if (!branchTreeMetaDataExists) {
       onMissingManager?.call();
       return;
@@ -328,14 +300,15 @@ extension BranchManager on Branch {
       return;
     }
 
-    CommitMetaData commitMetaData = CommitMetaData(
+    CommitTreeMetaData commitMetaData = CommitTreeMetaData(
+      originalBranch: branchName,
       sha: commit.sha.hash,
       message: commit.message,
       commitedObjects: commit.objects,
       commitedAt: commit.commitedAt,
     );
 
-    final mutableCommits = Map<String, CommitMetaData>.from(metaData.commits);
+    final mutableCommits = Map<String, CommitTreeMetaData>.from(metaData.commits);
     mutableCommits.putIfAbsent(commitMetaData.sha, () => commitMetaData);
     metaData = metaData.copyWith(commits: mutableCommits);
 
@@ -345,37 +318,36 @@ extension BranchManager on Branch {
   }
 }
 
-
-
-///BranchTreeMetaData
+/// BranchTreeMetaData
 @freezed
 class BranchTreeMetaData with _$BranchTreeMetaData {
   factory BranchTreeMetaData({
     required String name,
-    required Map<String, CommitMetaData> commits,
+    required Map<String, CommitTreeMetaData> commits,
   }) = _BranchMetaData;
 
   factory BranchTreeMetaData.fromJson(Map<String, Object?> json) => _$BranchTreeMetaDataFromJson(json);
 }
 
 extension BranchMetaDataX on BranchTreeMetaData {
-  List<CommitMetaData> get sortedBranchCommitsFromLatest => commits.values.toList()
+  List<CommitTreeMetaData> get sortedBranchCommitsFromLatest => commits.values.toList()
     ..sort(
       (a, b) => -a.commitedAt.compareTo(b.commitedAt),
     );
 
-  CommitMetaData? get latestBranchCommits => sortedBranchCommitsFromLatest.firstOrNull;
+  CommitTreeMetaData? get latestBranchCommits => sortedBranchCommitsFromLatest.firstOrNull;
 }
 
-///CommitMetaData
+/// CommitMetaData
 @freezed
-class CommitMetaData with _$CommitMetaData {
-  factory CommitMetaData({
+class CommitTreeMetaData with _$CommitTreeMetaData {
+  factory CommitTreeMetaData({
+    required String originalBranch,
     required String sha,
     required String message,
     required Map<String, RepoObjectsData> commitedObjects,
     required DateTime commitedAt,
-  }) = _CommitMetaData;
+  }) = _CommitTreeMetaData;
 
-  factory CommitMetaData.fromJson(Map<String, Object?> json) => _$CommitMetaDataFromJson(json);
+  factory CommitTreeMetaData.fromJson(Map<String, Object?> json) => _$CommitTreeMetaDataFromJson(json);
 }

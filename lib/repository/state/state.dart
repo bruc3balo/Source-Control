@@ -20,13 +20,8 @@ class State {
   State(this.repository);
 }
 
-extension StateCommons on State {}
-
 extension StateStorage on State {
-  String get stateFilePath => join(
-        repository.repositoryDirectory.path,
-        stateFileName,
-      );
+  String get stateFilePath => join(repository.repositoryDirectory.path, stateFileName);
 
   File get stateFile => File(stateFilePath);
 
@@ -43,17 +38,14 @@ extension StateStorage on State {
     return StateData.fromJson(stateInfo);
   }
 
-  Future<void> saveStateData({
+  /// This function is idempotent
+  StateData saveStateData({
     required StateData stateData,
     Function()? onSuccessfullySaved,
-    Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
-      if (!repository.isInitialized) {
-        onRepositoryNotInitialized?.call();
-        return;
-      }
+
 
       if (!exists) {
         stateFile.createSync(recursive: true, exclusive: true);
@@ -65,15 +57,17 @@ extension StateStorage on State {
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
     }
+
+    return stateData;
   }
 
-  Future<void> createStateFile({
+  void createStateFile({
     required Branch currentBranch,
     Function()? onAlreadyExists,
     Function()? onSuccessfullyCreated,
     Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       if (!repository.isInitialized) {
         onRepositoryNotInitialized?.call();
@@ -85,7 +79,7 @@ extension StateStorage on State {
         return;
       }
 
-      await stateFile.create(recursive: true, exclusive: true);
+      stateFile.createSync(recursive: true, exclusive: true);
 
       StateData data = StateData(currentBranch: currentBranch.branchName);
 
@@ -98,12 +92,12 @@ extension StateStorage on State {
     }
   }
 
-  Future<void> deleteStateFile({
+  void deleteStateFile({
     Function()? onDoesntExists,
     Function()? onSuccessfullyDeleted,
     Function()? onRepositoryNotInitialized,
     Function(FileSystemException)? onFileSystemException,
-  }) async {
+  }) {
     try {
       if (!repository.isInitialized) {
         onRepositoryNotInitialized?.call();
@@ -115,7 +109,7 @@ extension StateStorage on State {
         return;
       }
 
-      await stateFile.delete(recursive: true);
+      stateFile.deleteSync(recursive: true);
       onSuccessfullyDeleted?.call();
     } on FileSystemException catch (e, trace) {
       onFileSystemException?.call(e);
@@ -152,6 +146,5 @@ class StateData with _$StateData {
     String? currentCommit,
   }) = _StateData;
 
-  factory StateData.fromJson(Map<String, Object?> json) =>
-      _$StateDataFromJson(json);
+  factory StateData.fromJson(Map<String, Object?> json) => _$StateDataFromJson(json);
 }
