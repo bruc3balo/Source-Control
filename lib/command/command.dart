@@ -718,7 +718,7 @@ class PushBranchCommitCommand extends UndoableCommand {
       localRepository: localRepository,
       onNoCommits: () => debugPrintToConsole(message: "Nothing to commit"),
       onRemoteUrlNotSupported: () => debugPrintToConsole(message: "Unsupported remote"),
-      onSuccessfulPush: () => printToConsole(message: "Pushed successfully")
+      onSuccessfulPush: () => printToConsole(message: "Pushed successfully"),
     );
   }
 
@@ -734,7 +734,7 @@ class PullBranchCommitCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await remoteBranch.pull(localRepository: localRepository);
+    await remoteBranch.pull(localRepository: localRepository, onSuccessfulPull: () => debugPrintToConsole(message: "Pulled success"));
   }
 
   @override

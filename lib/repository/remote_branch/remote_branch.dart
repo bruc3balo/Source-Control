@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:balo/command/command.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/ignore.dart';
@@ -6,6 +8,7 @@ import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/variables.dart';
+import 'package:path/path.dart';
 
 class RemoteBranch {
   final Remote remote;
@@ -15,6 +18,8 @@ class RemoteBranch {
 }
 
 extension RemoteBranchCommon on RemoteBranch {
+
+  String get workingDirName => basenameWithoutExtension(remote.url);
 
   Future<void> pull({
     required Repository localRepository,
@@ -44,7 +49,7 @@ extension RemoteBranchCommon on RemoteBranch {
     //Get commits needed to pull
     List<CommitMetaData> commitsToPull = [];
     if (localTreeMetaData != null && localLatestCommit != null) {
-      for (int i = remoteCommits.length; i >= 0; i--) {
+      for (int i = remoteCommits.length - 1; i >= 0; i--) {
         CommitMetaData c = remoteCommits[i];
         commitsToPull.add(c);
         if (c.sha == localLatestCommit.sha) break;
@@ -80,6 +85,8 @@ extension RemoteBranchCommon on RemoteBranch {
     //Write remote objects
     for (var e in objectsToBePulledData) {
       e.store();
+      File(join(localRepository.workingDirectory.path, e.relativePathToRepository.substring(1, e.relativePathToRepository.length - 1)))
+          .writeAsBytesSync(e.blob, flush: true, mode: FileMode.writeOnly);
     }
 
     onSuccessfulPull?.call();
@@ -153,7 +160,12 @@ extension RemoteBranchCommon on RemoteBranch {
     //Copy objects
     for (var e in objectsToDownload) {
       e.store();
+      File(join(localRepository.workingDirectory.path, e.relativePathToRepository.substring(1, e.relativePathToRepository.length - 1)))
+          .writeAsBytesSync(e.blob, flush: true, mode: FileMode.writeOnly);
     }
+
+    //Add remote
+    remote.addRemote();
 
     onSuccessfulPush?.call();
   }

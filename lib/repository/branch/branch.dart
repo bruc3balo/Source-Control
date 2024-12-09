@@ -263,6 +263,8 @@ extension BranchTreeMetaDataStorage on Branch {
       return;
     }
 
+    managerFile.createSync(recursive: true);
+
     managerFile.writeAsStringSync(
       jsonEncode(BranchTreeMetaData(name: branchName, commits: HashMap())),
       mode: FileMode.writeOnly,

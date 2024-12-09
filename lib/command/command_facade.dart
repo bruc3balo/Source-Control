@@ -11,6 +11,7 @@ import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
+import 'package:path/path.dart';
 
 abstract class CommandFacade {
   List<UndoableCommand> initialize();
@@ -378,9 +379,10 @@ class CloneRepositoryInitializer implements CommandFacade {
 
   @override
   List<UndoableCommand> initialize() {
-    Repository localRepository = Repository(Directory.current.path);
+    String remoteName = basenameWithoutExtension(path);
+    Repository localRepository = Repository(join(Directory.current.path, remoteName));
     Repository remoteRepository = Repository(path);
-    Remote remote = Remote(remoteRepository, branchName, path);
+    Remote remote = Remote(remoteRepository, defaultRemote, path);
     RemoteBranch remoteBranch = RemoteBranch(Branch(branchName, remoteRepository), remote);
     return [
       CloneBranchCommitCommand(localRepository, remoteBranch),
