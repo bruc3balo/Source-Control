@@ -7,6 +7,7 @@ import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 import 'package:path/path.dart';
 
+///Represents an ignore file in memory
 class Ignore {
   final Repository repository;
 
@@ -14,67 +15,20 @@ class Ignore {
 }
 
 extension IgnoreCommons on Ignore {
-  //TODO: Move ignore file to root dir
-  File get ignoreFile => File(
-        join(
-          repository.repositoryDirectory.path,
-          repositoryIgnoreFileName,
-        ),
-      );
+  /// Path to [ignoreFile]
+  String get ignoreFilePath => join(repository.repositoryDirectory.path, repositoryIgnoreFileName);
 
+  /// Actual file for the [Ignore]
+  File get ignoreFile => File(ignoreFilePath);
+
+  /// Extracts patterns to ignore from [ignoreFile]
   List<String> get patternsToIgnore =>
       ignoreFile.existsSync() ? ignoreFile.readAsLinesSync().where((p) => p.isNotEmpty && !p.startsWith("#")).toList() : [];
 }
 
-extension IgnoreActions on Ignore{
-  void createIgnoreFile({
-    Function()? onAlreadyExists,
-    Function()? onSuccessfullyCreated,
-    Function()? onRepositoryNotInitialized,
-    Function(FileSystemException)? onFileSystemException,
-  }) {
-    try {
-      if (!repository.isInitialized) {
-        onRepositoryNotInitialized?.call();
-        return;
-      }
+extension IgnoreStorage on Ignore {
 
-      if (ignoreFile.existsSync()) {
-        onAlreadyExists?.call();
-        return;
-      }
-
-      ignoreFile.createSync(recursive: true, exclusive: true);
-      onSuccessfullyCreated?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
-    }
-  }
-
-  void deleteIgnoreFile({
-    Function()? onDoesntExists,
-    Function()? onSuccessfullyDeleted,
-    Function()? onRepositoryNotInitialized,
-    Function(FileSystemException)? onFileSystemException,
-  })  {
-    try {
-      if (!repository.isInitialized) {
-        onRepositoryNotInitialized?.call();
-        return;
-      }
-
-      if (!ignoreFile.existsSync()) {
-        onDoesntExists?.call();
-        return;
-      }
-
-      ignoreFile.deleteSync(recursive: true);
-      onSuccessfullyDeleted?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
-    }
-  }
-
+  /// Adds a [pattern] to an [ignoreFile]
   void addIgnore({
     required String pattern,
     Function()? onAlreadyPresent,
@@ -93,6 +47,7 @@ extension IgnoreActions on Ignore{
       ignoreFile.writeAsStringSync(
         ignores.join(Platform.lineTerminator),
         flush: true,
+        mode: FileMode.writeOnly,
       );
 
       onAdded?.call();
@@ -101,6 +56,7 @@ extension IgnoreActions on Ignore{
     }
   }
 
+  /// Remove a [pattern] from the [ignoreFile]
   void removeIgnore({
     required String pattern,
     Function()? onNotFoundPresent,
@@ -119,6 +75,7 @@ extension IgnoreActions on Ignore{
       ignoreFile.writeAsStringSync(
         ignores.join(Platform.lineTerminator),
         flush: true,
+        mode: FileMode.writeOnly,
       );
 
       onRemoved?.call();
@@ -126,6 +83,50 @@ extension IgnoreActions on Ignore{
       onFileSystemException?.call(e);
     }
   }
+}
+
+extension IgnoreActions on Ignore {
+
+  /// Creates an [ignoreFile]
+  void createIgnoreFile({
+    Function()? onAlreadyExists,
+    Function()? onSuccessfullyCreated,
+    Function()? onRepositoryNotInitialized,
+  }) {
+    if (!repository.isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return;
+    }
+
+    if (ignoreFile.existsSync()) {
+      onAlreadyExists?.call();
+      return;
+    }
+
+    ignoreFile.createSync(recursive: true, exclusive: true);
+    onSuccessfullyCreated?.call();
+  }
+
+  /// Deletes an [ignoreFile]
+  void deleteIgnoreFile({
+    Function()? onDoesntExists,
+    Function()? onSuccessfullyDeleted,
+    Function()? onRepositoryNotInitialized,
+  }) {
+    if (!repository.isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return;
+    }
+
+    if (!ignoreFile.existsSync()) {
+      onDoesntExists?.call();
+      return;
+    }
+
+    ignoreFile.deleteSync(recursive: true);
+    onSuccessfullyDeleted?.call();
+  }
+
 }
 
 ///Ignore patterns
@@ -146,6 +147,20 @@ class PatternExamples {
     required this.passInputPatterns,
     required this.failInputPatterns,
   });
+
+  void test() {
+    IgnorePatternRules rule = IgnorePatternRules.detectRule(testPattern);
+
+    for(String inputPattern in passInputPatterns) {
+      bool pass = rule.patternMatches(testPattern: testPattern, inputPattern: inputPattern);
+      assert(pass);
+    }
+
+    for(String inputPattern in failInputPatterns) {
+      bool pass = rule.patternMatches(testPattern: testPattern, inputPattern: inputPattern);
+      assert(!pass);
+    }
+  }
 }
 
 enum IgnorePatternRules {
@@ -241,12 +256,13 @@ extension IgnorePatternRulesExaluator on IgnorePatternRules {
           ),
       };
 
+  ///Checks if [testPattern] matches an [inputPattern]
+  ///[testPattern] may for example be a [pattern]
   bool patternMatches({
     required String testPattern,
     required String inputPattern,
   }) {
     // Simple match check for rule patterns like "*", "?", "**", etc.
-
     switch (this) {
       case IgnorePatternRules.suffix:
         String parsedPattern = testPattern.replaceFirst(pattern, "");
@@ -270,17 +286,9 @@ extension IgnorePatternRulesExaluator on IgnorePatternRules {
         return inputPattern.contains(parsedPattern);
 
       case IgnorePatternRules.pathFromRoot:
-
         return inputPattern.startsWith(testPattern);
       case IgnorePatternRules.exactMatch:
         return testPattern == inputPattern;
     }
   }
-
-  /// Convert patterns to valid regex
-  // "*" -> ".*"
-  // "?" -> "."
-  // "**" -> ".*" (handles nested directories)
-  // "/" -> "/" (directly uses slash for path match)
-  String get regex => filePatternToRegex(pattern);
 }

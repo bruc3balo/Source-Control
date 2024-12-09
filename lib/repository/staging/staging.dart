@@ -20,7 +20,7 @@ part 'staging.freezed.dart';
 
 part 'staging.g.dart';
 
-///Pre-[Commit] area in a [Branch] with files ready to be commited
+///Pre-[Commit] area in a [Branch] with files ready to be commited in memory
 class Staging {
   final Branch branch;
 
@@ -28,6 +28,8 @@ class Staging {
 }
 
 extension StagingActions on Staging {
+  ///Commit staged files in [stagingFile] with a commit [message]
+  ///If a [Merge] is pending, it will be included in the [Commit]
   void commitStagedFiles({
     required String message,
     Function()? onNoStagingData,
@@ -43,7 +45,7 @@ extension StagingActions on Staging {
 
     List<File> filesToBeStaged = data.filesToBeStaged.map((e) => File(e)).toList();
     Map<String, RepoObjectsData> repoObjects = {
-      for (var o in filesToBeStaged.map((e) => RepoObjects.createFromFile(localRepository, e).store())) o.sha: o,
+      for (var o in filesToBeStaged.map((e) => RepoObjects.createFromFile(localRepository, e).writeRepoObject())) o.sha: o,
     };
 
     //If has pending merge, add previous commits
@@ -68,7 +70,7 @@ extension StagingActions on Staging {
 
     //Save Commit
     DateTime commitedAt = DateTime.now();
-    Sha1 sha1 = createBranchSha(
+    Sha1 sha1 = createCommitSha(
       branchName: branch.branchName,
       message: message,
       noOfObjects: repoObjects.length,
@@ -82,100 +84,81 @@ extension StagingActions on Staging {
 
     //Point to latest commit
     State state = State(repository);
-    StateData? stateData = state.stateInfo;
-    if (stateData == null) {
-      stateData = StateData(currentBranch: branch.branchName, currentCommit: commit.sha.hash);
-    } else {
-      stateData = stateData.copyWith(currentCommit: commit.sha.hash);
-    }
-
-    state.saveStateData(stateData: stateData);
+    state.saveStateData(
+      stateData: StateData(
+        currentBranch: branch.branchName,
+        currentCommit: commit.sha.hash,
+      ),
+    );
   }
 
+  ///Stages files to be [Commit]ed into a [Branch] that match the [pattern]
   void stageFiles({
     required String pattern,
-    Function()? onUninitializedRepository,
-    Function(FileSystemException)? onFileSystemException,
   }) {
-    try {
-      if (!repository.isInitialized) {
-        onUninitializedRepository?.call();
-        return;
-      }
+    //Ignore staging these files
+    List<String> patternsToIgnore = ignore.patternsToIgnore;
+    debugPrintToConsole(
+      message: "Ignoring ${patternsToIgnore.join(" ")}",
+    );
 
-      //Ignore staging these files
-      Ignore i = ignore;
-      List<String> patternsToIgnore = ignore.patternsToIgnore;
-      debugPrintToConsole(
-        message: "Ignoring ${patternsToIgnore.join(" ")}",
-      );
+    //List files for staging
+    String repositoryParent = repository.workingDirectory.path;
+    List<FileSystemEntity> filesToBeStaged = repository.workingDirectory
+        .listSync(recursive: true, followLinks: false)
 
-      //List files for staging
-      String repositoryParent = repository.workingDirectory.path;
-      List<FileSystemEntity> filesToBeStaged = repository.workingDirectory
-          .listSync(recursive: true, followLinks: false)
+        //Files only
+        .where((f) => FileSystemEntityType.file == f.statSync().type)
 
-          //Files only
-          .where((f) => FileSystemEntityType.file == f.statSync().type)
+        //To add
+        .where((f) => shouldAddPath(relativePathFromDir(path: f.path, directoryPath: repositoryParent), pattern: pattern))
 
-          //To add
-          .where((f) => shouldAddPath(relativePathFromDir(path: f.path, directoryPath: repositoryParent), pattern: pattern))
+        //Ignore
+        .where((f) => !shouldIgnorePath(relativePathFromDir(path: f.path, directoryPath: repositoryParent), patternsToIgnore))
+        .toList();
 
-          //Ignore
-          .where((f) => !shouldIgnorePath(relativePathFromDir(path: f.path, directoryPath: repositoryParent), patternsToIgnore))
-          .toList();
+    StagingData data = StagingData(
+      stagedAt: DateTime.now(),
+      filesToBeStaged: filesToBeStaged.map((f) => f.path).toList(),
+    );
 
-      //Clear previous staging
-      if (stagingFile.existsSync()) {
-        stagingFile.deleteSync(recursive: true);
-        stagingFile.createSync(recursive: true);
-      }
-
-      //Fresh file
-      StagingData data = StagingData(
-        stagedAt: DateTime.now(),
-        filesToBeStaged: filesToBeStaged.map((f) => f.path).toList(),
-      );
-
-      //Write staging info
-      stagingFile.writeAsStringSync(jsonEncode(data), flush: true);
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
-    }
+    //Write staging info
+    stagingFile.writeAsStringSync(
+      jsonEncode(data),
+      flush: true,
+      mode: FileMode.writeOnly,
+    );
   }
 
+
+  ///Deletes data from [stagingFile]
   void unstageFiles({
-    Function()? onUninitializedRepository,
     Function()? onStagingFileDoesntExist,
     Function(FileSystemException)? onFileSystemException,
   }) {
-    try {
-      if (!repository.isInitialized) {
-        onUninitializedRepository?.call();
-        return;
-      }
-
-      if (!stagingFile.existsSync()) {
-        onStagingFileDoesntExist?.call();
-        return;
-      }
-
-      deleteStagingData();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
+    if (!stagingFile.existsSync()) {
+      onStagingFileDoesntExist?.call();
+      return;
     }
+
+    deleteStagingData();
   }
 }
 
 extension StagingStorage on Staging {
+
+  ///Path of [stagingFile]
   String get stagingFilePath => join(branch.branchDirectory.path, branchStage);
 
-  bool get isStaged => stagingFile.existsSync();
+  ///Checks if files have been staged for a [Commit]
+  bool get hasStagedFiles => stagingFile.existsSync();
 
+  ///Actual [File] that has [stagingData]
   File get stagingFile => File(stagingFilePath);
 
+  ///Data containing files to be staged
   StagingData? get stagingData {
-    if (!isStaged) return null;
+    if (!hasStagedFiles) return null;
 
     String fileData = stagingFile.readAsStringSync();
     if (fileData.isEmpty) return null;
@@ -184,6 +167,7 @@ extension StagingStorage on Staging {
     return StagingData.fromJson(info);
   }
 
+  ///Saved [data] to [stagingFile]
   StagingData saveStagingData(StagingData data) {
     stagingFile.writeAsStringSync(
       jsonEncode(data),
@@ -193,14 +177,16 @@ extension StagingStorage on Staging {
     return data;
   }
 
-  void deleteStagingData() {
-    stagingFile.deleteSync();
-  }
+  ///Removes [stagingFile]
+  void deleteStagingData() => stagingFile.deleteSync();
 }
 
 extension StagingCommons on Staging {
+
+  ///Get [Repository] associated with [stagingFile]
   Repository get repository => branch.repository;
 
+  ///Get [Ignore] associated with [repository]
   Ignore get ignore => repository.ignore;
 }
 
@@ -224,7 +210,7 @@ extension StagingIgnore on Staging {
         ),
       IgnorePatternRules.single => rule.patternMatches(
           testPattern: pattern,
-          inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
+          inputPattern: stripBeginningPathSeparatorPath(path),
         ),
       IgnorePatternRules.contains => rule.patternMatches(
           testPattern: pattern,
@@ -232,7 +218,7 @@ extension StagingIgnore on Staging {
         ),
       IgnorePatternRules.exactMatch => rule.patternMatches(
           testPattern: pattern,
-          inputPattern: path.replaceFirst(Platform.pathSeparator, ""),
+          inputPattern: stripBeginningPathSeparatorPath(path),
         ),
     };
 
@@ -260,7 +246,7 @@ extension StagingIgnore on Staging {
           ),
         IgnorePatternRules.single => rule.patternMatches(
             testPattern: ignorePattern,
-            inputPattern: path.startsWith(Platform.pathSeparator) ? path.replaceFirst(Platform.pathSeparator, "") : path,
+            inputPattern: stripBeginningPathSeparatorPath(path),
           ),
         IgnorePatternRules.contains => rule.patternMatches(
             testPattern: ignorePattern,
@@ -268,7 +254,7 @@ extension StagingIgnore on Staging {
           ),
         IgnorePatternRules.exactMatch => rule.patternMatches(
             testPattern: ignorePattern,
-            inputPattern: path.startsWith(Platform.pathSeparator) ? path.replaceFirst(Platform.pathSeparator, "") : path,
+            inputPattern: stripBeginningPathSeparatorPath(path),
           ),
       };
 
@@ -283,6 +269,8 @@ extension StagingIgnore on Staging {
   }
 }
 
+
+///Entity to store [Staging] data
 @freezed
 class StagingData with _$StagingData {
   factory StagingData({

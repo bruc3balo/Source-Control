@@ -5,6 +5,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:balo/repository/branch/branch.dart';
+import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
@@ -20,6 +21,7 @@ part 'merge.freezed.dart';
 
 part 'merge.g.dart';
 
+///Represents a [Commit] merge in memory
 class Merge {
   final Repository repository;
   final Branch branch;
@@ -58,6 +60,7 @@ extension MergeStorage on Merge {
     return mergeData;
   }
 
+  ///Deletes a [mergeFile]
   void deleteCommitMergeData() => mergeFile.deleteSync();
 }
 
@@ -75,7 +78,7 @@ extension BranchMerge on Merge {
     Function()? onNoCommitMetaData,
   }) async {
     Staging staging = branch.staging;
-    if (staging.isStaged) {
+    if (staging.hasStagedFiles) {
       onPendingCommit?.call();
       return null;
     }
@@ -243,7 +246,12 @@ extension BranchMerge on Merge {
         relativePath: otherFile.relativePathToRepository,
       );
 
-      File otherTempFile = File(otherTempFilePath)..writeAsBytesSync(otherFile.blob);
+      File otherTempFile = File(otherTempFilePath)
+        ..writeAsBytesSync(
+          otherFile.blob,
+          mode: FileMode.writeOnly,
+          flush: true,
+        );
       List<String> otherLines = otherTempFile.readAsLinesSync();
       int otherLength = otherLines.length;
 
@@ -308,7 +316,7 @@ extension BranchMerge on Merge {
       String temporaryNewFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectoryPath);
       File(temporaryNewFilePath).writeAsStringSync(
         linesToWrite.join("\n"),
-        mode: FileMode.write,
+        mode: FileMode.writeOnly,
         flush: true,
       );
 
@@ -354,7 +362,7 @@ extension BranchMerge on Merge {
   }
 }
 
-///MergeMetaData
+///Entity to persist a [Merge]
 @freezed
 class MergeCommitMetaData with _$MergeCommitMetaData {
   factory MergeCommitMetaData({

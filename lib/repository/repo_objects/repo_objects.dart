@@ -13,8 +13,9 @@ part 'repo_objects.g.dart';
 
 part 'repo_objects.freezed.dart';
 
-class RepoObjects {
 
+///Represents an object's [Uint8List] data with meta data in memory
+class RepoObjects {
   final Repository repository;
   final Sha1 sha1;
   final String relativePathToRepository;
@@ -41,47 +42,43 @@ class RepoObjects {
       blob: blob,
     );
   }
-
 }
 
 extension RepoObjectStorage on RepoObjects {
 
+  ///Path to [objectFile]
   String get objectFilePath => path.join(repository.repositoryPath, objectsStore, sha1.sub, sha1.hash);
 
+  ///Actual [RepoObjects] file in a [repository]
   File get objectFile => File(objectFilePath);
 
-  RepoObjectsData toRepoObjectsData() {
-    return RepoObjectsData(
-      sha: sha1.hash,
-      filePathRelativeToRepository: relativePathToRepository,
-      commitedAt: commitedAt,
-    );
-  }
+  ///Convert a [RepoObjects] to a [RepoObjectsData] for storage
+  RepoObjectsData get toRepoObjectsData => RepoObjectsData(
+        sha: sha1.hash,
+        filePathRelativeToRepository: relativePathToRepository,
+        commitedAt: commitedAt,
+      );
 
-  RepoObjectsData store() {
-
+  ///Writes [blob] into a [objectFile] in a [repository] at [objectsStore]
+  RepoObjectsData writeRepoObject() {
     //If it exists, return
     if (objectFile.existsSync()) {
       debugPrintToConsole(message: "Objects ${objectFile.path} already exists");
-      return toRepoObjectsData();
+      return toRepoObjectsData;
     }
 
-    //Create object
-    objectFile.createSync(recursive: true);
-
     //Write blob
-    objectFile.writeAsBytesSync(blob, mode: FileMode.writeOnly);
-
-    return RepoObjectsData(
-      sha: sha1.hash,
-      filePathRelativeToRepository: relativePathToRepository,
-      commitedAt: commitedAt,
+    objectFile.writeAsBytesSync(
+      blob,
+      mode: FileMode.writeOnly,
+      flush: true,
     );
-  }
 
+    return toRepoObjectsData;
+  }
 }
 
-///RepoObjectData
+///Entity to store [RepoObjects] in [Commit]s
 @freezed
 class RepoObjectsData with _$RepoObjectsData {
   factory RepoObjectsData({
@@ -94,9 +91,10 @@ class RepoObjectsData with _$RepoObjectsData {
 }
 
 extension RepoObjectsDataX on RepoObjectsData {
-
+  ///[Sha1] for a specific [RepoObjectsData]
   Sha1 get sha1 => Sha1(sha);
 
+  ///Returns a [RepoObjects] from a [repository] if it exists
   RepoObjects? fetchObject(Repository repository) {
     String objectFilePath = path.join(repository.repositoryPath, objectsStore, sha1.sub, sha1.hash);
     File objectFile = File(objectFilePath);

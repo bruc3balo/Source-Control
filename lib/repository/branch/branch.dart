@@ -4,7 +4,9 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:balo/command/command.dart';
 import 'package:balo/repository/commit.dart';
+import 'package:balo/repository/merge/merge.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
@@ -22,6 +24,7 @@ part 'branch.freezed.dart';
 part 'branch.g.dart';
 
 ///Named reference to a [Commit]
+///Represents a branch in memory
 class Branch {
   final Repository repository;
   final String branchName;
@@ -29,7 +32,7 @@ class Branch {
   Branch(this.branchName, this.repository);
 }
 
-///State of a file status
+///State of a file in a [GetStatusOfCurrentBranch] command
 enum BranchFileStatus { staged, unstaged }
 
 extension BranchStatus on Branch {
@@ -162,7 +165,7 @@ extension BranchCreation on Branch {
 
       //Move files from latest commit to current working dir
       if (commitMetaData != null) {
-        _copyFilesToWorkingDir(
+        _writeFilesToWorkingDir(
           objects: commitMetaData.commitedObjects.values.toList(),
           workingDir: repository.workingDirectory,
         );
@@ -170,10 +173,6 @@ extension BranchCreation on Branch {
 
       state.saveStateData(
         stateData: updatedStateData,
-        onFileSystemException: (e) => debugPrintToConsole(
-          message: e.message,
-          color: CliColor.red,
-        ),
         onSuccessfullySaved: () => debugPrintToConsole(
           message: "State saved",
         ),
@@ -184,7 +183,8 @@ extension BranchCreation on Branch {
     }
   }
 
-  void _copyFilesToWorkingDir({
+  ///Write [objects] to working directory
+  void _writeFilesToWorkingDir({
     required List<RepoObjectsData> objects,
     required Directory workingDir,
   }) {
@@ -245,6 +245,9 @@ extension BranchCommons on Branch {
 
   ///[Staging] file in a [Branch]
   Staging get staging => Staging(this);
+
+  ///[Merge] file in a [Branch]
+  Merge get merge => Merge(repository, this);
 }
 
 extension BranchTreeMetaDataStorage on Branch {
@@ -318,7 +321,7 @@ extension BranchManager on Branch {
   }
 }
 
-/// BranchTreeMetaData
+/// Entity of a [Branch] tree
 @freezed
 class BranchTreeMetaData with _$BranchTreeMetaData {
   factory BranchTreeMetaData({
@@ -330,15 +333,18 @@ class BranchTreeMetaData with _$BranchTreeMetaData {
 }
 
 extension BranchMetaDataX on BranchTreeMetaData {
+
+  ///Returns a list of [CommitTreeMetaData] in descending order
   List<CommitTreeMetaData> get sortedBranchCommitsFromLatest => commits.values.toList()
     ..sort(
       (a, b) => -a.commitedAt.compareTo(b.commitedAt),
     );
 
+  ///Returns latest [CommitTreeMetaData] in a [Branch]
   CommitTreeMetaData? get latestBranchCommits => sortedBranchCommitsFromLatest.firstOrNull;
 }
 
-/// CommitMetaData
+/// Entity of a [Commit] tree
 @freezed
 class CommitTreeMetaData with _$CommitTreeMetaData {
   factory CommitTreeMetaData({

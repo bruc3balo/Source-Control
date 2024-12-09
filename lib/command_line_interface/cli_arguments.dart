@@ -1,4 +1,3 @@
-import 'package:balo/repository/ignore.dart';
 import 'package:balo/utils/variables.dart';
 
 ///Cli commands run by the user
@@ -61,12 +60,17 @@ enum CliCommandsEnum {
   ),
   branch(
     command: "branch",
-    description: "List branches",
-    options: [],
+    description: "Display list of branches or create a new branch",
+    options: [
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.branch,
+        mandatory: false,
+      ),
+    ],
   ),
   checkout(
     command: "checkout",
-    description: "Switch to a different branch",
+    description: "Switch to a different branch. Creates it if it doesn't exists",
     options: [
       CommandOption(
         optionEnum: CliCommandOptionsEnum.branch,
@@ -282,9 +286,27 @@ enum CliCommandOptionsEnum {
     description: "Specify the current commit SHA",
     valueHelp: "current_sha",
   ),
-  otherSha(option: "target-sha", abbreviation: "y", aliases: ["target-sha"], description: "Specify the target commit SHA", valueHelp: "target_sha"),
-  help(option: "help", abbreviation: "h", aliases: ["usage", "info"], description: "Display help and usage information", valueHelp: null),
-  verbose(option: "verbose", abbreviation: "v", aliases: ["debug"], description: "Display detailed debugging information", valueHelp: null);
+  otherSha(
+    option: "target-sha",
+    abbreviation: "y",
+    aliases: ["target-sha"],
+    description: "Specify the target commit SHA",
+    valueHelp: "target_sha",
+  ),
+  help(
+    option: "help",
+    abbreviation: "h",
+    aliases: ["usage", "info"],
+    description: "Display help and usage information",
+    valueHelp: null,
+  ),
+  verbose(
+    option: "verbose",
+    abbreviation: "v",
+    aliases: ["debug"],
+    description: "Display detailed debugging information",
+    valueHelp: null,
+  );
 
   final String option;
   final String abbreviation;

@@ -66,6 +66,14 @@ abstract class UndoableCommandExecutor {
           patternToRemove: patternToRemove,
         );
       case CliCommandsEnum.branch:
+        String? branchName = parsedCommands.getOption(
+          CliCommandOptionsEnum.branch,
+        );
+
+        if(branchName != null) {
+          return CreateBranchInitializer(branchName);
+        }
+
         return ListBranchesInitializer();
       case CliCommandsEnum.status:
         return PrintStatusOfCurrentBranchInitializer();

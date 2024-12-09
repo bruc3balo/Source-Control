@@ -137,6 +137,23 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
   }
 }
 
+///[CommandFacade] to create a [Branch]es in a local [Repository]
+class CreateBranchInitializer implements CommandFacade {
+
+  final String branchName;
+
+  CreateBranchInitializer(this.branchName);
+
+  @override
+  List<UndoableCommand> initialize() {
+    Repository repository = Repository(Directory.current.path);
+    Branch branch = Branch(branchName, repository);
+    debugPrintToConsole(message: "extends ${repository.path}");
+    return [CreateNewBranchCommand(repository, branch)];
+  }
+}
+
+
 ///[CommandFacade] to list all [Branch]es in a local [Repository]
 class ListBranchesInitializer implements CommandFacade {
   @override
@@ -191,9 +208,6 @@ class GetCommitHistoryInitializer implements CommandFacade {
 
     branch ??= repository.state
         .getCurrentBranch(
-          onRepositoryNotInitialized: () => debugPrintToConsole(
-            message: "Repository not initialized",
-          ),
           onNoStateFile: () => debugPrintToConsole(
             message: "No state file provided",
           ),
@@ -328,9 +342,6 @@ class MergeBranchInitializer implements CommandFacade {
     Branch otherBranch = Branch(otherBranchName, repository);
     State state = State(repository);
     Branch? thisBranch = state.getCurrentBranch(
-      onRepositoryNotInitialized: () => debugPrintToConsole(
-        message: "Repository on path is ${repository.path} is not initialized",
-      ),
       onNoStateFile: () => debugPrintToConsole(
         message: "Missing repository state file",
       ),

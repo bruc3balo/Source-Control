@@ -14,6 +14,7 @@ part 'state.g.dart';
 part 'state.freezed.dart';
 
 ///Known as head in git
+///The [State] object represents the current state of a [Repository] in memory
 class State {
   final Repository repository;
 
@@ -21,12 +22,17 @@ class State {
 }
 
 extension StateStorage on State {
+
+  ///Path to [stateFile]
   String get stateFilePath => join(repository.repositoryDirectory.path, stateFileName);
 
+  ///Actual state [File]
   File get stateFile => File(stateFilePath);
 
+  ///Returns status of state file i.e. exists or not
   bool get exists => stateFile.existsSync();
 
+  ///Returns current [StateData] if [exists]
   StateData? get stateInfo {
     if (!exists) return null;
 
@@ -39,94 +45,45 @@ extension StateStorage on State {
   }
 
   /// This function is idempotent
+  /// Saves the [stateData] to [stateFile]
   StateData saveStateData({
     required StateData stateData,
     Function()? onSuccessfullySaved,
-    Function(FileSystemException)? onFileSystemException,
   }) {
-    try {
+    //Write state to file
+    stateFile.writeAsStringSync(
+      jsonEncode(stateData),
+      flush: true,
+      mode: FileMode.writeOnly,
+    );
 
-
-      if (!exists) {
-        stateFile.createSync(recursive: true, exclusive: true);
-      }
-
-      //Write state to file
-      stateFile.writeAsStringSync(jsonEncode(stateData));
-      onSuccessfullySaved?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
-    }
+    onSuccessfullySaved?.call();
 
     return stateData;
   }
 
-  void createStateFile({
-    required Branch currentBranch,
-    Function()? onAlreadyExists,
-    Function()? onSuccessfullyCreated,
-    Function()? onRepositoryNotInitialized,
-    Function(FileSystemException)? onFileSystemException,
-  }) {
-    try {
-      if (!repository.isInitialized) {
-        onRepositoryNotInitialized?.call();
-        return;
-      }
-
-      if (exists) {
-        onAlreadyExists?.call();
-        return;
-      }
-
-      stateFile.createSync(recursive: true, exclusive: true);
-
-      StateData data = StateData(currentBranch: currentBranch.branchName);
-
-      //Write state to file
-      stateFile.writeAsStringSync(jsonEncode(data));
-
-      onSuccessfullyCreated?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
-    }
-  }
-
+  ///Deletes the current [stateFile]
   void deleteStateFile({
     Function()? onDoesntExists,
     Function()? onSuccessfullyDeleted,
-    Function()? onRepositoryNotInitialized,
-    Function(FileSystemException)? onFileSystemException,
   }) {
-    try {
-      if (!repository.isInitialized) {
-        onRepositoryNotInitialized?.call();
-        return;
-      }
-
-      if (!stateFile.existsSync()) {
-        onDoesntExists?.call();
-        return;
-      }
-
-      stateFile.deleteSync(recursive: true);
-      onSuccessfullyDeleted?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
+    if (!stateFile.existsSync()) {
+      onDoesntExists?.call();
+      return;
     }
+
+    stateFile.deleteSync(recursive: true);
+    onSuccessfullyDeleted?.call();
   }
 }
 
 extension StateActions on State {
+
+  ///Gets current [Branch] that [StateData] points to currently
+  ///only if [exists]
   Branch? getCurrentBranch({
-    Function()? onRepositoryNotInitialized,
     Function()? onNoStateFile,
   }) {
-    if (!repository.isInitialized) {
-      onRepositoryNotInitialized?.call();
-      return null;
-    }
-
     if (!exists) {
       onNoStateFile?.call();
       return null;
@@ -139,6 +96,8 @@ extension StateActions on State {
   }
 }
 
+
+///Entity to store [State]
 @freezed
 class StateData with _$StateData {
   factory StateData({

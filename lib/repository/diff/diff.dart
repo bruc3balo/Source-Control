@@ -1,9 +1,8 @@
 import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
-import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
-import 'package:balo/utils/variables.dart';
+import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 import 'package:dart_levenshtein/dart_levenshtein.dart';
@@ -11,6 +10,7 @@ import 'package:path/path.dart';
 
 const maxDiffScore = 100;
 
+///Represents differences of 2 [Commit]s in memory
 class CommitDiff {
   Commit thisCommit;
   Commit otherCommit;
@@ -33,13 +33,13 @@ class CommitDiff {
     Function()? onNoThisCommitMetaData,
   }) async {
     //Get a commit files
-    List<File>? thisFiles = thisCommit.getCommitFiles(
+    Map<String, RepoObjectsData>? thisFiles = thisCommit.getCommitFiles(
       onNoCommitBranchMetaData: onNoThisCommitBranchMetaData,
       onNoCommitMetaData: onNoThisCommitMetaData,
     );
 
     //Get b commit files
-    List<File>? otherFiles = otherCommit.getCommitFiles(
+    Map<String, RepoObjectsData>? otherFiles = otherCommit.getCommitFiles(
       onNoCommitBranchMetaData: onNoOtherCommitBranchMetaData,
       onNoCommitMetaData: onNoOtherCommitMetaData,
     );
@@ -52,20 +52,8 @@ class CommitDiff {
         statistic: {},
       );
     }
-    thisFiles ??= [];
-    otherFiles ??= [];
-
-    //Get other files map
-    String otherDirPrefix = join(
-      otherCommit.branch.branchDirectoryPath,
-      branchCommitFolder,
-      otherCommit.sha.hash,
-    );
-    Map<String, File> otherFilesMap = {for (var f in otherFiles) f.path.replaceAll(otherDirPrefix, ""): f};
-
-    //Get this files map
-    String thisDirPrefix = join(thisCommit.branch.branchDirectoryPath, branchCommitFolder, thisCommit.sha.hash);
-    Map<String, File> thisFilesMap = {for (var f in thisFiles) f.path.replaceAll(thisDirPrefix, ""): f};
+    thisFiles ??= {};
+    otherFiles ??= {};
 
     //Compare this with other
     debugPrintToConsole(
@@ -75,14 +63,18 @@ class CommitDiff {
     List<FileDiff> filesDiff = [];
     Map<DiffType, int> statistics = {};
     HashSet<String> thisAndOtherFiles = HashSet();
-    thisAndOtherFiles.addAll(thisFilesMap.keys);
-    thisAndOtherFiles.addAll(otherFilesMap.keys);
+    thisAndOtherFiles.addAll(thisFiles.keys);
+    thisAndOtherFiles.addAll(otherFiles.keys);
+
+    Directory tempDirectory = Directory.systemTemp;
+    String r = Random().nextInt(500).toString();
+    Directory compareDirectory = Directory(join(tempDirectory.path, r)).createTempSync();
 
     for (String thisOrOtherFileKey in thisAndOtherFiles) {
       debugPrintToConsole(message: thisOrOtherFileKey);
 
-      File? thisFile = thisFilesMap[thisOrOtherFileKey];
-      File? otherFile = otherFilesMap[thisOrOtherFileKey];
+      RepoObjectsData? thisFile = thisFiles[thisOrOtherFileKey];
+      RepoObjectsData? otherFile = otherFiles[thisOrOtherFileKey];
 
       late DiffType diffType;
       if (thisFile == null) {
@@ -90,13 +82,18 @@ class CommitDiff {
       } else if (otherFile == null) {
         diffType = DiffType.insert;
       } else {
-        FileDiff fileDiff = await FileDiff.calculateDiff(thisFile: thisFile, otherFile: otherFile);
+        File thisTempFile = File(join(compareDirectory.path, thisFile.sha));
+        File otherTempFile = File(join(compareDirectory.path, otherFile.sha));
+
+        FileDiff fileDiff = await FileDiff.calculateDiff(thisFile: thisTempFile, otherFile: otherTempFile);
         filesDiff.add(fileDiff);
         diffType = DiffType.modify;
       }
 
       statistics.update(diffType, (o) => o + 1, ifAbsent: () => 1);
     }
+
+    compareDirectory.deleteSync(recursive: true);
 
     return CommitDiff(
       filesDiff: filesDiff,
@@ -114,6 +111,7 @@ class CommitDiff {
   """;
 }
 
+///Represents differences of 2 [File]s in memory
 class FileDiff {
   File thisFile;
   File otherFile;
@@ -196,6 +194,7 @@ class FileDiff {
   """;
 }
 
+///Represents  differences of 2 lines in a [File] in memory
 class FileLineDiff {
   String thisPath;
   String otherPath;
@@ -282,9 +281,11 @@ class FileLineDiff {
   """;
 }
 
+///Types of differences
 enum DiffType { insert, modify, delete, same }
 
 extension DiffTypeColor on DiffType {
+  ///Color represented by a [DiffType]
   CliColor get color => switch (this) {
         DiffType.insert => CliColor.brightGreen,
         DiffType.modify => CliColor.brightWhite,
@@ -292,6 +293,7 @@ extension DiffTypeColor on DiffType {
         DiffType.same => CliColor.yellow,
       };
 
+  ///Title represented by a [DiffType]
   String get title => switch (this) {
         DiffType.insert => "inserted",
         DiffType.modify => "modified",
@@ -300,19 +302,8 @@ extension DiffTypeColor on DiffType {
       };
 }
 
-class LineComparison {
-  final String key;
-  final String thisLine;
-  final String otherLine;
-
-  LineComparison({
-    required this.key,
-    required this.thisLine,
-    required this.otherLine,
-  });
-}
-
 extension CommitDiffPrint on CommitDiff {
+  ///Print a [CommitDiff] from [Commit] to [FileLineDiff]
   void fullPrint() {
     printDiff();
 
@@ -325,6 +316,7 @@ extension CommitDiffPrint on CommitDiff {
     }
   }
 
+  ///Print a [CommitDiff]
   void printDiff() {
     printToConsole(
       message: "Commits: a -> ${thisCommit.sha}, b -> ${otherCommit.sha}",
@@ -346,6 +338,7 @@ extension CommitDiffPrint on CommitDiff {
 }
 
 extension FileDiffPrint on FileDiff {
+  ///Groups and counts differences for each line in a file
   Map<DiffType, int> get diffCount {
     Map<DiffType, int> count = {};
 
@@ -356,6 +349,7 @@ extension FileDiffPrint on FileDiff {
     return count;
   }
 
+  ///Print a [FileDiff]
   void printDiff() {
     int differences = diffCount.entries.where((e) => e.key != DiffType.same).map((e) => e.value).fold(0, (a, b) => a + b);
     printToConsole(
@@ -374,6 +368,7 @@ extension FileDiffPrint on FileDiff {
 }
 
 extension FileLineDiffPrint on FileLineDiff {
+  ///Print a [FileLineDiff]
   void printDiff() {
     printToConsole(
       message:

@@ -1,3 +1,7 @@
+
+import 'dart:io';
+
+///Changes [stdout] color
 enum CliColor {
   // Text Colors
   defaultColor('\x1B[0m'),
@@ -45,6 +49,7 @@ enum CliColor {
   const CliColor(this.color);
 }
 
+///Changes [stdout] style
 enum CliStyle {
   bold('\x1B[1m'),
   underline('\x1B[4m'),

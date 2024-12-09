@@ -1,8 +1,8 @@
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:balo/command/command.dart';
 import 'package:balo/repository/branch/branch.dart';
+import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
@@ -12,6 +12,7 @@ import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
+///Represents a [Remote]'s [Branch} in memory
 class RemoteBranch {
   final Remote remote;
   final Branch branch;
@@ -20,8 +21,11 @@ class RemoteBranch {
 }
 
 extension RemoteBranchCommon on RemoteBranch {
+
+  ///Name of the working [Directory]
   String get workingDirName => basenameWithoutExtension(remote.url);
 
+  /// Updates a [localRepository] with latest [Commit]'s from a [RemoteBranch] for a [branch]
   void pull({
     required Repository localRepository,
     Function()? onNoChanges,
@@ -74,7 +78,7 @@ extension RemoteBranchCommon on RemoteBranch {
     }
 
     //Objects needed to pull
-    List<RepoObjectsData> objectsToBePulled = extractRepoObjectsNotPresentInAggregateBranchTree(
+    List<RepoObjectsData> objectsToBePulled = _extractRepoObjectsNotPresentInAggregateBranchTree(
       commitsWithRepoObject: commitsToPull,
       aggregateBranchTree: localTreeMetaData,
     );
@@ -92,7 +96,7 @@ extension RemoteBranchCommon on RemoteBranch {
         );
 
         //Store to local repository
-        RepoObjectsData data = o.store();
+        RepoObjectsData data = o.writeRepoObject();
 
         //write file to working dir
         String objectFilePath = fullPathFromDir(
@@ -115,6 +119,7 @@ extension RemoteBranchCommon on RemoteBranch {
     onSuccessfulPull?.call();
   }
 
+  ///Downloads a remote [Repository] from a [RemoteBranch] into a local branch
   void clone({
     required Repository localRepository,
     Function()? onRepositoryNotFound,
@@ -180,7 +185,7 @@ extension RemoteBranchCommon on RemoteBranch {
             );
 
             //Store to local repository
-            RepoObjectsData data = o.store();
+            RepoObjectsData data = o.writeRepoObject();
 
             //write file to working dir
             String objectFilePath = fullPathFromDir(
@@ -200,6 +205,7 @@ extension RemoteBranchCommon on RemoteBranch {
     onSuccessfulPush?.call();
   }
 
+  ///Uploads [Commit]s from a [localRepository] into a [RemoteBranch]
   void push({
     required Repository localRepository,
     Function()? onNoCommits,
@@ -231,7 +237,7 @@ extension RemoteBranchCommon on RemoteBranch {
         createIgnoreFile: () => remoteRepository.ignore.createIgnoreFile(),
         addIgnoreFile: () => remoteRepository.ignore.addIgnore(pattern: repositoryIgnoreFileName),
         createNewBranch: () => branch.createBranch(),
-        createNewStateFile: () => remoteRepository.state.createStateFile(currentBranch: branch),
+        createNewStateFile: () => remoteRepository.state.saveStateData(stateData: StateData(currentBranch: branch.branchName)),
       );
     }
 
@@ -250,7 +256,7 @@ extension RemoteBranchCommon on RemoteBranch {
     }
 
     //Objects needed to push
-    List<RepoObjectsData> objectsToBePushed = extractRepoObjectsNotPresentInAggregateBranchTree(
+    List<RepoObjectsData> objectsToBePushed = _extractRepoObjectsNotPresentInAggregateBranchTree(
       commitsWithRepoObject: commitsToPush,
       aggregateBranchTree: remoteBranchTree,
     );
@@ -268,7 +274,7 @@ extension RemoteBranchCommon on RemoteBranch {
         );
 
         //Store to remote repository
-        RepoObjectsData data = o.store();
+        RepoObjectsData data = o.writeRepoObject();
       },
     );
 
@@ -285,7 +291,8 @@ extension RemoteBranchCommon on RemoteBranch {
     onSuccessfulPush?.call();
   }
 
-  List<RepoObjectsData> extractRepoObjectsNotPresentInAggregateBranchTree({
+  ///TLDR: Strips and extracts [RepoObjectsData] already in [aggregateBranchTree]
+  List<RepoObjectsData> _extractRepoObjectsNotPresentInAggregateBranchTree({
     required List<CommitTreeMetaData> commitsWithRepoObject,
     BranchTreeMetaData? aggregateBranchTree,
   }) {
@@ -305,7 +312,7 @@ extension RemoteBranchCommon on RemoteBranch {
 }
 
 ///Template pattern
-///Steps to create a repository
+///Steps to create a [Repository]
 void createRepositoryTemplate({
   required Function() initializeRepository,
   required Function() createIgnoreFile,

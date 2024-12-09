@@ -9,7 +9,6 @@ environment:
 # Add regular dependencies here.
 dependencies:
   path: ^1.9.1
-  dart_console: ^4.1.1
   freezed: ^2.5.7
   dart_levenshtein: ^1.0.1
   args: ^2.6.0

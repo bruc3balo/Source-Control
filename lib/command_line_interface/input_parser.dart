@@ -5,7 +5,6 @@ import 'package:balo/repository/ignore.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
-import 'package:dart_console/dart_console.dart';
 
 import 'cli_arguments.dart';
 
@@ -159,7 +158,6 @@ class ArgsCommandParser extends CommandParser {
       message: "${"=" * 45} $executableName help page ${"=" * 45}",
       color: CliColor.defaultColor,
       style: CliStyle.bold,
-      alignment: TextAlignment.center,
       newLine: true,
     );
 

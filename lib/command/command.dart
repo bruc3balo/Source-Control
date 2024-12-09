@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:balo/command/command_facade.dart';
@@ -17,7 +16,6 @@ import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
-import 'package:dart_console/dart_console.dart';
 
 /// Basic executable command by a [CommandFacade]
 abstract class UndoableCommand {
@@ -53,7 +51,6 @@ class ShowErrorCommand extends UndoableCommand {
       message: error,
       color: CliColor.red,
       newLine: true,
-      alignment: TextAlignment.center,
       style: CliStyle.bold,
     );
   }
@@ -109,21 +106,8 @@ class CreateStateFileCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    repository.state.createStateFile(
-      currentBranch: currentBranch,
-      onAlreadyExists: () => debugPrintToConsole(
-        message: "Ignore file already exists",
-      ),
-      onRepositoryNotInitialized: () => debugPrintToConsole(
-        message: "Repository not initialized",
-      ),
-      onSuccessfullyCreated: () => debugPrintToConsole(
-        message: "State file successfully created",
-      ),
-      onFileSystemException: (e) => debugPrintToConsole(
-        message: e.message,
-        color: CliColor.red,
-      ),
+    repository.state.saveStateData(
+      stateData: StateData(currentBranch: currentBranch.branchName),
     );
   }
 
@@ -133,16 +117,11 @@ class CreateStateFileCommand extends UndoableCommand {
       onDoesntExists: () => debugPrintToConsole(
         message: "State file doesn't exists",
       ),
-      onRepositoryNotInitialized: () => debugPrintToConsole(
-        message: "Repository not initialized",
-      ),
+
       onSuccessfullyDeleted: () => debugPrintToConsole(
         message: "State file successfully deleted",
       ),
-      onFileSystemException: (e) => debugPrintToConsole(
-        message: e.message,
-        color: CliColor.red,
-      ),
+
     );
   }
 }
@@ -156,10 +135,6 @@ class CreateIgnoreFileCommand extends UndoableCommand {
   @override
   Future<void> execute() async {
     repository.ignore.createIgnoreFile(
-      onFileSystemException: (e) => debugPrintToConsole(
-        message: e.message,
-        color: CliColor.red,
-      ),
       onRepositoryNotInitialized: () => debugPrintToConsole(
         message: "Repository not initialized",
       ),
@@ -175,10 +150,6 @@ class CreateIgnoreFileCommand extends UndoableCommand {
   @override
   Future<void> undo() async {
     repository.ignore.deleteIgnoreFile(
-      onFileSystemException: (e) => debugPrintToConsole(
-        message: e.message,
-        color: CliColor.red,
-      ),
       onRepositoryNotInitialized: () => debugPrintToConsole(
         message: "Repository not initialized",
       ),
@@ -261,13 +232,6 @@ class StageFilesCommand extends UndoableCommand {
     await Isolate.run(
       () => staging.stageFiles(
         pattern: pattern,
-        onFileSystemException: (e) => debugPrintToConsole(
-          message: e.message,
-          color: CliColor.red,
-        ),
-        onUninitializedRepository: () => debugPrintToConsole(
-          message: "Repository not initialized",
-        ),
       ),
     );
   }
@@ -275,9 +239,6 @@ class StageFilesCommand extends UndoableCommand {
   @override
   Future<void> undo() async {
     staging.unstageFiles(
-      onUninitializedRepository: () => debugPrintToConsole(
-        message: "Repository not initialized",
-      ),
       onStagingFileDoesntExist: () => debugPrintToConsole(
         message: "Staging file doesn't exist",
       ),
@@ -352,10 +313,6 @@ class ListBranchesCommand extends UndoableCommand {
     State state = repository.state;
 
     Branch? currentBranch = state.getCurrentBranch(
-      onRepositoryNotInitialized: () => debugPrintToConsole(
-        message: "Repository not initialized",
-        color: CliColor.red,
-      ),
       onNoStateFile: () => debugPrintToConsole(
         message: "No state file found",
       ),
@@ -366,7 +323,6 @@ class ListBranchesCommand extends UndoableCommand {
       printToConsole(
         message: "${b.branchName} ${isCurrentBranch ? "*" : ''} ${isCurrentBranch ? "-> ${state.stateInfo?.currentCommit}" : ''}",
         style: isCurrentBranch ? null : CliStyle.bold,
-        alignment: TextAlignment.left,
         color: isCurrentBranch ? CliColor.brightCyan : CliColor.white,
       );
     }
@@ -387,7 +343,6 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
     if (!repository.isInitialized) {
       printToConsole(
         message: "Repository is not initialized at path ${repository.repositoryPath}",
-        alignment: TextAlignment.left,
         color: CliColor.red,
       );
       return;
@@ -397,7 +352,6 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
     if (stateData == null) {
       printToConsole(
         message: "Repository is doesn't have state data at ${repository.state.stateFilePath}",
-        alignment: TextAlignment.left,
         color: CliColor.red,
       );
       return;
@@ -415,13 +369,11 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
       printToConsole(
         message: "${e.key.name} files",
         style: CliStyle.bold,
-        alignment: TextAlignment.left,
         color: CliColor.defaultColor,
         newLine: true,
       );
       printToConsole(
         message: e.value.join("\n"),
-        alignment: TextAlignment.left,
         color: e.key == BranchFileStatus.staged ? CliColor.brightGreen : CliColor.red,
       );
     }
@@ -444,29 +396,23 @@ class CommitStagedFilesCommand extends UndoableCommand {
       onNoStateFile: () => debugPrintToConsole(
         message: "No state file",
         style: CliStyle.bold,
-        alignment: TextAlignment.left,
         color: CliColor.red,
-      ),
-      onRepositoryNotInitialized: () => debugPrintToConsole(
-        message: "Repository not initialized",
       ),
     );
     if (branch == null) {
       printToConsole(
         message: "Failed to get current branch",
         style: CliStyle.bold,
-        alignment: TextAlignment.left,
         color: CliColor.red,
       );
       return;
     }
 
     late final Staging staging = Staging(branch);
-    if (!staging.isStaged) {
+    if (!staging.hasStagedFiles) {
       printToConsole(
         message: "Files not staged",
         style: CliStyle.bold,
-        alignment: TextAlignment.left,
         color: CliColor.red,
       );
       return;
@@ -478,8 +424,7 @@ class CommitStagedFilesCommand extends UndoableCommand {
           onNoStagingData: () => debugPrintToConsole(
             message: "Files not staged",
             style: CliStyle.bold,
-            alignment: TextAlignment.left,
-            color: CliColor.red,
+                color: CliColor.red,
           ),
         );
       },

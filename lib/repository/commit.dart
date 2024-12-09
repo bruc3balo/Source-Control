@@ -6,8 +6,7 @@ import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
-///Snapshot of a working directory
-
+///Hash of a sha1 with validation
 class Sha1 {
   final String hash;
 
@@ -18,6 +17,7 @@ class Sha1 {
   String get short => hash.substring(0, 6);
 }
 
+///Snapshot of a working directory
 class Commit {
   final Branch fromBranch;
   final Branch branch;
@@ -37,7 +37,9 @@ class Commit {
 }
 
 extension CommitActions on Commit {
-  List<File>? getCommitFiles({
+
+  ///Get list of commited [RepoObjectsData] in a [Commit]
+  Map<String, RepoObjectsData>? getCommitFiles({
     Function()? onNoCommitBranchMetaData,
     Function()? onNoCommitMetaData,
   }) {
@@ -49,22 +51,16 @@ extension CommitActions on Commit {
       return null;
     }
 
-    CommitTreeMetaData? commitMetaData = branchCommitMetaData.commits[sha];
+    CommitTreeMetaData? commitMetaData = branchCommitMetaData.commits[sha.hash];
     if (commitMetaData == null) {
       onNoCommitMetaData?.call();
       return null;
     }
 
-    String commitDirPath = join(
-      commitBranch.branchDirectoryPath,
-      branchCommitFolder,
-      sha.hash,
-    );
-    Directory commitDir = Directory(commitDirPath);
-
-    return commitDir.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).map((e) => File(e.path)).toList();
+    return commitMetaData.commitedObjects;
   }
 
+  ///Compare a [CommitDiff] to another commit [other]
   Future<void> compareCommitDiff({
     required Commit other,
     Function()? onNoOtherCommitBranchMetaData,
