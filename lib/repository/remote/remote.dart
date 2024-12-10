@@ -24,7 +24,6 @@ class Remote {
 }
 
 extension RemoteCommons on Remote {
-
   ///Path to a [remoteFile]
   String get remoteFilePath => join(repository.repositoryDirectory.path, remoteFileName);
 
@@ -39,14 +38,15 @@ extension RemoteCommons on Remote {
 }
 
 extension RemoteStorage on Remote {
-
   ///Persists a [metaData] into a [remoteFile]
   RemoteMetaData saveRemoteData(RemoteMetaData metaData) {
-    remoteFile.writeAsStringSync(
-      jsonEncode(metaData),
-      mode: FileMode.writeOnly,
-      flush: true,
-    );
+    remoteFile
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+        jsonEncode(metaData),
+        mode: FileMode.write,
+        flush: true,
+      );
     return metaData;
   }
 
@@ -62,11 +62,9 @@ extension RemoteStorage on Remote {
     String data = remoteFile.readAsStringSync();
     return RemoteMetaData.fromJson(jsonDecode(data));
   }
-
 }
 
 extension RemoteActions on Remote {
-
   /// Adds a [RemoteData] into a [remoteFile]
   /// The function is idempotent
   void addRemote({
@@ -101,8 +99,7 @@ extension RemoteActions on Remote {
       return;
     }
 
-    final Map<String, RemoteData> updatedMap = Map<String, RemoteData>.from(metaData.remotes)
-      ..remove(name);
+    final Map<String, RemoteData> updatedMap = Map<String, RemoteData>.from(metaData.remotes)..remove(name);
     saveRemoteData(metaData.copyWith(remotes: updatedMap));
   }
 }

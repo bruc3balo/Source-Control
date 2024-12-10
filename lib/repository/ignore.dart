@@ -27,7 +27,6 @@ extension IgnoreCommons on Ignore {
 }
 
 extension IgnoreStorage on Ignore {
-
   /// Adds a [pattern] to an [ignoreFile]
   void addIgnore({
     required String pattern,
@@ -44,11 +43,13 @@ extension IgnoreStorage on Ignore {
 
       ignores.add(pattern);
 
-      ignoreFile.writeAsStringSync(
-        ignores.join(Platform.lineTerminator),
-        flush: true,
-        mode: FileMode.writeOnly,
-      );
+      ignoreFile
+        ..createSync(recursive: true)
+        ..writeAsStringSync(
+          ignores.join(Platform.lineTerminator),
+          flush: true,
+          mode: FileMode.write,
+        );
 
       onAdded?.call();
     } on FileSystemException catch (e, trace) {
@@ -72,11 +73,13 @@ extension IgnoreStorage on Ignore {
 
       ignores.remove(pattern);
 
-      ignoreFile.writeAsStringSync(
-        ignores.join(Platform.lineTerminator),
-        flush: true,
-        mode: FileMode.writeOnly,
-      );
+      ignoreFile
+        ..createSync(recursive: true)
+        ..writeAsStringSync(
+          ignores.join(Platform.lineTerminator),
+          flush: true,
+          mode: FileMode.write,
+        );
 
       onRemoved?.call();
     } on FileSystemException catch (e, trace) {
@@ -86,7 +89,6 @@ extension IgnoreStorage on Ignore {
 }
 
 extension IgnoreActions on Ignore {
-
   /// Creates an [ignoreFile]
   void createIgnoreFile({
     Function()? onAlreadyExists,
@@ -126,7 +128,6 @@ extension IgnoreActions on Ignore {
     ignoreFile.deleteSync(recursive: true);
     onSuccessfullyDeleted?.call();
   }
-
 }
 
 ///Ignore patterns
@@ -151,13 +152,19 @@ class PatternExamples {
   void test() {
     IgnorePatternRules rule = IgnorePatternRules.detectRule(testPattern);
 
-    for(String inputPattern in passInputPatterns) {
+    debugPrintToConsole(message: "Detected rule $rule for test pattern $testPattern \n", newLine: true);
+
+    for (String inputPattern in passInputPatterns) {
       bool pass = rule.patternMatches(testPattern: testPattern, inputPattern: inputPattern);
+      CliColor color = pass ? CliColor.green : CliColor.red;
+      debugPrintToConsole(message: "Pass Test: input $inputPattern = $pass", color: color);
       assert(pass);
     }
 
-    for(String inputPattern in failInputPatterns) {
+    for (String inputPattern in failInputPatterns) {
       bool pass = rule.patternMatches(testPattern: testPattern, inputPattern: inputPattern);
+      CliColor color = !pass ? CliColor.green : CliColor.red;
+      debugPrintToConsole(message: "Fail Test: input $inputPattern = $pass", color: color);
       assert(!pass);
     }
   }
@@ -229,14 +236,14 @@ extension IgnorePatternRulesExaluator on IgnorePatternRules {
           ),
         IgnorePatternRules.single => PatternExamples(
             testPattern: "file?.txt",
-            passInputPatterns: ["file1.txt", "fileA.txt", "file_.txt"],
-            failInputPatterns: ["file.txt", "file12.txt", "files.txt"],
+            passInputPatterns: ["file1.txt", "fileA.txt", "file_.txt", "files.txt"],
+            failInputPatterns: ["file.txt", "file12.txt"],
           ),
         IgnorePatternRules.contains => PatternExamples(
             testPattern: "**/build/**",
             passInputPatterns: [
               "project/build/file.txt",
-              "build/subdir/file.txt",
+              "/build/subdir/file.txt",
               "project/subproject/build/file.txt",
             ],
             failInputPatterns: [
@@ -266,17 +273,21 @@ extension IgnorePatternRulesExaluator on IgnorePatternRules {
     switch (this) {
       case IgnorePatternRules.suffix:
         String parsedPattern = testPattern.replaceFirst(pattern, "");
-        return inputPattern.endsWith(parsedPattern);
+        return inputPattern.endsWith(parsedPattern) && inputPattern.replaceFirst(parsedPattern, "").isNotEmpty;
 
       case IgnorePatternRules.single:
+        if (testPattern.length != inputPattern.length) return false;
+
         String parsedPattern = testPattern.replaceAll(pattern, "");
         String parsedInput = "";
 
         //Replace with empty string and match the strings
         for (int i = 0; i < testPattern.length; i++) {
-          String test = testPattern[i];
-          if (test == pattern) continue;
-          parsedInput += inputPattern[i];
+          String testPatternChar = testPattern[i];
+
+          //skip character
+          if (testPatternChar == pattern) continue;
+          parsedInput += testPatternChar;
         }
 
         return parsedPattern == parsedInput;

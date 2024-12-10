@@ -22,7 +22,6 @@ class State {
 }
 
 extension StateStorage on State {
-
   ///Path to [stateFile]
   String get stateFilePath => join(repository.repositoryDirectory.path, stateFileName);
 
@@ -51,11 +50,13 @@ extension StateStorage on State {
     Function()? onSuccessfullySaved,
   }) {
     //Write state to file
-    stateFile.writeAsStringSync(
-      jsonEncode(stateData),
-      flush: true,
-      mode: FileMode.writeOnly,
-    );
+    stateFile
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+        jsonEncode(stateData),
+        flush: true,
+        mode: FileMode.write,
+      );
 
     onSuccessfullySaved?.call();
 
@@ -78,7 +79,6 @@ extension StateStorage on State {
 }
 
 extension StateActions on State {
-
   ///Gets current [Branch] that [StateData] points to currently
   ///only if [exists]
   Branch? getCurrentBranch({
@@ -95,7 +95,6 @@ extension StateActions on State {
     return Branch(branch, repository);
   }
 }
-
 
 ///Entity to store [State]
 @freezed

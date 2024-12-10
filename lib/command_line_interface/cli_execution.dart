@@ -43,7 +43,7 @@ abstract class UndoableCommandExecutor {
         }
         //Path
         String? path = parsedCommands.getOption(CliCommandOptionsEnum.path);
-        if (path == "." || path == null) path = Directory.current.path;
+        if (path == ".") path = Directory.current.path;
 
         return RepositoryInitializer(path);
 
@@ -70,7 +70,7 @@ abstract class UndoableCommandExecutor {
           CliCommandOptionsEnum.branch,
         );
 
-        if(branchName != null) {
+        if (branchName != null) {
           return CreateBranchInitializer(branchName);
         }
 
@@ -166,14 +166,13 @@ abstract class UndoableCommandExecutor {
           return ErrorInitializer("Remote option required url");
         }
 
-        if(isAdding) {
+        if (isAdding) {
           return AddRemoteInitializer(remoteName, remoteUrl!);
         } else {
           return RemoveRemoteInitializer(remoteName);
         }
 
       case CliCommandsEnum.clone:
-
         String? remoteUrl = parsedCommands.getOption(
           CliCommandOptionsEnum.remoteUrl,
         );
@@ -190,7 +189,6 @@ abstract class UndoableCommandExecutor {
         return CloneRepositoryInitializer(remoteUrl, branchName);
 
       case CliCommandsEnum.push:
-
         String? remoteName = parsedCommands.getOption(
           CliCommandOptionsEnum.remoteName,
         );
@@ -206,9 +204,7 @@ abstract class UndoableCommandExecutor {
 
         return PushRepositoryInitializer(remoteName, branchName);
 
-
       case CliCommandsEnum.pull:
-
         String? remoteName = parsedCommands.getOption(
           CliCommandOptionsEnum.remoteName,
         );
@@ -223,7 +219,6 @@ abstract class UndoableCommandExecutor {
         );
 
         return PullRepositoryInitializer(remoteName, branchName);
-
 
       default:
         return ErrorInitializer("Unknown command");

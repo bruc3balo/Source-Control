@@ -13,7 +13,6 @@ part 'repo_objects.g.dart';
 
 part 'repo_objects.freezed.dart';
 
-
 ///Represents an object's [Uint8List] data with meta data in memory
 class RepoObjects {
   final Repository repository;
@@ -45,7 +44,6 @@ class RepoObjects {
 }
 
 extension RepoObjectStorage on RepoObjects {
-
   ///Path to [objectFile]
   String get objectFilePath => path.join(repository.repositoryPath, objectsStore, sha1.sub, sha1.hash);
 
@@ -68,11 +66,13 @@ extension RepoObjectStorage on RepoObjects {
     }
 
     //Write blob
-    objectFile.writeAsBytesSync(
-      blob,
-      mode: FileMode.writeOnly,
-      flush: true,
-    );
+    objectFile
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(
+        blob,
+        mode: FileMode.write,
+        flush: true,
+      );
 
     return toRepoObjectsData;
   }

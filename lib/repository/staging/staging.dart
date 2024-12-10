@@ -139,11 +139,7 @@ extension StagingActions on Staging {
     );
 
     //Write staging info
-    stagingFile.writeAsStringSync(
-      jsonEncode(data),
-      flush: true,
-      mode: FileMode.writeOnly,
-    );
+    saveStagingData(data);
   }
 
   ///Deletes data from [stagingFile]
@@ -183,11 +179,13 @@ extension StagingStorage on Staging {
 
   ///Saved [data] to [stagingFile]
   StagingData saveStagingData(StagingData data) {
-    stagingFile.writeAsStringSync(
-      jsonEncode(data),
-      flush: true,
-      mode: FileMode.writeOnly,
-    );
+    stagingFile
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+        jsonEncode(data),
+        flush: true,
+        mode: FileMode.write,
+      );
     return data;
   }
 

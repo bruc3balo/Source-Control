@@ -21,7 +21,6 @@ class RemoteBranch {
 }
 
 extension RemoteBranchCommon on RemoteBranch {
-
   ///Name of the working [Directory]
   String get workingDirName => basenameWithoutExtension(remote.url);
 
@@ -104,11 +103,13 @@ extension RemoteBranchCommon on RemoteBranch {
           directoryPath: localRepository.workingDirectory.path,
         );
 
-        File(objectFilePath).writeAsBytesSync(
-          o.blob,
-          flush: true,
-          mode: FileMode.writeOnly,
-        );
+        File(objectFilePath)
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(
+            o.blob,
+            flush: true,
+            mode: FileMode.write,
+          );
       },
     );
 
@@ -126,7 +127,6 @@ extension RemoteBranchCommon on RemoteBranch {
     Function()? onNoCommitFound,
     Function()? onSuccessfulPush,
   }) {
-
     //Get remote repository
     Repository remoteRepository = branch.repository;
 
@@ -158,7 +158,8 @@ extension RemoteBranchCommon on RemoteBranch {
       },
       addIgnoreFile: () async => localRepository.ignore.addIgnore(pattern: repositoryIgnoreFileName),
       createNewBranch: () async => Branch(branch.branchName, localRepository),
-      createNewStateFile: () async => localRepository.state.saveStateData(stateData: StateData(currentBranch: branch.branchName, currentCommit: latestCommit.sha)),
+      createNewStateFile: () async =>
+          localRepository.state.saveStateData(stateData: StateData(currentBranch: branch.branchName, currentCommit: latestCommit.sha)),
     );
 
     //Add remote file
@@ -169,38 +170,35 @@ extension RemoteBranchCommon on RemoteBranch {
     localBranch.saveBranchTreeMetaData(remoteBranchMetaData);
 
     // Copy objects
-    latestCommit.commitedObjects.values
-        .map((e) => e.fetchObject(remoteRepository))
-        .where((e) => e != null)
-        .forEach(
-          (remoteObject) {
-
-            //RepoObjects
-            RepoObjects o = RepoObjects(
-              repository: localRepository,
-              sha1: remoteObject!.sha1,
-              relativePathToRepository: remoteObject.relativePathToRepository,
-              commitedAt: remoteObject.commitedAt,
-              blob: remoteObject.blob,
-            );
-
-            //Store to local repository
-            RepoObjectsData data = o.writeRepoObject();
-
-            //write file to working dir
-            String objectFilePath = fullPathFromDir(
-              relativePath: data.filePathRelativeToRepository,
-              directoryPath: localRepository.workingDirectory.path,
-            );
-
-            File(objectFilePath).writeAsBytesSync(
-              o.blob,
-              flush: true,
-              mode: FileMode.writeOnly,
-            );
-          },
+    latestCommit.commitedObjects.values.map((e) => e.fetchObject(remoteRepository)).where((e) => e != null).forEach(
+      (remoteObject) {
+        //RepoObjects
+        RepoObjects o = RepoObjects(
+          repository: localRepository,
+          sha1: remoteObject!.sha1,
+          relativePathToRepository: remoteObject.relativePathToRepository,
+          commitedAt: remoteObject.commitedAt,
+          blob: remoteObject.blob,
         );
 
+        //Store to local repository
+        RepoObjectsData data = o.writeRepoObject();
+
+        //write file to working dir
+        String objectFilePath = fullPathFromDir(
+          relativePath: data.filePathRelativeToRepository,
+          directoryPath: localRepository.workingDirectory.path,
+        );
+
+        File(objectFilePath)
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(
+            o.blob,
+            flush: true,
+            mode: FileMode.write,
+          );
+      },
+    );
 
     onSuccessfulPush?.call();
   }

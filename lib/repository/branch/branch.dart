@@ -199,11 +199,13 @@ extension BranchCreation on Branch {
       );
       debugPrintToConsole(message: "File is at destination $fileDestinationPath");
 
-      File(fileDestinationPath).writeAsBytesSync(
-        repoObject.blob,
-        mode: FileMode.writeOnly,
-        flush: true,
-      );
+      File(fileDestinationPath)
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(
+          repoObject.blob,
+          mode: FileMode.write,
+          flush: true,
+        );
 
       debugPrintToConsole(message: "cp ${repoObject.objectFilePath} -> $fileDestinationPath");
     }
@@ -275,11 +277,13 @@ extension BranchTreeMetaDataStorage on Branch {
   /// Creates a [BranchTreeMetaData] only if it doesn't exist
   ///Update a [managerFile] with the latest [metaData]
   BranchTreeMetaData saveBranchTreeMetaData(BranchTreeMetaData metaData) {
-    managerFile.writeAsStringSync(
-      jsonEncode(metaData.toJson()),
-      mode: FileMode.writeOnly,
-      flush: true,
-    );
+    managerFile
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+        jsonEncode(metaData.toJson()),
+        mode: FileMode.write,
+        flush: true,
+      );
     return metaData;
   }
 }
@@ -333,7 +337,6 @@ class BranchTreeMetaData with _$BranchTreeMetaData {
 }
 
 extension BranchMetaDataX on BranchTreeMetaData {
-
   ///Returns a list of [CommitTreeMetaData] in descending order
   List<CommitTreeMetaData> get sortedBranchCommitsFromLatest => commits.values.toList()
     ..sort(

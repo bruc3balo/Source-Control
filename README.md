@@ -12,6 +12,11 @@ Build a distributed source control system in the style of Git. It should be poss
   dart run build_runner build --delete-conflicting-outputs
 ```
 
+# Test
+```bash
+  dart run test
+```
+
 # Build
 #### For Windows: 
 ```bash

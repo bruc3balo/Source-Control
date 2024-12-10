@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:balo/command/command_facade.dart';
@@ -9,7 +8,7 @@ import 'package:balo/command_line_interface/user_input.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 
-Future<void> main(List<String> arguments) async {
+Future<int> main(List<String> arguments) async {
   int code = 0;
   try {
     UserInput userInput = CliUserInput(arguments);
@@ -49,6 +48,8 @@ Future<void> main(List<String> arguments) async {
       newLine: true,
     );
 
-    exit(code);
+    //exit(code);
   }
+
+  return code;
 }

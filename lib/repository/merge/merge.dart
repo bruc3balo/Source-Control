@@ -52,11 +52,13 @@ extension MergeStorage on Merge {
   ///Save [mergeData] to [mergeFile]
   MergeCommitMetaData saveCommitMergeData(MergeCommitMetaData mergeData) {
     String data = jsonEncode(mergeData);
-    mergeFile.writeAsStringSync(
-      jsonEncode(data),
-      flush: true,
-      mode: FileMode.writeOnly,
-    );
+    mergeFile
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+        jsonEncode(data),
+        flush: true,
+        mode: FileMode.write,
+      );
     return mergeData;
   }
 
@@ -247,9 +249,10 @@ extension BranchMerge on Merge {
       );
 
       File otherTempFile = File(otherTempFilePath)
+        ..createSync(recursive: true)
         ..writeAsBytesSync(
           otherFile.blob,
-          mode: FileMode.writeOnly,
+          mode: FileMode.write,
           flush: true,
         );
       List<String> otherLines = otherTempFile.readAsLinesSync();
@@ -314,11 +317,13 @@ extension BranchMerge on Merge {
 
       //Modify this file to show conflicts
       String temporaryNewFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectoryPath);
-      File(temporaryNewFilePath).writeAsStringSync(
-        linesToWrite.join("\n"),
-        mode: FileMode.writeOnly,
-        flush: true,
-      );
+      File(temporaryNewFilePath)
+        ..createSync(recursive: true)
+        ..writeAsStringSync(
+          linesToWrite.join("\n"),
+          mode: FileMode.write,
+          flush: true,
+        );
 
       debugPrintToConsole(
         message: "CONFLICT for $thisFileName",
