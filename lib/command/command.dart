@@ -424,7 +424,7 @@ class CommitStagedFilesCommand extends UndoableCommand {
           onNoStagingData: () => debugPrintToConsole(
             message: "Files not staged",
             style: CliStyle.bold,
-                color: CliColor.red,
+            color: CliColor.red,
           ),
         );
       },

@@ -1,7 +1,7 @@
 name: balo
 description: A source control in the style of git
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/bruc3balo/Source-Control
 
 environment:
   sdk: ^3.5.0

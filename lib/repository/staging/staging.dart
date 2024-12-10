@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -43,7 +44,9 @@ extension StagingActions on Staging {
       return;
     }
 
-    List<File> filesToBeStaged = data.filesToBeStaged.map((e) => File(e)).toList();
+    String directoryPath = localRepository.workingDirectory.path;
+    List<File> filesToBeStaged =
+        data.filesToBeStaged.map((e) => File(fullPathFromDir(relativePath: e, directoryPath: directoryPath))).where((e) => e.existsSync()).toList();
     Map<String, RepoObjectsData> repoObjects = {
       for (var o in filesToBeStaged.map((e) => RepoObjects.createFromFile(localRepository, e).writeRepoObject())) o.sha: o,
     };
@@ -117,9 +120,22 @@ extension StagingActions on Staging {
         .where((f) => !shouldIgnorePath(relativePathFromDir(path: f.path, directoryPath: repositoryParent), patternsToIgnore))
         .toList();
 
+    HashMap<String, String> filesToBeStagedList = HashMap.from(
+      {for (var f in filesToBeStaged) computeFileSha1Hash(File(f.path)).hash: relativePathFromDir(directoryPath: repositoryParent, path: f.path)},
+    );
+
+    //Add RepoObjectsData from previous commit that are in working dir
+    CommitTreeMetaData? commitTreeMetaData = branch.branchTreeMetaData?.latestBranchCommits;
+    if (commitTreeMetaData != null) {
+      Iterable<RepoObjectsData> commitObjects = commitTreeMetaData.commitedObjects.values.where(
+        (f) => !shouldIgnorePath(f.filePathRelativeToRepository, patternsToIgnore),
+      );
+      filesToBeStagedList.addAll({for (var o in commitObjects) o.sha: o.filePathRelativeToRepository});
+    }
+
     StagingData data = StagingData(
       stagedAt: DateTime.now(),
-      filesToBeStaged: filesToBeStaged.map((f) => f.path).toList(),
+      filesToBeStaged: filesToBeStagedList.values.toList(),
     );
 
     //Write staging info
@@ -129,7 +145,6 @@ extension StagingActions on Staging {
       mode: FileMode.writeOnly,
     );
   }
-
 
   ///Deletes data from [stagingFile]
   void unstageFiles({
@@ -146,7 +161,6 @@ extension StagingActions on Staging {
 }
 
 extension StagingStorage on Staging {
-
   ///Path of [stagingFile]
   String get stagingFilePath => join(branch.branchDirectory.path, branchStage);
 
@@ -182,7 +196,6 @@ extension StagingStorage on Staging {
 }
 
 extension StagingCommons on Staging {
-
   ///Get [Repository] associated with [stagingFile]
   Repository get repository => branch.repository;
 
@@ -268,7 +281,6 @@ extension StagingIgnore on Staging {
     return false;
   }
 }
-
 
 ///Entity to store [Staging] data
 @freezed

@@ -42,7 +42,7 @@ Sha1 createCommitSha({
 }
 
 ///Creates a [Sha1] from a [file]
-Future<Sha1> computeFileSha1Hash(File file) async => computeSha1Hash(await file.readAsBytes());
+Sha1 computeFileSha1Hash(File file) => computeSha1Hash(file.readAsBytesSync());
 
 ///Creates a [Sha1] hash from [bytes] data
 Sha1 computeSha1Hash(Uint8List bytes) => Sha1(sha1.convert(bytes).toString());

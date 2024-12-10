@@ -5,7 +5,7 @@ Build a distributed source control system in the style of Git. It should be poss
 
 # Design Patterns
 - Commands have been done with the **Command Design Pattern**
-- The inputs parsed into a list commands with the **Facade** pattern
+- The inputs parsed into a Command Facade running a list of commands with the **Facade** pattern
 
 # Code generation
 ```bash
