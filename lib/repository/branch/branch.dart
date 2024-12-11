@@ -13,7 +13,6 @@ import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
-import 'package:balo/view/themes.dart';
 import 'package:path/path.dart';
 
 import 'package:freezed_annotation/freezed_annotation.dart';

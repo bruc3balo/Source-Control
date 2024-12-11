@@ -2,9 +2,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
-import 'package:balo/command/command.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/ignore.dart';
@@ -178,7 +176,7 @@ extension BranchMerge on Merge {
       otherBranchObjectsMap: otherBranchObjectsMap,
     );
 
-    MergeCommitMetaData mergeData = saveCommitMergeData(
+    saveCommitMergeData(
       MergeCommitMetaData(
         fromBranchName: otherBranch.branchName,
         commitsToMerge: {for (var c in commitsToMerge) c.sha: c},

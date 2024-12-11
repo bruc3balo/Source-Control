@@ -1,11 +1,7 @@
-import 'dart:io';
-
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/utils/print_fn.dart';
-import 'package:balo/utils/variables.dart';
-import 'package:path/path.dart';
 
 ///Hash of a sha1 with validation
 class Sha1 {

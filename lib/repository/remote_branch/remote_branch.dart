@@ -297,7 +297,7 @@ extension RemoteBranchCommon on RemoteBranch {
         );
 
         //Store to remote repository
-        RepoObjectsData data = o.writeRepoObject();
+        o.writeRepoObject();
       },
     );
 
