@@ -6,6 +6,7 @@ import 'package:balo/command/command_facade.dart';
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/command_line_interface/user_input.dart';
+import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 
@@ -41,8 +42,8 @@ abstract class UndoableCommandExecutor {
           return HelpInitializer(command: parsedCommands.command);
         }
         //Path
-        String? path = parsedCommands.getOption(CliCommandOptionsEnum.path);
-        if (path == ".") path = Directory.current.path;
+        String path = parsedCommands.getOption(CliCommandOptionsEnum.path);
+        if (path == dot) path = Directory.current.path;
 
         return RepositoryInitializer(path);
 

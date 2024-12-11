@@ -1,7 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
@@ -61,8 +60,8 @@ extension StagingActions on Staging {
           commit: Commit(
             Sha1(commit.sha),
             branch,
-            message,
-            repoObjects,
+            commit.message,
+            commit.commitedObjects,
             fromBranch,
             commit.commitedAt,
           ),
@@ -144,8 +143,8 @@ extension StagingActions on Staging {
 
   ///Deletes data from [stagingFile]
   void unstageFiles({
-    Function()? onStagingFileDoesntExist,
-    Function(FileSystemException)? onFileSystemException,
+    void Function()? onStagingFileDoesntExist,
+    void Function(FileSystemException)? onFileSystemException,
   }) {
     if (!stagingFile.existsSync()) {
       onStagingFileDoesntExist?.call();
@@ -200,7 +199,6 @@ extension StagingCommons on Staging {
   ///Get [Ignore] associated with [repository]
   Ignore get ignore => repository.ignore;
 }
-
 
 ///Entity to store [Staging] data
 @freezed

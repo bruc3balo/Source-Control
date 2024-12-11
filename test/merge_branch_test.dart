@@ -18,7 +18,7 @@ void main() {
       // Test with repository
       await test_runner.testWithRepository(
         cleanup: false,
-        verbose: true,
+        verbose: false,
         doTest: (r, _, v) async {
           // Show add help command
           int helpCode = await test_runner.runTest([CliCommandsEnum.merge.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
@@ -63,9 +63,22 @@ void main() {
           ]);
           assert(mergeFromDefaultBranchToNewBranchCode == 0);
 
-          //assert merge file exists
+          //Assert merge file exists
           Merge merge = Merge(r, Branch(newBranch, r));
           assert(merge.hasPendingMerge);
+
+          //Commit changes
+          String commitMessage = "Merged from $defaultBranch";
+
+          //Commit the staged file
+          int commitMergedFilesCode = await test_runner.runTest([
+            CliCommandsEnum.commit.command,
+            "-${CliCommandOptionsEnum.message.abbreviation}",
+            commitMessage,
+            v ?"-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
+          ]);
+
+          assert(commitMergedFilesCode == 0);
 
         },
       );
@@ -77,5 +90,6 @@ void main() {
         newLine: true,
       );
     },
+    timeout: Timeout(Duration(days: 1))
   );
 }

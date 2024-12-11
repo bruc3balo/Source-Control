@@ -70,9 +70,11 @@ extension MergeStorage on Merge {
 }
 
 extension BranchMerge on Merge {
+
   ///Merges [otherBranch] to the current [branch]
   Future<StagingData?> mergeFromOtherBranchIntoThis({
     required Branch otherBranch,
+    Function()? onSuccessfulMerge,
     Function()? onPendingCommit,
     Function()? onPendingMerge,
     Function()? onSameBranchMerge,
@@ -190,16 +192,19 @@ extension BranchMerge on Merge {
     );
 
     debugPrintToConsole(
-      message: "Deleting $mergeFilePath",
+      message: "Deleting ${patchesDirectory.path}",
     );
 
     patchesDirectory.deleteSync(recursive: true);
 
     //Stage files for commit
+    debugPrintToConsole(
+      message: "Staging ${mergedFiles.length} files for commit",
+    );
     StagingData stagingData = staging.saveStagingData(
       StagingData(
         stagedAt: DateTime.now(),
-        filesToBeStaged: mergedFiles.map((s) => s.path).toList(),
+        filesToBeStaged: mergedFiles.map((s) => relativePathFromDir(directoryPath: workingDirectory.path, path: s.path)).toList(),
       ),
     );
 
@@ -214,9 +219,6 @@ extension BranchMerge on Merge {
   }) {
     Directory patchDirectory = Directory.systemTemp.createTempSync();
 
-    debugPrintToConsole(
-      message: "Patch Dir: ${patchDirectory.path}",
-    );
 
     String repositoryParent = workingDirectory.path;
     List<File> workingBranchFiles =
@@ -225,9 +227,10 @@ extension BranchMerge on Merge {
             .where((f) => !shouldIgnorePath(relativePathFromDir(path: f.path, directoryPath: repositoryParent), patternsToIgnore))
             .map((e) => File(e.path)).toList();
 
-    debugPrintToConsole(
-      message: "Starting file comparison for ${workingBranchFiles.length} files",
+    printToConsole(
+      message: "Generating ${workingBranchFiles.length} patches at Dir: ${patchDirectory.path}",
     );
+
 
     //Compare file by file
     int mergeFileCount = 0;
@@ -246,13 +249,13 @@ extension BranchMerge on Merge {
         //Keep this
 
         String temporaryThisFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectory.path);
-        debugPrintToConsole(message: "Copying file to $temporaryThisFilePath from patch dir ${patchDirectory.path}");
+        debugPrintToConsole(message: "Copying file from ${thisFile.path} to patch dir $temporaryThisFilePath");
         File(temporaryThisFilePath).createSync(recursive: true);
         File finalFile = thisFile.copySync(temporaryThisFilePath);
 
-        debugPrintToConsole(
-          message: "Auto merging for ${basename(finalFile.path)}",
-          color: CliColor.defaultColor,
+        printToConsole(
+          message: "AUTO MERGING: ${basename(finalFile.path)}",
+          color: CliColor.green,
         );
         continue;
       }
@@ -300,16 +303,18 @@ extension BranchMerge on Merge {
           String thisLine = thisLines[line];
 
           //int diffScore = await levenshteinDistance(otherLine, thisLine);
-          bool divergence = otherLine == thisLine;
-          debugPrintToConsole(
-            message: "Lines $line has divergence $divergence",
-          );
+          bool divergence = otherLine != thisLine;
+
 
           if (!divergence) {
             //add either
             linesToWrite.add(otherLine);
             continue lineLoop;
           }
+
+          debugPrintToConsole(
+            message: "Lines $line has divergence",
+          );
 
           //Merge conflict detected
           conflict = true;
@@ -321,8 +326,8 @@ extension BranchMerge on Merge {
       }
 
       if (!conflict) {
-        debugPrintToConsole(
-          message: "Auto merging for $thisFileName",
+        printToConsole(
+          message: "AUTO MERGING: $thisFileName",
           color: CliColor.cyan,
           style: CliStyle.bold,
         );
@@ -343,7 +348,7 @@ extension BranchMerge on Merge {
         );
 
       debugPrintToConsole(
-        message: "CONFLICT for $thisFileName",
+        message: "CONFLICT: $thisFileName",
         color: CliColor.brightRed,
         style: CliStyle.bold,
       );
@@ -362,9 +367,8 @@ extension BranchMerge on Merge {
     required Directory patchesDirectory,
     required Directory workingDir,
   }) {
-    debugPrintToConsole(
-      message: "Merging files from $patchesDirectory to $workingDir",
-      newLine: true,
+    printToConsole(
+      message: "Applying patches from $patchesDirectory to $workingDir",
     );
 
     List<File> mergedFiles = [];
@@ -376,8 +380,8 @@ extension BranchMerge on Merge {
       debugPrintToConsole(message: "Copying to ${basename(file.path)} to $newPath");
     });
 
-    debugPrintToConsole(
-      message: "Done merging ${mergedFiles.length} files to $workingDir",
+    printToConsole(
+      message: "${mergedFiles.length} patches applied successfully to $workingDir",
     );
 
     return mergedFiles;

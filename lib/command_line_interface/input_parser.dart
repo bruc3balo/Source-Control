@@ -18,7 +18,7 @@ class ParsedCommands {
 
   ParsedCommands(this.command, Map<CliCommandOptionsEnum, dynamic> options) : _options = options;
 
-  dynamic getOption(CliCommandOptionsEnum o) => _options[o];
+  dynamic getOption(CliCommandOptionsEnum o) => _options[o] ?? command.options.where((e) => e.optionEnum == o).map((e) => e.defaultValue).firstOrNull;
 
   bool hasOption(CliCommandOptionsEnum o) => _options.containsKey(o);
 

@@ -540,13 +540,16 @@ class MergeBranchCommand extends UndoableCommand {
   final Branch otherBranch;
   late final Merge merge = Merge(repository, thisBranch);
 
-
   MergeBranchCommand(this.repository, this.thisBranch, this.otherBranch);
 
   @override
   Future<void> execute() async {
     await merge.mergeFromOtherBranchIntoThis(
       otherBranch: otherBranch,
+      onSuccessfulMerge: () => printToConsole(
+        message: "Merge complete, if any conflicts resolve and commit your changes",
+        color: CliColor.yellow,
+      ),
       onSameBranchMerge: () => debugPrintToConsole(
         message: "Cannot merge from the same branch",
       ),

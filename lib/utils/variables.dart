@@ -13,7 +13,7 @@ const remoteFileName = "remotes.json";
 const defaultRemote = "origin";
 const branchMergeFileName = "merge.json";
 
-const defaultIgnore = ["/$repositoryWorkingDirName", "/.git", "/.dart_tool"];
+const defaultIgnore = ["/$repositoryWorkingDirName", "/.git", "/.dart_tool", "/.idea"];
 
 const stagedAtKey = "staged_at";
 const filePathsKey = "file_paths";
