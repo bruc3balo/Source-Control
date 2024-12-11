@@ -34,7 +34,7 @@ extension RemoteBranchCommon on RemoteBranch {
     Function()? onSuccessfulPull,
   }) {
     //Must be in an initialized
-    if (localRepository.isInitialized) {
+    if (!localRepository.isInitialized) {
       onRepositoryNotInitialized?.call();
       return;
     }
@@ -68,12 +68,11 @@ extension RemoteBranchCommon on RemoteBranch {
 
     //Get commits needed to pull
     List<CommitTreeMetaData> commitsToPull = [];
-    for (int i = remoteCommits.length - 1; i >= 0; i--) {
-      CommitTreeMetaData c = remoteCommits[i];
-      commitsToPull.add(c);
-
+    for (CommitTreeMetaData c in remoteCommits) {
       bool isMergeBase = c.sha == localLatestCommit?.sha;
       if (isMergeBase) break;
+
+      commitsToPull.add(c);
     }
 
     //Objects needed to pull
@@ -247,12 +246,11 @@ extension RemoteBranchCommon on RemoteBranch {
 
     //Get commits needed to push
     List<CommitTreeMetaData> commitsToPush = [];
-    for (int i = 0; i < localCommits.length; i++) {
-      CommitTreeMetaData c = localCommits[i];
-      commitsToPush.add(c);
-
+    for (CommitTreeMetaData c in localCommits) {
       bool isMergeBase = c.sha == latestRemoteCommit?.sha;
       if (isMergeBase) break;
+
+      commitsToPush.add(c);
     }
 
     //Objects needed to push

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/merge/merge.dart';
@@ -24,7 +26,7 @@ void main() {
           assert(helpCode == 0);
 
           //Stage file
-          String expectedFile = "/test/balo_t.dart";
+          String expectedFile = "${Platform.pathSeparator}${join("test", "balo_t.dart")}";
           int stageFilesCode = await test_runner.runTest([
             CliCommandsEnum.add.command,
             "-${CliCommandOptionsEnum.filePattern.abbreviation}",

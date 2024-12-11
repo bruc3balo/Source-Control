@@ -1,3 +1,5 @@
+import 'dart:io';
+
 const executableName = "balo";
 const executableDescription = "A cli utility for balo repository";
 const repositoryWorkingDirName = ".balo";
@@ -13,7 +15,7 @@ const remoteFileName = "remotes.json";
 const defaultRemote = "origin";
 const branchMergeFileName = "merge.json";
 
-const defaultIgnore = ["/$repositoryWorkingDirName", "/.git", "/.dart_tool", "/.idea"];
+final defaultIgnore = ["${Platform.pathSeparator}$repositoryWorkingDirName", "${Platform.pathSeparator}.git", "${Platform.pathSeparator}.dart_tool", "${Platform.pathSeparator}.idea"];
 
 const stagedAtKey = "staged_at";
 const filePathsKey = "file_paths";

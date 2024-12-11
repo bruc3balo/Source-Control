@@ -173,44 +173,45 @@ class PatternExamples {
 enum IgnorePatternRules {
   // matches any number of characters
   suffix(
-    pattern: "*",
     position: PatternPosition.start,
     description: "Matches any number of characters",
   ),
   // matches a single character
   single(
-    pattern: "?",
     position: PatternPosition.any,
     description: "Matches exactly one character",
   ),
   // matches nested directories
   contains(
-    pattern: "**",
     position: PatternPosition.any,
     description: "Matches nested directories",
   ),
   // at start means relative to the root
   pathFromRoot(
-    pattern: "/",
     position: PatternPosition.start,
     description: "Relative to root start",
   ),
   // at start means relative to the root
   exactMatch(
-    pattern: "",
     position: PatternPosition.any,
     description: "Exact name match",
   );
 
-  final String pattern;
   final PatternPosition position;
   final String description;
 
   const IgnorePatternRules({
-    required this.pattern,
     required this.position,
     required this.description,
   });
+
+  String get pattern => switch(this) {
+    IgnorePatternRules.suffix => "*",
+    IgnorePatternRules.single => "?",
+    IgnorePatternRules.contains => "**",
+    IgnorePatternRules.pathFromRoot => Platform.pathSeparator,
+    IgnorePatternRules.exactMatch => "",
+  };
 
   static IgnorePatternRules detectRule(String pattern) {
     if (pattern.startsWith(IgnorePatternRules.suffix.pattern) && !pattern.contains(IgnorePatternRules.contains.pattern)) {

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/merge/merge.dart';
@@ -25,7 +27,7 @@ void main() {
         assert(helpCode == 0);
 
         //Stage file
-        String expectedFile = "/test/balo_t.dart";
+        String expectedFile = "${Platform.pathSeparator}${join("test", "balo_t.dart")}";
         int stageFilesCode = await test_runner.runTest([
           CliCommandsEnum.add.command,
           "-${CliCommandOptionsEnum.filePattern.abbreviation}",
@@ -67,6 +69,12 @@ void main() {
         ]);
         assert(pushToRemoteCommand == 0);
 
+        //Check if commit has been recorded
+        Branch branch = Branch(defaultBranch, remoteRepository);
+        BranchTreeMetaData? branchTree = branch.branchTreeMetaData;
+        assert(branchTree != null);
+        assert(branchTree!.commits.length == 1);
+        assert(branchTree!.commits.values.first.message == initialCommit);
 
       },
     );

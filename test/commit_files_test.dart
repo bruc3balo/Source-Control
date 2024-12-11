@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
+import 'package:path/path.dart';
 import 'package:test/test.dart';
 import 'balo_t.dart' as test_runner;
 
@@ -17,7 +20,7 @@ void main() {
         int helpCode = await test_runner.runTest([CliCommandsEnum.commit.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
 
-        String expectedFile = "/test/balo_t.dart";
+        String expectedFile = "${Platform.pathSeparator}${join("test", "balo_t.dart")}";
 
         //Run stage files command
         int stageFilesCode = await test_runner.runTest([
