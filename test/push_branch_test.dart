@@ -12,12 +12,14 @@ import 'package:test/test.dart';
 import 'balo_t.dart' as test_runner;
 
 void main() {
-  test('Clone branch test', () async {
+  test('Push branch test', () async {
+
     // Test with repository
     await test_runner.testWithRepository(
-      cleanup: true,
+      cleanup: false,
       verbose: true,
       doTest: (localRepository, remoteRepository, v) async {
+
         // Show command help command
         int helpCode = await test_runner.runTest([CliCommandsEnum.clone.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
@@ -64,6 +66,7 @@ void main() {
           v ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
         ]);
         assert(pushToRemoteCommand == 0);
+
 
 
       },
