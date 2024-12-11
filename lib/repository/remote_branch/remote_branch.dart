@@ -8,6 +8,7 @@ import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/state/state.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
@@ -29,11 +30,11 @@ extension RemoteBranchCommon on RemoteBranch {
   /// Updates a [localRepository] with latest [Commit]'s from a [RemoteBranch] for a [branch]
   void pull({
     required Repository localRepository,
-    Function()? onNoChanges,
-    Function()? onNoStateData,
-    Function()? onNoRemoteData,
-    Function()? onRepositoryNotInitialized,
-    Function()? onSuccessfulPull,
+    Function()? onNoChanges = onNoChanges,
+    Function()? onNoStateData = onStateDoesntExist,
+    Function()? onNoRemoteData = onNoRemoteData,
+    Function()? onRepositoryNotInitialized = onRepositoryNotInitialized,
+    Function()? onSuccessfulPull = onSuccessfulPull,
   }) {
     //Must be in an initialized
     if (!localRepository.isInitialized) {
@@ -148,9 +149,9 @@ extension RemoteBranchCommon on RemoteBranch {
   ///Downloads a remote [Repository] from a [RemoteBranch] into a local branch
   void clone({
     required Repository localRepository,
-    Function()? onRepositoryNotFound,
-    Function()? onNoCommitFound,
-    Function()? onSuccessfulPush,
+    Function()? onRepositoryNotFound = onRemoteRepositoryNotFound,
+    Function()? onNoCommitFound = onNoCommitsFound,
+    Function()? onSuccessfulClone = onSuccessfulClone,
   }) {
     //Get remote repository
     Repository remoteRepository = branch.repository;
@@ -225,15 +226,15 @@ extension RemoteBranchCommon on RemoteBranch {
       },
     );
 
-    onSuccessfulPush?.call();
+    onSuccessfulClone?.call();
   }
 
   ///Uploads [Commit]s from a [localRepository] into a [RemoteBranch]
   void push({
     required Repository localRepository,
-    Function()? onNoCommits,
-    Function()? onRemoteUrlNotSupported,
-    Function()? onSuccessfulPush,
+    Function()? onNoCommits = onNoCommitsFound,
+    Function()? onRemoteUrlNotSupported = onRemoteUrlNotSupported,
+    Function()? onSuccessfulPush = onSuccessfulPush,
   }) {
     //Only path remotes
     if (!remote.isPath) {

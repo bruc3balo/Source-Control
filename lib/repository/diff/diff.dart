@@ -1,8 +1,10 @@
 import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
+import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 import 'package:dart_levenshtein/dart_levenshtein.dart';
@@ -27,15 +29,15 @@ class CommitDiff {
   static Future<CommitDiff> calculateDiff({
     required Commit thisCommit,
     required Commit otherCommit,
-    Function()? onNoOtherCommitBranchMetaData,
-    Function()? onNoOtherCommitMetaData,
-    Function()? onNoThisCommitBranchMetaData,
-    Function()? onNoThisCommitMetaData,
+    Function(Branch)? onNoOtherCommitBranchMetaData = onNoCommitBranchMetaData,
+    Function(Commit)? onNoOtherCommitMetaData = onNoCommitMetaData,
+    Function(Branch)? onNoThisCommitBranchMetaData = onNoCommitBranchMetaData,
+    Function(Commit)? onNoThisCommitMetaData = onNoCommitMetaData,
   }) async {
     //Get a commit files
     Map<String, RepoObjectsData>? thisFiles = thisCommit.getCommitFiles(
-      onNoCommitBranchMetaData: onNoThisCommitBranchMetaData,
       onNoCommitMetaData: onNoThisCommitMetaData,
+      onNoCommitBranchMetaData: onNoThisCommitBranchMetaData,
     );
 
     //Get b commit files

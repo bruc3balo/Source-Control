@@ -5,7 +5,6 @@ import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/ignore.dart';
-import 'package:balo/repository/merge/merge.dart';
 import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/remote_branch/remote_branch.dart';
 import 'package:balo/repository/repository.dart';

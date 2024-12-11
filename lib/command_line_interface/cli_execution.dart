@@ -6,6 +6,7 @@ import 'package:balo/command/command_facade.dart';
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/command_line_interface/user_input.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
@@ -187,7 +188,7 @@ abstract class UndoableCommandExecutor {
         );
 
         String localPath = parsedCommands.getOption(CliCommandOptionsEnum.path);
-        if(localPath == dot) localPath = Directory.current.path;
+        if (localPath == dot) localPath = Directory.current.path;
 
         return CloneRepositoryInitializer(remoteUrl, branchName, localPath);
 
@@ -244,7 +245,12 @@ abstract class UndoableCommandExecutor {
       }
       return 0;
     } catch (e, trace) {
-      debugPrintToConsole(message: e.toString(), color: CliColor.red);
+      if (e is FileSystemException) {
+        onFileSystemException(e);
+      } else {
+        debugPrintToConsole(message: e.toString(), color: CliColor.red);
+      }
+
       debugPrintToConsole(message: trace.toString(), color: CliColor.red);
 
       while (i > 0) {

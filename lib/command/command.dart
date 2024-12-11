@@ -68,34 +68,12 @@ class InitializeRepositoryCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    repository.initializeRepository(
-      onAlreadyInitialized: () => printToConsole(
-        message: "Balo repository is already initialized",
-        color: CliColor.red,
-      ),
-      onSuccessfullyInitialized: () => printToConsole(
-        message: "Repository initialized",
-      ),
-      onFileSystemException: (e) => printToConsole(
-        message: e.message,
-      ),
-    );
+    repository.initializeRepository();
   }
 
   @override
   Future<void> undo() async {
-    repository.unInitializeRepository(
-      onRepositoryNotInitialized: () => printToConsole(
-        message: "Balo repository is not initialized",
-      ),
-      onSuccessfullyUninitialized: () => printToConsole(
-        message: "Repository has been initialized at ${repository.path}",
-      ),
-      onFileSystemException: (e) => printToConsole(
-        message: e.message,
-        color: CliColor.red,
-      ),
-    );
+    repository.unInitializeRepository();
   }
 }
 
@@ -175,49 +153,12 @@ class CreateNewBranchCommand extends UndoableCommand {
   Future<void> execute() async {
     branch.createBranch(
       isValidBranchName: isValidBranchName,
-      onFileSystemException: (e) => debugPrintToConsole(
-        message: e.message,
-        color: CliColor.red,
-      ),
-      onRepositoryNotInitialized: () => debugPrintToConsole(
-        message: "Repository not initialized",
-        color: CliColor.red,
-      ),
-      onBranchAlreadyExists: () => debugPrintToConsole(
-        message: "${branch.branchName} already exists",
-        color: CliColor.red,
-      ),
-      onBranchCreated: (d) => debugPrintToConsole(
-        message: "${branch.branchName} created at ${d.path}",
-        color: CliColor.red,
-      ),
-      onInvalidBranchName: (n) => debugPrintToConsole(
-        message: "Invalid branch name $n",
-        color: CliColor.red,
-      ),
     );
   }
 
   @override
   Future<void> undo() async {
-    branch.deleteBranch(
-      onFileSystemException: (e) => debugPrintToConsole(
-        message: e.message,
-        color: CliColor.red,
-      ),
-      onRepositoryNotInitialized: () => debugPrintToConsole(
-        message: "Repository not initialized",
-        color: CliColor.red,
-      ),
-      onBranchDeleted: () => debugPrintToConsole(
-        message: "${branch.branchName} deleted",
-        color: CliColor.red,
-      ),
-      onBranchDoesntExist: () => debugPrintToConsole(
-        message: "Branch ${branch.branchName} doesn't exist",
-        color: CliColor.red,
-      ),
-    );
+    branch.deleteBranch();
   }
 }
 
@@ -239,15 +180,7 @@ class StageFilesCommand extends UndoableCommand {
 
   @override
   Future<void> undo() async {
-    staging.unstageFiles(
-      onStagingFileDoesntExist: () => debugPrintToConsole(
-        message: "Staging file doesn't exist",
-      ),
-      onFileSystemException: (e) => debugPrintToConsole(
-        message: e.message,
-        color: CliColor.red,
-      ),
-    );
+    staging.unstageFiles();
   }
 }
 
@@ -260,20 +193,7 @@ class AddIgnorePatternCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    repository.ignore.addIgnore(
-      pattern,
-      onFileSystemException: (e) => debugPrintToConsole(
-        message: e.message,
-        color: CliColor.red,
-      ),
-      onAdded: () => debugPrintToConsole(
-        message: "Pattern $pattern has been added to ignore file",
-      ),
-      onAlreadyPresent: () => debugPrintToConsole(
-        message: "Pattern $pattern already exists in ignore file",
-        color: CliColor.red,
-      ),
-    );
+    repository.ignore.addIgnore(pattern);
   }
 
   @override
@@ -368,8 +288,7 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
     );
 
     for (MapEntry<BranchFileStatus, HashSet<String>> e in status.entries) {
-
-      CliColor c = switch(e.key) {
+      CliColor c = switch (e.key) {
         BranchFileStatus.staged => CliColor.brightGreen,
         BranchFileStatus.untracked => CliColor.white,
         BranchFileStatus.unstaged => CliColor.red,
@@ -493,15 +412,7 @@ class CheckoutToBranchCommand extends UndoableCommand {
   @override
   Future<void> execute() async {
     await Isolate.run(() async {
-      branch.checkoutToBranch(
-        commitSha: commitSha,
-        onRepositoryNotInitialized: () => debugPrintToConsole(message: "Repository not initialized"),
-        onNoCommitFound: () => debugPrintToConsole(message: "Commit not found"),
-        onSameCommit: () => debugPrintToConsole(message: "Cannot check out to same commit"),
-        onStateDoesntExists: () => debugPrintToConsole(message: "State doesn't exist"),
-        onBranchMetaDataDoesntExists: () => debugPrintToConsole(message: "Branch meta data doesn't exists"),
-        onFileSystemException: (e) => debugPrintToConsole(message: e.message, color: CliColor.red),
-      );
+      branch.checkoutToBranch(commitSha: commitSha);
     });
   }
 
@@ -523,18 +434,6 @@ class ShowCommitDiffCommand extends UndoableCommand {
       await thisCommit.compareCommitDiff(
         other: otherCommit,
         onDiffCalculated: (d) => d.fullPrint(),
-        onNoOtherCommitMetaData: () => debugPrintToConsole(
-          message: "Commit b ${otherCommit.sha} (${otherCommit.branch.branchName}) has no commit meta data",
-        ),
-        onNoOtherCommitBranchMetaData: () => debugPrintToConsole(
-          message: "Commit b ${otherCommit.sha} (${otherCommit.branch.branchName}) has no branch data",
-        ),
-        onNoThisCommitMetaData: () => debugPrintToConsole(
-          message: "Commit a ${thisCommit.sha} (${thisCommit.branch.branchName}) has no commit meta data",
-        ),
-        onNoThisCommitBranchMetaData: () => debugPrintToConsole(
-          message: "Commit a ${thisCommit.sha} (${thisCommit.branch.branchName}) has no branch data",
-        ),
       );
     });
   }
@@ -554,37 +453,7 @@ class MergeBranchCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await merge.mergeFromOtherBranchIntoThis(
-      otherBranch: otherBranch,
-      onSuccessfulMerge: () => printToConsole(
-        message: "Merge complete, if any conflicts resolve and commit your changes",
-        color: CliColor.yellow,
-      ),
-      onSameBranchMerge: () => debugPrintToConsole(
-        message: "Cannot merge from the same branch",
-      ),
-      onRepositoryNotInitialized: () => debugPrintToConsole(
-        message: "Repository not initialized",
-      ),
-      onNoOtherBranchMetaData: () => debugPrintToConsole(
-        message: "${otherBranch.branchName} branch doesn't exist",
-      ),
-      onNoCommit: () => debugPrintToConsole(
-        message: "${otherBranch.branchName} branch doesn't have a commit",
-      ),
-      onNoCommitMetaData: () => debugPrintToConsole(
-        message: "No commit meta data",
-      ),
-      onNoCommitBranchMetaData: () => debugPrintToConsole(
-        message: "No commit branch meta data",
-      ),
-      onPendingCommit: () => debugPrintToConsole(
-        message: "Please commit your changes first",
-      ),
-      onPendingMerge: () => debugPrintToConsole(
-        message: "There's already a pending merge",
-      ),
-    );
+    await merge.mergeFromOtherBranchIntoThis(otherBranch: otherBranch);
   }
 
   @override

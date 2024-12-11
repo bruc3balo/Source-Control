@@ -4,7 +4,10 @@ import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/state/state.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/variables.dart';
+import 'package:balo/view/terminal.dart';
+import 'package:balo/view/themes.dart';
 import 'package:path/path.dart';
 
 /// A [Directory] containing source control working data
@@ -15,48 +18,43 @@ class Repository {
 }
 
 extension RepositoryActions on Repository {
-
   /// Delete all [Repository] data
   void unInitializeRepository({
-    Function()? onRepositoryNotInitialized,
-    Function()? onSuccessfullyUninitialized,
-    Function(FileSystemException)? onFileSystemException,
+    void Function()? onRepositoryNotInitialized = onRepositoryNotInitialized,
+    void Function()? onSuccessfullyUninitialized = onRepositorySuccessfullyUninitialized,
   }) {
-    try {
-      if (!isInitialized) {
-        onRepositoryNotInitialized?.call();
-        return;
-      }
-
-      repositoryDirectory.deleteSync(recursive: true);
-      onSuccessfullyUninitialized?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
+    if (!isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return;
     }
+
+    repositoryDirectory.deleteSync(recursive: true);
+    onSuccessfullyUninitialized?.call();
   }
 
   /// Create a [Repository] in [path]
   void initializeRepository({
-    Function()? onAlreadyInitialized,
-    Function()? onSuccessfullyInitialized,
-    Function(FileSystemException)? onFileSystemException,
+    Function()? onAlreadyInitialized = onRepositoryAlreadyInitialized,
+    Function()? onSuccessfullyInitialized = onRepositorySuccessfullyUninitialized,
   }) {
-    try {
-      if (isInitialized) {
-        onAlreadyInitialized?.call();
-        return;
-      }
-
-      repositoryDirectory.createSync(recursive: true);
-      onSuccessfullyInitialized?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
+    if (isInitialized) {
+      printToConsole(
+        message: "Repository is already initialized",
+        color: CliColor.red,
+      );
+      onAlreadyInitialized?.call();
+      return;
     }
+
+    repositoryDirectory.createSync(recursive: true);
+    onSuccessfullyInitialized?.call();
+    printToConsole(
+      message: "Repository initialized",
+    );
   }
 }
 
 extension RepositoryCommons on Repository {
-
   /// Path to a [repositoryDirectory]
   String get repositoryPath => join(path, repositoryWorkingDirName);
 
@@ -71,7 +69,6 @@ extension RepositoryCommons on Repository {
 }
 
 extension RepositoryEnvironment on Repository {
-
   /// Get all [Branch]es in a [Repository]
   List<Branch> get allBranches => Directory(join(repositoryPath, branchFolderName))
       .listSync(recursive: false, followLinks: false)

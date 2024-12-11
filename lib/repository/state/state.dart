@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repository.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
@@ -47,7 +48,7 @@ extension StateStorage on State {
   /// Saves the [stateData] to [stateFile]
   StateData saveStateData({
     required StateData stateData,
-    Function()? onSuccessfullySaved,
+    Function()? onSuccessfullySaved = onSuccessfullyStateSaved,
   }) {
     //Write state to file
     stateFile
@@ -65,8 +66,8 @@ extension StateStorage on State {
 
   ///Deletes the current [stateFile]
   void deleteStateFile({
-    Function()? onDoesntExists,
-    Function()? onSuccessfullyDeleted,
+    Function()? onDoesntExists = onStateDoesntExist,
+    Function()? onSuccessfullyDeleted = onSuccessfullyStateDeleted,
   }) {
     if (!stateFile.existsSync()) {
       onDoesntExists?.call();
@@ -82,7 +83,7 @@ extension StateActions on State {
   ///Gets current [Branch] that [StateData] points to currently
   ///only if [exists]
   Branch? getCurrentBranch({
-    Function()? onNoStateFile,
+    Function()? onNoStateFile = onStateDoesntExist,
   }) {
     if (!exists) {
       onNoStateFile?.call();

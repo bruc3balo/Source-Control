@@ -11,6 +11,7 @@ import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
@@ -74,15 +75,15 @@ extension BranchMerge on Merge {
   ///Merges [otherBranch] to the current [branch]
   Future<StagingData?> mergeFromOtherBranchIntoThis({
     required Branch otherBranch,
-    Function()? onSuccessfulMerge,
-    Function()? onPendingCommit,
-    Function()? onPendingMerge,
-    Function()? onSameBranchMerge,
-    Function()? onRepositoryNotInitialized,
-    Function()? onNoOtherBranchMetaData,
-    Function()? onNoCommit,
-    Function()? onNoCommitBranchMetaData,
-    Function()? onNoCommitMetaData,
+    Function()? onSuccessfulMerge = onSuccessfulMerge,
+    Function()? onPendingCommit = onPendingCommit,
+    Function()? onPendingMerge = onPendingMerge,
+    Function()? onSameBranchMerge = onSameBranchMerge,
+    Function()? onRepositoryNotInitialized = onRepositoryNotInitialized,
+    Function(Branch)? onNoOtherBranchMetaData = onNoCommitBranchMetaData,
+    Function()? onNoCommit = onNoCommitsFound,
+    Function(Commit)? onNoCommitBranchMetaData = onNoCommitBranchMetaData,
+    Function(Commit)? onNoCommitMetaData = onNoCommitMetaData,
   }) async {
     //Ensure merging from repository
     if (!repository.isInitialized) {
@@ -111,7 +112,7 @@ extension BranchMerge on Merge {
     //Other branch data
     BranchTreeMetaData? otherBranchData = otherBranch.branchTreeMetaData;
     if (otherBranchData == null) {
-      onNoOtherBranchMetaData?.call();
+      onNoOtherBranchMetaData?.call(branch);
       return null;
     }
 

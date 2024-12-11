@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
@@ -40,20 +41,20 @@ extension CommitActions on Commit {
 
   ///Get list of commited [RepoObjectsData] in a [Commit]
   Map<String, RepoObjectsData>? getCommitFiles({
-    Function()? onNoCommitBranchMetaData,
-    Function()? onNoCommitMetaData,
+    Function(Branch)? onNoCommitBranchMetaData = onNoCommitBranchMetaData,
+    Function(Commit)? onNoCommitMetaData = onNoCommitMetaData,
   }) {
     Branch commitBranch = branch;
 
     BranchTreeMetaData? branchCommitMetaData = commitBranch.branchTreeMetaData;
     if (branchCommitMetaData == null) {
-      onNoCommitBranchMetaData?.call();
+      onNoCommitBranchMetaData?.call(branch);
       return null;
     }
 
     CommitTreeMetaData? commitMetaData = branchCommitMetaData.commits[sha.hash];
     if (commitMetaData == null) {
-      onNoCommitMetaData?.call();
+      onNoCommitMetaData?.call(this);
       return null;
     }
 
@@ -63,10 +64,10 @@ extension CommitActions on Commit {
   ///Compare a [CommitDiff] to another commit [other]
   Future<void> compareCommitDiff({
     required Commit other,
-    Function()? onNoOtherCommitBranchMetaData,
-    Function()? onNoOtherCommitMetaData,
-    Function()? onNoThisCommitBranchMetaData,
-    Function()? onNoThisCommitMetaData,
+    Function(Branch)? onNoOtherCommitBranchMetaData = onNoCommitBranchMetaData,
+    Function(Commit)? onNoOtherCommitMetaData = onNoCommitMetaData,
+    Function(Branch)? onNoThisCommitBranchMetaData = onNoCommitBranchMetaData,
+    Function(Commit)? onNoThisCommitMetaData = onNoCommitMetaData,
     Function(CommitDiff)? onDiffCalculated,
   }) async {
     CommitDiff commitDiff = await CommitDiff.calculateDiff(

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:balo/repository/repository.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
@@ -31,29 +32,24 @@ extension IgnoreStorage on Ignore {
     String pattern, {
     Function()? onAlreadyPresent,
     Function()? onAdded,
-    Function(FileSystemException)? onFileSystemException,
   }) {
-    try {
-      List<String> ignores = ignoreFile.readAsLinesSync();
-      if (ignores.contains(pattern)) {
-        onAlreadyPresent?.call();
-        return;
-      }
-
-      ignores.add(pattern);
-
-      ignoreFile
-        ..createSync(recursive: true)
-        ..writeAsStringSync(
-          ignores.join(Platform.lineTerminator),
-          flush: true,
-          mode: FileMode.write,
-        );
-
-      onAdded?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
+    List<String> ignores = ignoreFile.readAsLinesSync();
+    if (ignores.contains(pattern)) {
+      onAlreadyPresent?.call();
+      return;
     }
+
+    ignores.add(pattern);
+
+    ignoreFile
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+        ignores.join(Platform.lineTerminator),
+        flush: true,
+        mode: FileMode.write,
+      );
+
+    onAdded?.call();
   }
 
   /// Remove a [pattern] from the [ignoreFile]
@@ -61,40 +57,38 @@ extension IgnoreStorage on Ignore {
     required String pattern,
     Function()? onNotFoundPresent,
     Function()? onRemoved,
-    Function(FileSystemException)? onFileSystemException,
   }) {
-    try {
-      List<String> ignores = ignoreFile.readAsLinesSync();
-      if (!ignores.contains(pattern)) {
-        onNotFoundPresent?.call();
-        return;
-      }
-
-      ignores.remove(pattern);
-
-      ignoreFile
-        ..createSync(recursive: true)
-        ..writeAsStringSync(
-          ignores.join(Platform.lineTerminator),
-          flush: true,
-          mode: FileMode.write,
-        );
-
-      onRemoved?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
+    List<String> ignores = ignoreFile.readAsLinesSync();
+    if (!ignores.contains(pattern)) {
+      onNotFoundPresent?.call();
+      return;
     }
+
+    ignores.remove(pattern);
+
+    ignoreFile
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+        ignores.join(Platform.lineTerminator),
+        flush: true,
+        mode: FileMode.write,
+      );
+
+    onRemoved?.call();
   }
 }
 
 extension IgnoreActions on Ignore {
   /// Creates an [ignoreFile]
   void createIgnoreFile({
-    Function()? onAlreadyExists,
-    Function()? onSuccessfullyCreated,
-    Function()? onRepositoryNotInitialized,
+    Function()? onAlreadyExists = onIgnoreFileAlreadyExists,
+    Function()? onSuccessfullyCreated = onIgnoreFileSuccessfullyCreated,
+    Function()? onRepositoryNotInitialized = onRepositoryNotInitialized,
   }) {
     if (!repository.isInitialized) {
+      debugPrintToConsole(
+        message: "Repository not initialized",
+      );
       onRepositoryNotInitialized?.call();
       return;
     }
@@ -110,9 +104,9 @@ extension IgnoreActions on Ignore {
 
   /// Deletes an [ignoreFile]
   void deleteIgnoreFile({
-    Function()? onDoesntExists,
-    Function()? onSuccessfullyDeleted,
-    Function()? onRepositoryNotInitialized,
+    Function()? onDoesntExists = onIgnoreFileDoesntExists,
+    Function()? onSuccessfullyDeleted = onIgnoreFileSuccessfullyDeleted,
+    Function()? onRepositoryNotInitialized = onRepositoryNotInitialized,
   }) {
     if (!repository.isInitialized) {
       onRepositoryNotInitialized?.call();
@@ -204,13 +198,13 @@ enum IgnorePatternRules {
     required this.description,
   });
 
-  String get pattern => switch(this) {
-    IgnorePatternRules.suffix => "*",
-    IgnorePatternRules.single => "?",
-    IgnorePatternRules.contains => "**",
-    IgnorePatternRules.pathFromRoot => Platform.pathSeparator,
-    IgnorePatternRules.exactMatch => "",
-  };
+  String get pattern => switch (this) {
+        IgnorePatternRules.suffix => "*",
+        IgnorePatternRules.single => "?",
+        IgnorePatternRules.contains => "**",
+        IgnorePatternRules.pathFromRoot => Platform.pathSeparator,
+        IgnorePatternRules.exactMatch => "",
+      };
 
   static IgnorePatternRules detectRule(String pattern) {
     if (pattern.startsWith(IgnorePatternRules.suffix.pattern) && !pattern.contains(IgnorePatternRules.contains.pattern)) {

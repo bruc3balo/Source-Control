@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:balo/repository/repository.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:path/path.dart';
 
@@ -68,7 +69,7 @@ extension RemoteActions on Remote {
   /// Adds a [RemoteData] into a [remoteFile]
   /// The function is idempotent
   void addRemote({
-    Function()? onRemoteAlreadyExists,
+    Function()? onRemoteAlreadyExists = onRemoteAlreadyExists,
   }) {
     RemoteMetaData metaData = remoteData;
     RemoteData? rData = metaData.remotes[name];
@@ -91,7 +92,7 @@ extension RemoteActions on Remote {
   /// Removes a [RemoteData] into a [remoteFile]
   /// The function is idempotent
   void removeRemote({
-    Function()? onRemoteDoesntExists,
+    Function()? onRemoteDoesntExists = onRemoteDoesntAlreadyExists,
   }) {
     RemoteMetaData metaData = remoteData;
     if (!metaData.remotes.containsKey(name)) {

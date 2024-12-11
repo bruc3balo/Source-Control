@@ -1,8 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:balo/command/command.dart';
 import 'package:balo/repository/commit.dart';
@@ -11,6 +9,7 @@ import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
@@ -55,7 +54,11 @@ extension BranchStatus on Branch {
     //FileSystemEntity
     String directoryPath = repository.workingDirectory.path;
     for (FileSystemEntity f in workingDirFiles) {
-      BranchFileStatus branchStatus = stagedPaths.contains(f.path) ? BranchFileStatus.staged : trackedFiles.contains(relativePathFromDir(directoryPath: directoryPath, path: f.path)) ? BranchFileStatus.unstaged : BranchFileStatus.untracked;
+      BranchFileStatus branchStatus = stagedPaths.contains(f.path)
+          ? BranchFileStatus.staged
+          : trackedFiles.contains(relativePathFromDir(directoryPath: directoryPath, path: f.path))
+              ? BranchFileStatus.unstaged
+              : BranchFileStatus.untracked;
       fileStatus.update(branchStatus, (l) => l..add(f.path), ifAbsent: () => HashSet()..add(f.path));
     }
 
@@ -68,39 +71,34 @@ extension BranchCreation on Branch {
   void createBranch({
     bool Function(String name)? isValidBranchName,
     Function(String name)? onInvalidBranchName,
-    Function()? onBranchAlreadyExists,
-    Function()? onRepositoryNotInitialized,
-    Function(Directory)? onBranchCreated,
-    Function(FileSystemException)? onFileSystemException,
+    Function()? onBranchAlreadyExists = onBranchAlreadyExists,
+    Function()? onRepositoryNotInitialized = onRepositoryNotInitialized,
+    Function(Directory)? onBranchCreated = onBranchCreated,
   }) {
-    try {
-      if (!repository.isInitialized) {
-        onRepositoryNotInitialized?.call();
-        return;
-      }
-
-      bool valid = isValidBranchName?.call(branchName) ?? true;
-      if (!valid) {
-        onInvalidBranchName?.call(branchName);
-        return;
-      }
-
-      bool branchExists = branchDirectory.existsSync();
-      if (branchExists) {
-        onBranchAlreadyExists?.call();
-        return;
-      }
-
-      branchDirectory.createSync(
-        recursive: true,
-      );
-
-      saveBranchTreeMetaData(BranchTreeMetaData(name: branchName, commits: HashMap()));
-
-      onBranchCreated?.call(branchDirectory);
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
+    if (!repository.isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return;
     }
+
+    bool valid = isValidBranchName?.call(branchName) ?? true;
+    if (!valid) {
+      onInvalidBranchName?.call(branchName);
+      return;
+    }
+
+    bool branchExists = branchDirectory.existsSync();
+    if (branchExists) {
+      onBranchAlreadyExists?.call();
+      return;
+    }
+
+    branchDirectory.createSync(
+      recursive: true,
+    );
+
+    saveBranchTreeMetaData(BranchTreeMetaData(name: branchName, commits: HashMap()));
+
+    onBranchCreated?.call(branchDirectory);
   }
 
   ///Checkout to new [Branch] on a local [Repository]
@@ -112,81 +110,56 @@ extension BranchCreation on Branch {
     Function()? onBranchMetaDataDoesntExists,
     Function()? onStateDoesntExists,
     Function()? onRepositoryNotInitialized,
-    Function(FileSystemException)? onFileSystemException,
   }) {
-    try {
-      if (!branchTreeMetaDataExists) {
-        createBranch(
-          isValidBranchName: isValidBranchName,
-          onFileSystemException: (e) => debugPrintToConsole(
-            message: e.message,
-            color: CliColor.red,
-          ),
-          onRepositoryNotInitialized: () => debugPrintToConsole(
-            message: "Repository not initialized",
-          ),
-          onBranchAlreadyExists: () => debugPrintToConsole(
-            message: "Branch exists",
-          ),
-          onInvalidBranchName: (s) => printToConsole(
-            message: "Invalid branch name $s",
-          ),
-          onBranchCreated: (d) => debugPrintToConsole(
-            message: "Branch has been created on ${d.path}",
-          ),
-        );
-      }
-      State state = State(repository);
+    if (!branchTreeMetaDataExists) createBranch(isValidBranchName: isValidBranchName);
 
-      StateData? stateData = state.stateInfo;
-      if (stateData == null) {
-        onStateDoesntExists?.call();
-        return;
-      }
+    State state = State(repository);
 
-      StateData updatedStateData = stateData;
-
-      BranchTreeMetaData? branchData = branchTreeMetaData;
-      if (branchData == null) {
-        onBranchMetaDataDoesntExists?.call();
-        return;
-      }
-
-      //Change branch
-      updatedStateData = updatedStateData.copyWith(currentBranch: branchName);
-
-      //Change commit
-      CommitTreeMetaData? commitMetaData = commitSha != null ? branchData.commits[commitSha.trim()] : branchData.latestBranchCommits;
-      if (commitSha != null && commitMetaData == null) {
-        onNoCommitFound?.call();
-        return;
-      }
-
-      //Update commit pointer
-      updatedStateData = updatedStateData.copyWith(currentCommit: commitMetaData?.sha);
-      if (updatedStateData == stateData) {
-        onSameCommit?.call();
-        return;
-      }
-
-      //Move files from latest commit to current working dir
-      if (commitMetaData != null) {
-        _writeFilesToWorkingDir(
-          objects: commitMetaData.commitedObjects.values.toList(),
-          workingDir: repository.workingDirectory,
-        );
-      }
-
-      state.saveStateData(
-        stateData: updatedStateData,
-        onSuccessfullySaved: () => debugPrintToConsole(
-          message: "State saved",
-        ),
-      );
-    } on FileSystemException catch (e, trace) {
-      debugPrintToConsole(message: trace.toString(), color: CliColor.red);
-      onFileSystemException?.call(e);
+    StateData? stateData = state.stateInfo;
+    if (stateData == null) {
+      onStateDoesntExists?.call();
+      return;
     }
+
+    StateData updatedStateData = stateData;
+
+    BranchTreeMetaData? branchData = branchTreeMetaData;
+    if (branchData == null) {
+      onBranchMetaDataDoesntExists?.call();
+      return;
+    }
+
+    //Change branch
+    updatedStateData = updatedStateData.copyWith(currentBranch: branchName);
+
+    //Change commit
+    CommitTreeMetaData? commitMetaData = commitSha != null ? branchData.commits[commitSha.trim()] : branchData.latestBranchCommits;
+    if (commitSha != null && commitMetaData == null) {
+      onNoCommitFound?.call();
+      return;
+    }
+
+    //Update commit pointer
+    updatedStateData = updatedStateData.copyWith(currentCommit: commitMetaData?.sha);
+    if (updatedStateData == stateData) {
+      onSameCommit?.call();
+      return;
+    }
+
+    //Move files from latest commit to current working dir
+    if (commitMetaData != null) {
+      _writeFilesToWorkingDir(
+        objects: commitMetaData.commitedObjects.values.toList(),
+        workingDir: repository.workingDirectory,
+      );
+    }
+
+    state.saveStateData(
+      stateData: updatedStateData,
+      onSuccessfullySaved: () => debugPrintToConsole(
+        message: "State saved",
+      ),
+    );
   }
 
   ///Write [objects] to working directory
@@ -222,25 +195,20 @@ extension BranchCreation on Branch {
   void deleteBranch({
     Function()? onBranchDoesntExist,
     Function()? onBranchDeleted,
-    Function()? onRepositoryNotInitialized,
-    Function(FileSystemException)? onFileSystemException,
+    Function()? onRepositoryNotInitialized = onRepositoryNotInitialized,
   }) {
-    try {
-      if (!repository.isInitialized) {
-        onRepositoryNotInitialized?.call();
-        return;
-      }
-
-      if (!branchDirectory.existsSync()) {
-        onBranchDoesntExist?.call();
-        return;
-      }
-
-      branchDirectory.deleteSync(recursive: true);
-      onBranchDeleted?.call();
-    } on FileSystemException catch (e, trace) {
-      onFileSystemException?.call(e);
+    if (!repository.isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return;
     }
+
+    if (!branchDirectory.existsSync()) {
+      onBranchDoesntExist?.call();
+      return;
+    }
+
+    branchDirectory.deleteSync(recursive: true);
+    onBranchDeleted?.call();
   }
 }
 

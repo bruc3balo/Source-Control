@@ -9,6 +9,7 @@ import 'package:balo/repository/merge/merge.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/state/state.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
@@ -32,7 +33,7 @@ extension StagingActions on Staging {
   ///If a [Merge] is pending, it will be included in the [Commit]
   void commitStagedFiles({
     required String message,
-    Function()? onNoStagingData,
+    Function()? onNoStagingData = onNoStagingData,
   }) {
     Repository localRepository = repository;
     Branch commitingBranch = branch;
@@ -144,7 +145,6 @@ extension StagingActions on Staging {
   ///Deletes data from [stagingFile]
   void unstageFiles({
     void Function()? onStagingFileDoesntExist,
-    void Function(FileSystemException)? onFileSystemException,
   }) {
     if (!stagingFile.existsSync()) {
       onStagingFileDoesntExist?.call();

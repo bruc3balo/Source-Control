@@ -7,8 +7,12 @@ import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
+import 'package:balo/view/themes.dart';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart';
+
+
+
 
 ///[Function] to validate a [Branch] name and takes a [branchName]
 bool isValidBranchName(String? branchName) {
