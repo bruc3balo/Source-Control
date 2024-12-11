@@ -186,7 +186,10 @@ abstract class UndoableCommandExecutor {
           CliCommandOptionsEnum.branch,
         );
 
-        return CloneRepositoryInitializer(remoteUrl, branchName);
+        String localPath = parsedCommands.getOption(CliCommandOptionsEnum.path);
+        if(localPath == dot) localPath = Directory.current.path;
+
+        return CloneRepositoryInitializer(remoteUrl, branchName, localPath);
 
       case CliCommandsEnum.push:
         String? remoteName = parsedCommands.getOption(

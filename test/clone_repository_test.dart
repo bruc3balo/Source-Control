@@ -4,6 +4,7 @@ import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/merge/merge.dart';
 import 'package:balo/repository/remote/remote.dart';
+import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/variables.dart';
@@ -23,7 +24,7 @@ void main() {
       doTest: (localRepository, remoteRepository, v) async {
 
         // Show command help command
-        int helpCode = await test_runner.runTest([CliCommandsEnum.push.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
+        int helpCode = await test_runner.runTest([CliCommandsEnum.clone.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
 
         //Stage file
@@ -69,15 +70,25 @@ void main() {
         ]);
         assert(pushToRemoteCommand == 0);
 
-
         //Clone from remote repository
+        String clonePath = join(Directory.current.path, "test-clone-path");
+
         int cloneFromRemoteCommand = await test_runner.runTest([
           CliCommandsEnum.clone.command,
           "-${CliCommandOptionsEnum.remoteUrl.abbreviation}",
           url,
+          "-${CliCommandOptionsEnum.path.abbreviation}",
+          clonePath,
           v ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
         ]);
         assert(cloneFromRemoteCommand == 0);
+
+        String cloneWorkingDir = join(clonePath, remoteRepository.path.split(Platform.pathSeparator).last);
+        Repository clonedRepository = Repository(cloneWorkingDir);
+        assert(clonedRepository.isInitialized);
+
+        //Clean up cloned repo
+        Directory(clonePath).deleteSync(recursive: true);
 
       },
     );

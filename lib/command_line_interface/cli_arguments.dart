@@ -155,6 +155,11 @@ enum CliCommandsEnum {
         mandatory: false,
         defaultValue: defaultBranch,
       ),
+      CommandOption(
+        optionEnum: CliCommandOptionsEnum.path,
+        mandatory: false,
+        defaultValue: dot,
+      ),
     ],
   ),
   push(

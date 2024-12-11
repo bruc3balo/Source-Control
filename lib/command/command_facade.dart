@@ -404,17 +404,18 @@ class ListAllRemoteInitializer implements CommandFacade {
 
 ///[CommandFacade] to clone a [RemoteBranch]s from a remote [Repository] into a local [Repository]
 class CloneRepositoryInitializer implements CommandFacade {
-  final String path;
+  final String localPath;
+  final String remotePath;
   final String branchName;
 
-  CloneRepositoryInitializer(this.path, String? branchName) : branchName = branchName ?? defaultBranch;
+  CloneRepositoryInitializer(this.remotePath, String? branchName, this.localPath) : branchName = branchName ?? defaultBranch;
 
   @override
   List<UndoableCommand> initialize() {
-    String remoteName = basenameWithoutExtension(path);
-    Repository localRepository = Repository(join(Directory.current.path, remoteName));
-    Repository remoteRepository = Repository(path);
-    Remote remote = Remote(remoteRepository, defaultRemote, path);
+    String remoteName = basenameWithoutExtension(remotePath);
+    Repository localRepository = Repository(join(localPath, remoteName));
+    Repository remoteRepository = Repository(remotePath);
+    Remote remote = Remote(remoteRepository, defaultRemote, remotePath);
     RemoteBranch remoteBranch = RemoteBranch(Branch(branchName, remoteRepository), remote);
     return [
       CloneBranchCommitCommand(localRepository, remoteBranch),
