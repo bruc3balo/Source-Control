@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:balo/repository/repository.dart';
-import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
@@ -228,7 +227,7 @@ enum IgnorePatternRules {
   }
 }
 
-extension IgnorePatternRulesExaluator on IgnorePatternRules {
+extension IgnorePatternRulesEvaluator on IgnorePatternRules {
   PatternExamples get example => switch (this) {
         IgnorePatternRules.suffix => PatternExamples(
             testPattern: "*.log",

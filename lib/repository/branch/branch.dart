@@ -33,7 +33,7 @@ class Branch {
 }
 
 ///State of a file in a [GetStatusOfCurrentBranch] command
-enum BranchFileStatus { staged, unstaged }
+enum BranchFileStatus { staged, untracked, unstaged }
 
 extension BranchStatus on Branch {
   ///List stages and unstaged files in a working directory on a local [Repository]
@@ -47,9 +47,15 @@ extension BranchStatus on Branch {
     //Staged files
     HashSet<String> stagedPaths = HashSet.of(staging.stagingData?.filesToBeStaged ?? []);
 
+    //Commited files i.e. tracking
+    HashSet<String> trackedFiles = HashSet.of(
+      branchTreeMetaData?.latestBranchCommits?.commitedObjects.values.map((e) => e.filePathRelativeToRepository) ?? [],
+    );
+
     //FileSystemEntity
+    String directoryPath = repository.workingDirectory.path;
     for (FileSystemEntity f in workingDirFiles) {
-      BranchFileStatus branchStatus = stagedPaths.contains(f.path) ? BranchFileStatus.staged : BranchFileStatus.unstaged;
+      BranchFileStatus branchStatus = stagedPaths.contains(f.path) ? BranchFileStatus.staged : trackedFiles.contains(relativePathFromDir(directoryPath: directoryPath, path: f.path)) ? BranchFileStatus.unstaged : BranchFileStatus.untracked;
       fileStatus.update(branchStatus, (l) => l..add(f.path), ifAbsent: () => HashSet()..add(f.path));
     }
 

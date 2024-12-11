@@ -368,6 +368,13 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
     );
 
     for (MapEntry<BranchFileStatus, HashSet<String>> e in status.entries) {
+
+      CliColor c = switch(e.key) {
+        BranchFileStatus.staged => CliColor.brightGreen,
+        BranchFileStatus.untracked => CliColor.white,
+        BranchFileStatus.unstaged => CliColor.red,
+      };
+
       printToConsole(
         message: "${e.key.name} files",
         style: CliStyle.bold,
@@ -376,7 +383,7 @@ class GetStatusOfCurrentBranch extends UndoableCommand {
       );
       printToConsole(
         message: e.value.join("\n"),
-        color: e.key == BranchFileStatus.staged ? CliColor.brightGreen : CliColor.red,
+        color: c,
       );
     }
   }

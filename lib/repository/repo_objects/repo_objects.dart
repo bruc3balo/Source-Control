@@ -94,6 +94,10 @@ extension RepoObjectsDataX on RepoObjectsData {
   ///[Sha1] for a specific [RepoObjectsData]
   Sha1 get sha1 => Sha1(sha);
 
+  String getObjectFilePath(Repository repository) => path.join(repository.repositoryPath, objectsStore, sha1.sub, sha1.hash);
+  bool exists(Repository repository) => File(getObjectFilePath(repository)).existsSync();
+
+
   ///Returns a [RepoObjects] from a [repository] if it exists
   RepoObjects? fetchObject(Repository repository) {
     String objectFilePath = path.join(repository.repositoryPath, objectsStore, sha1.sub, sha1.hash);

@@ -160,7 +160,7 @@ void main() {
     );
 
     printToConsole(
-      message: "Clone commit test completed",
+      message: "Pull commit test completed",
       color: CliColor.brightYellow,
       style: CliStyle.bold,
       newLine: true,

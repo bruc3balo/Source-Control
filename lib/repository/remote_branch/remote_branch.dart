@@ -10,6 +10,8 @@ import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/state/state.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
+import 'package:balo/view/terminal.dart';
+import 'package:balo/view/themes.dart';
 import 'package:path/path.dart';
 
 ///Represents a [Remote]'s [Branch} in memory
@@ -81,6 +83,9 @@ extension RemoteBranchCommon on RemoteBranch {
       aggregateBranchTree: localTreeMetaData,
     );
 
+    //add missing objects
+    localLatestCommit!.commitedObjects.values.where((e) => !e.exists(localRepository)).forEach(objectsToBePulled.add);
+
     //pull objects
     objectsToBePulled.map((e) => e.fetchObject(remoteRepository)).where((e) => e != null).forEach(
       (remoteObject) {
@@ -112,11 +117,30 @@ extension RemoteBranchCommon on RemoteBranch {
       },
     );
 
+
     //pull commits
     localTreeMetaData = localTreeMetaData.copyWith(
       commits: Map.from(localTreeMetaData.commits)..addAll({for (var c in commitsToPull) c.sha: c}),
     );
     localBranch.saveBranchTreeMetaData(localTreeMetaData);
+
+    //pull branches
+    Map<String, Branch> localBranchMap = {for (var b in localRepository.allBranches) b.branchName: b};
+    for (Branch remoteB in remoteRepository.allBranches) {
+      if (localBranchMap.containsKey(remoteB.branchName)) continue;
+
+      Branch newLocalBranch = Branch(remoteB.branchName, localRepository);
+      BranchTreeMetaData? branchTree = remoteB.branchTreeMetaData;
+      if (branchTree == null) continue;
+
+      printToConsole(
+        message: "Branch ${remoteB.branchName} has been added and is not in local repository",
+        color: CliColor.brightMagenta,
+        newLine: true,
+      );
+
+      newLocalBranch.saveBranchTreeMetaData(branchTree);
+    }
 
     onSuccessfulPull?.call();
   }
