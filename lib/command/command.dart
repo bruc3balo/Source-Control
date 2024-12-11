@@ -71,6 +71,7 @@ class InitializeRepositoryCommand extends UndoableCommand {
     repository.initializeRepository(
       onAlreadyInitialized: () => printToConsole(
         message: "Balo repository is already initialized",
+        color: CliColor.red,
       ),
       onSuccessfullyInitialized: () => printToConsole(
         message: "Repository initialized",
@@ -139,6 +140,7 @@ class CreateIgnoreFileCommand extends UndoableCommand {
       ),
       onAlreadyExists: () => debugPrintToConsole(
         message: "Ignore file already exists",
+        color: CliColor.red,
       ),
       onSuccessfullyCreated: () => debugPrintToConsole(
         message: "Ignore file successfully created",
@@ -269,6 +271,7 @@ class AddIgnorePatternCommand extends UndoableCommand {
       ),
       onAlreadyPresent: () => debugPrintToConsole(
         message: "Pattern $pattern already exists in ignore file",
+        color: CliColor.red,
       ),
     );
   }

@@ -21,7 +21,7 @@ void main() {
       doTest: (localRepository, remoteRepository, v) async {
 
         // Show command help command
-        int helpCode = await test_runner.runTest([CliCommandsEnum.clone.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
+        int helpCode = await test_runner.runTest([CliCommandsEnum.push.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
 
         //Stage file
@@ -66,7 +66,6 @@ void main() {
           v ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
         ]);
         assert(pushToRemoteCommand == 0);
-
 
 
       },

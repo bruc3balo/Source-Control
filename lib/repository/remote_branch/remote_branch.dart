@@ -115,7 +115,7 @@ extension RemoteBranchCommon on RemoteBranch {
 
     //pull commits
     localTreeMetaData = localTreeMetaData.copyWith(
-      commits: localTreeMetaData.commits..addAll({for (var c in commitsToPull) c.sha: c}),
+      commits: Map.from(localTreeMetaData.commits)..addAll({for (var c in commitsToPull) c.sha: c}),
     );
     localBranch.saveBranchTreeMetaData(localTreeMetaData);
 
@@ -286,7 +286,7 @@ extension RemoteBranchCommon on RemoteBranch {
 
     //push commits
     remoteBranchTree = remoteBranchTree.copyWith(
-      commits: remoteBranchTree.commits..addAll({for (var c in commitsToPush) c.sha: c}),
+      commits: Map.from(remoteBranchTree.commits)..addAll({for (var c in commitsToPush) c.sha: c}),
     );
     branch.saveBranchTreeMetaData(remoteBranchTree);
 
