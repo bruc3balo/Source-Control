@@ -77,12 +77,12 @@ Build a distributed source control system in the style of Git. It should be poss
 #### For Linux:
 - Copy to local bin directory
 ```bash
-   sudo cp ./build/macos/balo /usr/local/bin
+   sudo cp ./build/linux/balo /usr/local/bin
 ```
 
 - Create symlink to local bin directory
 ```bash
-    sudo ln -s ./build/macos/balo /usr/local/bin/balo
+    sudo ln -s ./build/linux/balo /usr/local/bin/balo
 ```
 
 

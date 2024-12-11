@@ -22,6 +22,8 @@ part 'merge.freezed.dart';
 part 'merge.g.dart';
 
 ///Represents a [Commit] merge in memory
+///[repository] is the current repository
+///[branch] is the current branch
 class Merge {
   final Repository repository;
   final Branch branch;
@@ -31,7 +33,7 @@ class Merge {
 
 extension MergeStorage on Merge {
   ///Path to the merge file
-  String get mergeFilePath => join(repository.repositoryPath, branch.branchName, branchMergeFileName);
+  String get mergeFilePath => join(repository.repositoryPath, branchFolderName, branch.branchName, branchMergeFileName);
 
   ///[File] containing data to be merged
   File get mergeFile => File(mergeFilePath);
@@ -51,11 +53,10 @@ extension MergeStorage on Merge {
 
   ///Save [mergeData] to [mergeFile]
   MergeCommitMetaData saveCommitMergeData(MergeCommitMetaData mergeData) {
-    String data = jsonEncode(mergeData);
     mergeFile
       ..createSync(recursive: true)
       ..writeAsStringSync(
-        jsonEncode(data),
+        jsonEncode(mergeData),
         flush: true,
         mode: FileMode.write,
       );
@@ -79,6 +80,12 @@ extension BranchMerge on Merge {
     Function()? onNoCommitBranchMetaData,
     Function()? onNoCommitMetaData,
   }) async {
+    //Ensure merging from repository
+    if (!repository.isInitialized) {
+      onRepositoryNotInitialized?.call();
+      return null;
+    }
+
     Staging staging = branch.staging;
     if (staging.hasStagedFiles) {
       onPendingCommit?.call();
@@ -91,11 +98,7 @@ extension BranchMerge on Merge {
       return null;
     }
 
-    //Ensure merging from repository
-    if (!repository.isInitialized) {
-      onRepositoryNotInitialized?.call();
-      return null;
-    }
+
 
     //Cannot merge from same branch
     if (otherBranch.branchName == branch.branchName) {
@@ -142,15 +145,6 @@ extension BranchMerge on Merge {
       return null;
     }
 
-    //Start the actual merge
-    MergeCommitMetaData mergeData = saveCommitMergeData(
-      MergeCommitMetaData(
-        fromBranchName: otherBranch.branchName,
-        commitsToMerge: {for (var c in commitsToMerge) c.sha: c},
-        mergedAt: DateTime.now(),
-      ),
-    );
-
     //Detect conflicts from latest commit (desired state to role model)
     commitsToMerge.sort((a, b) => -a.commitedAt.compareTo(b.commitedAt));
     CommitTreeMetaData latestCommit = commitsToMerge.first;
@@ -172,11 +166,20 @@ extension BranchMerge on Merge {
       for (var o in latestCommitObjects) o.relativePathToRepository: o,
     };
 
+    //Start the actual merge
     //Generate patches (otherCommit + thisWorkingDir = merge)
     Directory workingDirectory = repository.workingDirectory;
     Directory patchesDirectory = _generatePatches(
       workingDirectory: workingDirectory,
       otherBranchObjectsMap: otherBranchObjectsMap,
+    );
+
+    MergeCommitMetaData mergeData = saveCommitMergeData(
+      MergeCommitMetaData(
+        fromBranchName: otherBranch.branchName,
+        commitsToMerge: {for (var c in commitsToMerge) c.sha: c},
+        mergedAt: DateTime.now(),
+      ),
     );
 
     //Apply patches generated above
@@ -188,6 +191,8 @@ extension BranchMerge on Merge {
     debugPrintToConsole(
       message: "Deleting $mergeFilePath",
     );
+
+    patchesDirectory.deleteSync(recursive: true);
 
     //Stage files for commit
     StagingData stagingData = staging.saveStagingData(
@@ -205,9 +210,11 @@ extension BranchMerge on Merge {
     required Directory workingDirectory,
     required Map<String, RepoObjects> otherBranchObjectsMap,
   }) {
-    Directory temporaryDirectory = Directory.systemTemp;
-    String patchDirectoryPath = join(temporaryDirectory.path, dirname(workingDirectory.path));
-    Directory patchDirectory = Directory(patchDirectoryPath);
+    Directory patchDirectory = Directory.systemTemp.createTempSync();
+
+    debugPrintToConsole(
+      message: "Patch Dir: ${patchDirectory.path}",
+    );
 
     List<File> workingBranchFiles =
         workingDirectory.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).map((e) => File(e.path)).toList();
@@ -220,6 +227,7 @@ extension BranchMerge on Merge {
     int mergeFileCount = 0;
     for (File thisFile in workingBranchFiles) {
       mergeFileCount++;
+      debugPrintToConsole(message: "File count $mergeFileCount");
       String thisFileName = basename(thisFile.path);
       bool conflict = false;
       // same -> Pick other
@@ -230,7 +238,10 @@ extension BranchMerge on Merge {
       RepoObjects? otherFile = otherBranchObjectsMap[thisRelativePathToRepository];
       if (otherFile == null) {
         //Keep this
-        String temporaryThisFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectoryPath);
+
+        String temporaryThisFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectory.path);
+        debugPrintToConsole(message: "Copying file to $temporaryThisFilePath from patch dir ${patchDirectory.path}");
+        File(temporaryThisFilePath).createSync(recursive: true);
         File finalFile = thisFile.copySync(temporaryThisFilePath);
 
         debugPrintToConsole(
@@ -244,7 +255,7 @@ extension BranchMerge on Merge {
       List<String> linesToWrite = [];
 
       String otherTempFilePath = fullPathFromDir(
-        directoryPath: temporaryDirectory.path,
+        directoryPath: patchDirectory.path,
         relativePath: otherFile.relativePathToRepository,
       );
 
@@ -310,13 +321,13 @@ extension BranchMerge on Merge {
           style: CliStyle.bold,
         );
 
-        String temporaryNewFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectoryPath);
+        String temporaryNewFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectory.path);
         thisFile.copySync(temporaryNewFilePath);
         continue;
       }
 
       //Modify this file to show conflicts
-      String temporaryNewFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectoryPath);
+      String temporaryNewFilePath = fullPathFromDir(relativePath: thisRelativePathToRepository, directoryPath: patchDirectory.path);
       File(temporaryNewFilePath)
         ..createSync(recursive: true)
         ..writeAsStringSync(

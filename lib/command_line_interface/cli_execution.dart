@@ -248,7 +248,7 @@ abstract class UndoableCommandExecutor {
         debugPrintToConsole(
           message: "Undoing $i: ${c.runtimeType}",
         );
-        await commands[--i].undo();
+        await c.undo();
       }
 
       return 1;
