@@ -8,6 +8,7 @@ import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/repository/ignore.dart';
+import 'package:balo/repository/merge/merge.dart';
 import 'package:balo/repository/remote/remote.dart';
 import 'package:balo/repository/remote_branch/remote_branch.dart';
 import 'package:balo/repository/repository.dart';
@@ -117,11 +118,9 @@ class CreateStateFileCommand extends UndoableCommand {
       onDoesntExists: () => debugPrintToConsole(
         message: "State file doesn't exists",
       ),
-
       onSuccessfullyDeleted: () => debugPrintToConsole(
         message: "State file successfully deleted",
       ),
-
     );
   }
 }
@@ -539,13 +538,15 @@ class MergeBranchCommand extends UndoableCommand {
   final Repository repository;
   final Branch thisBranch;
   final Branch otherBranch;
+  late final Merge merge = Merge(repository, thisBranch);
 
   MergeBranchCommand(this.repository, this.thisBranch, this.otherBranch);
 
   @override
   Future<void> execute() async {
     //TODO: FIx merge branch command
-    /*await thisBranch.mergeFromOtherBranchIntoThis(
+
+    await merge.mergeFromOtherBranchIntoThis(
       otherBranch: otherBranch,
       onSameBranchMerge: () => debugPrintToConsole(
         message: "Cannot merge from the same branch",
@@ -565,7 +566,13 @@ class MergeBranchCommand extends UndoableCommand {
       onNoCommitBranchMetaData: () => debugPrintToConsole(
         message: "No commit branch meta data",
       ),
-    );*/
+      onPendingCommit: () => debugPrintToConsole(
+        message: "Please commit your changes first",
+      ),
+      onPendingMerge: () => debugPrintToConsole(
+        message: "There's already a pending merge",
+      ),
+    );
   }
 
   @override
@@ -710,5 +717,4 @@ class PullBranchCommitCommand extends UndoableCommand {
 
   @override
   Future<void> undo() async {}
-
 }
