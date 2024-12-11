@@ -1,8 +1,6 @@
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
-import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
-import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 import 'package:test/test.dart';

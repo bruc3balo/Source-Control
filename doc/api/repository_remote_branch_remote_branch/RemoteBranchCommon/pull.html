@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the pull method from the RemoteBranchCommon extension, for the Dart programming language.">
+  <title>pull method - RemoteBranchCommon extension - remote_branch library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+
+  
+</head>
+
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">balo</a></li>
+    <li><a href="../../repository_remote_branch_remote_branch/repository_remote_branch_remote_branch-library.html">repository&#47;remote_branch&#47;remote_branch.dart</a></li>
+    <li><a href="../../repository_remote_branch_remote_branch/RemoteBranchCommon.html">RemoteBranchCommon</a></li>
+    <li class="self-crumb">pull method</li>
+  </ol>
+  <div class="self-name">pull</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <div class="toggle" id="theme-button" title="Toggle brightness">
+    <label for="theme">
+      <input type="checkbox" id="theme" value="light-theme">
+      <span id="dark-theme-button" class="material-symbols-outlined">
+        dark_mode
+      </span>
+      <span id="light-theme-button" class="material-symbols-outlined">
+        light_mode
+      </span>
+    </label>
+  </div>
+</header>
+<main>
+
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="repository_remote_branch_remote_branch&#47;RemoteBranchCommon-extension-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">pull</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+
+<span class="returntype">void</span>
+<span class="name ">pull</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="pull-param-localRepository"><span>required</span> <span class="type-annotation"><a href="../../repository_repository/Repository-class.html">Repository</a></span> <span class="parameter-name">localRepository</span>, </span></li>
+<li><span class="parameter" id="pull-param-onNoChanges"><span class="type-annotation">dynamic</span> <span class="parameter-name">onNoChanges</span>()?, </span></li>
+<li><span class="parameter" id="pull-param-onNoStateData"><span class="type-annotation">dynamic</span> <span class="parameter-name">onNoStateData</span>()?, </span></li>
+<li><span class="parameter" id="pull-param-onNoRemoteData"><span class="type-annotation">dynamic</span> <span class="parameter-name">onNoRemoteData</span>()?, </span></li>
+<li><span class="parameter" id="pull-param-onRepositoryNotInitialized"><span class="type-annotation">dynamic</span> <span class="parameter-name">onRepositoryNotInitialized</span>()?, </span></li>
+<li><span class="parameter" id="pull-param-onSuccessfulPull"><span class="type-annotation">dynamic</span> <span class="parameter-name">onSuccessfulPull</span>()?, </span></li>
+</ol>})
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Updates a <code>localRepository</code> with latest <a href="../../repository_commit/Commit-class.html">Commit</a>'s from a <a href="../../repository_remote_branch_remote_branch/RemoteBranch-class.html">RemoteBranch</a> for a <a href="../../repository_remote_branch_remote_branch/RemoteBranch/branch.html">branch</a></p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">void pull({
+  required Repository localRepository,
+  Function()? onNoChanges,
+  Function()? onNoStateData,
+  Function()? onNoRemoteData,
+  Function()? onRepositoryNotInitialized,
+  Function()? onSuccessfulPull,
+}) {
+  &#47;&#47;Must be in an initialized
+  if (!localRepository.isInitialized) {
+    onRepositoryNotInitialized?.call();
+    return;
+  }
+
+  &#47;&#47;Get remote branch data
+  Repository remoteRepository = branch.repository;
+  BranchTreeMetaData? remoteTreeData = branch.branchTreeMetaData;
+  if (remoteTreeData == null) {
+    onNoRemoteData?.call();
+    return;
+  }
+
+  &#47;&#47;remoteCommits
+  List&lt;CommitTreeMetaData&gt; remoteCommits = remoteTreeData.sortedBranchCommitsFromLatest;
+
+  State localState = localRepository.state;
+  StateData? localStateData = localState.stateInfo;
+  if (localStateData == null) {
+    onNoStateData?.call();
+    return;
+  }
+
+  Branch localBranch = Branch(branch.branchName, localRepository);
+  BranchTreeMetaData? localTreeMetaData = localBranch.branchTreeMetaData;
+  localTreeMetaData ??= localBranch.saveBranchTreeMetaData(BranchTreeMetaData(name: localBranch.branchName, commits: HashMap()));
+  CommitTreeMetaData? localLatestCommit = localTreeMetaData.latestBranchCommits;
+  if (remoteTreeData.latestBranchCommits?.sha == localLatestCommit?.sha) {
+    onNoChanges?.call();
+    return;
+  }
+
+  &#47;&#47;Get commits needed to pull
+  List&lt;CommitTreeMetaData&gt; commitsToPull = [];
+  for (CommitTreeMetaData c in remoteCommits) {
+    bool isMergeBase = c.sha == localLatestCommit?.sha;
+    if (isMergeBase) break;
+
+    commitsToPull.add(c);
+  }
+
+  &#47;&#47;Objects needed to pull
+  List&lt;RepoObjectsData&gt; objectsToBePulled = _extractRepoObjectsNotPresentInAggregateBranchTree(
+    commitsWithRepoObject: commitsToPull,
+    aggregateBranchTree: localTreeMetaData,
+  );
+
+  &#47;&#47;pull objects
+  objectsToBePulled.map((e) =&gt; e.fetchObject(remoteRepository)).where((e) =&gt; e != null).forEach(
+    (remoteObject) {
+      &#47;&#47;RepoObjects
+      RepoObjects o = RepoObjects(
+        repository: localRepository,
+        sha1: remoteObject!.sha1,
+        relativePathToRepository: remoteObject.relativePathToRepository,
+        commitedAt: remoteObject.commitedAt,
+        blob: remoteObject.blob,
+      );
+
+      &#47;&#47;Store to local repository
+      RepoObjectsData data = o.writeRepoObject();
+
+      &#47;&#47;write file to working dir
+      String objectFilePath = fullPathFromDir(
+        relativePath: data.filePathRelativeToRepository,
+        directoryPath: localRepository.workingDirectory.path,
+      );
+
+      File(objectFilePath)
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(
+          o.blob,
+          flush: true,
+          mode: FileMode.write,
+        );
+    },
+  );
+
+  &#47;&#47;pull commits
+  localTreeMetaData = localTreeMetaData.copyWith(
+    commits: Map.from(localTreeMetaData.commits)..addAll({for (var c in commitsToPull) c.sha: c}),
+  );
+  localBranch.saveBranchTreeMetaData(localTreeMetaData);
+
+  onSuccessfulPull?.call();
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">balo</a></li>
+    <li><a href="../../repository_remote_branch_remote_branch/repository_remote_branch_remote_branch-library.html">remote_branch</a></li>
+    <li><a href="../../repository_remote_branch_remote_branch/RemoteBranchCommon.html">RemoteBranchCommon</a></li>
+    <li class="self-crumb">pull method</li>
+</ol>
+
+
+    <h5>RemoteBranchCommon extension on <a href="../../repository_remote_branch_remote_branch/RemoteBranch-class.html">RemoteBranch</a></h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+
+</main>
+
+<footer>
+  <span class="no-break">
+    balo
+      1.0.0
+  </span>
+
+  
+</footer>
+
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+
+
+</body>
+
+</html>
+

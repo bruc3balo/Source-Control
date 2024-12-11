@@ -1,4 +1,3 @@
-
 import 'package:args/command_runner.dart';
 import 'package:balo/command/command_facade.dart';
 import 'package:balo/command_line_interface/cli_arguments.dart';

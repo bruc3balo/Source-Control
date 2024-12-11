@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="balo API docs, for the Dart programming language.">
+  <title>balo - Dart API docs</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+
+  
+</head>
+
+
+<body data-base-href="" data-using-base-href="false" class="light-theme">
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li class="self-crumb">balo package</li>
+  </ol>
+  <div class="self-name">balo</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <div class="toggle" id="theme-button" title="Toggle brightness">
+    <label for="theme">
+      <input type="checkbox" id="theme" value="light-theme">
+      <span id="dark-theme-button" class="material-symbols-outlined">
+        dark_mode
+      </span>
+      <span id="light-theme-button" class="material-symbols-outlined">
+        light_mode
+      </span>
+    </label>
+  </div>
+</header>
+<main>
+
+  <div id="dartdoc-main-content" class="main-content">
+      
+<section class="desc markdown">
+  <h1 id="0-source-control-system-wakatimehttpswakatimecombadgeusere508bec6-f1ed-42e9-a365-8c4e69c8dd19projectbff0792d-4b5a-4003-98b3-d9e75973114dsvghttpswakatimecombadgeusere508bec6-f1ed-42e9-a365-8c4e69c8dd19projectbff0792d-4b5a-4003-98b3-d9e75973114d">0: source control system <a href="https://wakatime.com/badge/user/e508bec6-f1ed-42e9-a365-8c4e69c8dd19/project/bff0792d-4b5a-4003-98b3-d9e75973114d"><img src="https://wakatime.com/badge/user/e508bec6-f1ed-42e9-a365-8c4e69c8dd19/project/bff0792d-4b5a-4003-98b3-d9e75973114d.svg" alt="wakatime"></a></h1>
+<p>Build a distributed source control system in the style of Git. It should be possible to initialise a repository in a directory and the repository proper should be stored in a dot-prefixed subdirectory. There should be support for staging files (git add) and committing them. There should be a way to view the commit history, to create branches, merge and do diffs between them. Conflicting changes should be detected but there's no need to build resolution features for them, or anything like rebasing. It should also be possible to clone the repository (on disk—it doesn't have to work over network). Finally, there should be a way to ignore files.</p>
+<h1 id="design-patterns">Design Patterns</h1>
+<ul>
+<li>Commands have been done with the <strong>Command Design Pattern</strong></li>
+<li>The inputs parsed into a Command Facade running a list of commands with the <strong>Facade</strong> pattern</li>
+</ul>
+<h1 id="documentation-generation">Documentation generation</h1>
+<pre class="language-bash"><code class="language-bash">    dart doc
+</code></pre>
+<h1 id="code-generation">Code generation</h1>
+<pre class="language-bash"><code class="language-bash">  dart run build_runner build --delete-conflicting-outputs
+</code></pre>
+<h1 id="test">Test</h1>
+<p>Test in isolation</p>
+<pre class="language-bash"><code class="language-bash">  dart run test --concurrency=1
+</code></pre>
+<h1 id="build">Build</h1>
+<h4 id="for-windows">For Windows:</h4>
+<pre class="language-bash"><code class="language-bash">  dart compile exe bin/balo.dart -o build/windows/balo.exe --target-os=windows
+</code></pre>
+<h4 id="for-macos">For macOS:</h4>
+<pre class="language-bash"><code class="language-bash">  dart compile exe bin/balo.dart -o build/macos/balo --target-os=macos
+</code></pre>
+<h4 id="for-linux">For Linux:</h4>
+<pre class="language-bash"><code class="language-bash">  dart compile exe bin/balo.dart -o build/linux/balo --target-os=linux
+</code></pre>
+<h1 id="running">Running</h1>
+<h3 id="dart">Dart</h3>
+<pre class="language-bash"><code class="language-bash">  dart run bin/balo.dart
+</code></pre>
+<h3 id="binary">Binary</h3>
+<h4 id="for-windows-2">For Windows:</h4>
+<pre class="language-bash"><code class="language-bash">  ./build/windows/balo
+</code></pre>
+<h3 id="for-macos-2">For macOS:</h3>
+<pre class="language-bash"><code class="language-bash">  ./build/macos/balo
+</code></pre>
+<h3 id="for-linux-2">For Linux:</h3>
+<pre class="language-bash"><code class="language-bash">   ./build/linux/balo
+</code></pre>
+<h1 id="installing-options">Installing Options</h1>
+<h4 id="for-windows-3">For Windows:</h4>
+<ul>
+<li>Copy to System32</li>
+</ul>
+<pre class="language-bash"><code class="language-bash">  copy .\build\windows\balo.exe C:\Windows\System32\balo.exe
+</code></pre>
+<ul>
+<li>Create symlink to System32</li>
+</ul>
+<pre class="language-bash"><code class="language-bash">  mklink C:\Windows\System32\balo.exe .\build\windows\balo.exe 
+</code></pre>
+<h4 id="for-macos-3">For macOS:</h4>
+<ul>
+<li>Copy to local bin directory</li>
+</ul>
+<pre class="language-bash"><code class="language-bash">  sudo cp ./build/macos/balo /usr/local/bin/balo &amp;&amp; sudo chmod +x /usr/local/bin/balo
+</code></pre>
+<ul>
+<li>Create symlink to local bin directory</li>
+</ul>
+<pre class="language-bash"><code class="language-bash">  sudo ln -s ./build/macos/balo /usr/local/bin/balo 
+</code></pre>
+<h4 id="for-linux-3">For Linux:</h4>
+<ul>
+<li>Copy to local bin directory</li>
+</ul>
+<pre class="language-bash"><code class="language-bash">   sudo cp ./build/linux/balo /usr/local/bin
+</code></pre>
+<ul>
+<li>Create symlink to local bin directory</li>
+</ul>
+<pre class="language-bash"><code class="language-bash">    sudo ln -s ./build/linux/balo /usr/local/bin/balo
+</code></pre>
+</section>
+
+
+      <section class="summary">
+          <h2>Libraries</h2>
+        <dl>
+          <dt id="command">
+  <span class="name"><a href="command_command/command_command-library.html">command/command</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="command_facade">
+  <span class="name"><a href="command_command_facade/command_command_facade-library.html">command/command_facade</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="cli_arguments">
+  <span class="name"><a href="command_line_interface_cli_arguments/command_line_interface_cli_arguments-library.html">command_line_interface/cli_arguments</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="cli_execution">
+  <span class="name"><a href="command_line_interface_cli_execution/command_line_interface_cli_execution-library.html">command_line_interface/cli_execution</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="input_parser">
+  <span class="name"><a href="command_line_interface_input_parser/command_line_interface_input_parser-library.html">command_line_interface/input_parser</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="user_input">
+  <span class="name"><a href="command_line_interface_user_input/command_line_interface_user_input-library.html">command_line_interface/user_input</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="branch">
+  <span class="name"><a href="repository_branch_branch/repository_branch_branch-library.html">repository/branch/branch</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="commit">
+  <span class="name"><a href="repository_commit/repository_commit-library.html">repository/commit</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="diff">
+  <span class="name"><a href="repository_diff_diff/repository_diff_diff-library.html">repository/diff/diff</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="ignore">
+  <span class="name"><a href="repository_ignore/repository_ignore-library.html">repository/ignore</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="merge">
+  <span class="name"><a href="repository_merge_merge/repository_merge_merge-library.html">repository/merge/merge</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="remote">
+  <span class="name"><a href="repository_remote_remote/repository_remote_remote-library.html">repository/remote/remote</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="remote_branch">
+  <span class="name"><a href="repository_remote_branch_remote_branch/repository_remote_branch_remote_branch-library.html">repository/remote_branch/remote_branch</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="repo_objects">
+  <span class="name"><a href="repository_repo_objects_repo_objects/repository_repo_objects_repo_objects-library.html">repository/repo_objects/repo_objects</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="repository">
+  <span class="name"><a href="repository_repository/repository_repository-library.html">repository/repository</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="staging">
+  <span class="name"><a href="repository_staging_staging/repository_staging_staging-library.html">repository/staging/staging</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="state">
+  <span class="name"><a href="repository_state_state/repository_state_state-library.html">repository/state/state</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="utils">
+  <span class="name"><a href="utils_utils/utils_utils-library.html">utils/utils</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="variables">
+  <span class="name"><a href="utils_variables/utils_variables-library.html">utils/variables</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="terminal">
+  <span class="name"><a href="view_terminal/view_terminal-library.html">view/terminal</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="themes">
+  <span class="name"><a href="view_themes/view_themes-library.html">view/themes</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+        </dl>
+      </section>
+
+  </div> <!-- /.main-content -->
+
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li class="self-crumb">balo package</li>
+</ol>
+
+
+    <h5 class="hidden-xs"><span class="package-name">balo</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="command_command/command_command-library.html">command/command</a></li>
+      <li><a href="command_command_facade/command_command_facade-library.html">command/command_facade</a></li>
+      <li><a href="command_line_interface_cli_arguments/command_line_interface_cli_arguments-library.html">command_line_interface/cli_arguments</a></li>
+      <li><a href="command_line_interface_cli_execution/command_line_interface_cli_execution-library.html">command_line_interface/cli_execution</a></li>
+      <li><a href="command_line_interface_input_parser/command_line_interface_input_parser-library.html">command_line_interface/input_parser</a></li>
+      <li><a href="command_line_interface_user_input/command_line_interface_user_input-library.html">command_line_interface/user_input</a></li>
+      <li><a href="repository_branch_branch/repository_branch_branch-library.html">repository/branch/branch</a></li>
+      <li><a href="repository_commit/repository_commit-library.html">repository/commit</a></li>
+      <li><a href="repository_diff_diff/repository_diff_diff-library.html">repository/diff/diff</a></li>
+      <li><a href="repository_ignore/repository_ignore-library.html">repository/ignore</a></li>
+      <li><a href="repository_merge_merge/repository_merge_merge-library.html">repository/merge/merge</a></li>
+      <li><a href="repository_remote_remote/repository_remote_remote-library.html">repository/remote/remote</a></li>
+      <li><a href="repository_remote_branch_remote_branch/repository_remote_branch_remote_branch-library.html">repository/remote_branch/remote_branch</a></li>
+      <li><a href="repository_repo_objects_repo_objects/repository_repo_objects_repo_objects-library.html">repository/repo_objects/repo_objects</a></li>
+      <li><a href="repository_repository/repository_repository-library.html">repository/repository</a></li>
+      <li><a href="repository_staging_staging/repository_staging_staging-library.html">repository/staging/staging</a></li>
+      <li><a href="repository_state_state/repository_state_state-library.html">repository/state/state</a></li>
+      <li><a href="utils_utils/utils_utils-library.html">utils/utils</a></li>
+      <li><a href="utils_variables/utils_variables-library.html">utils/variables</a></li>
+      <li><a href="view_terminal/view_terminal-library.html">view/terminal</a></li>
+      <li><a href="view_themes/view_themes-library.html">view/themes</a></li>
+</ol>
+
+  </div>
+
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div>
+
+</main>
+
+<footer>
+  <span class="no-break">
+    balo
+      1.0.0
+  </span>
+
+  
+</footer>
+
+
+
+<script src="static-assets/highlight.pack.js?v1"></script>
+<script src="static-assets/docs.dart.js"></script>
+
+
+
+</body>
+
+</html>
+

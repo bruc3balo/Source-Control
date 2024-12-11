@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the MergeStorage extension from the merge library, for the Dart programming language.">
+  <title>MergeStorage extension - merge library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+
+  
+</head>
+
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">balo</a></li>
+    <li><a href="../repository_merge_merge/repository_merge_merge-library.html">repository&#47;merge&#47;merge.dart</a></li>
+    <li class="self-crumb">MergeStorage extension</li>
+  </ol>
+  <div class="self-name">MergeStorage</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <div class="toggle" id="theme-button" title="Toggle brightness">
+    <label for="theme">
+      <input type="checkbox" id="theme" value="light-theme">
+      <span id="dark-theme-button" class="material-symbols-outlined">
+        dark_mode
+      </span>
+      <span id="light-theme-button" class="material-symbols-outlined">
+        light_mode
+      </span>
+    </label>
+  </div>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="repository_merge_merge&#47;repository_merge_merge-library-sidebar.html"
+    data-below-sidebar="repository_merge_merge&#47;MergeStorage-extension-sidebar.html">
+    <div>
+<h1><span class="kind-class">MergeStorage</span> extension 
+ 
+</h1></div>
+
+    
+
+    <section>
+      <dl class="dl-horizontal">
+        <dt>on</dt>
+        <dd>
+          <ul class="comma-separated clazz-relationships">
+              <li><a href="../repository_merge_merge/Merge-class.html">Merge</a></li>
+          </ul>
+        </dd>
+      </dl>
+      
+
+
+    </section>
+
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="hasPendingMerge" class="property">
+  <span class="name"><a href="../repository_merge_merge/MergeStorage/hasPendingMerge.html">hasPendingMerge</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a> to check if <a href="../repository_merge_merge/MergeStorage/mergeFile.html">mergeFile</a> exists
+Represents if a merge is in a pending state
+  <div class="features"><span class="feature">no setter</span></div>
+
+</dd>
+
+        <dt id="mergeFile" class="property">
+  <span class="name"><a href="../repository_merge_merge/MergeStorage/mergeFile.html">mergeFile</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-io/File-class.html">File</a></span>
+  
+
+</dt>
+<dd>
+  <a href="https://api.flutter.dev/flutter/dart-io/File-class.html">File</a> containing data to be merged
+  <div class="features"><span class="feature">no setter</span></div>
+
+</dd>
+
+        <dt id="mergeFilePath" class="property">
+  <span class="name"><a href="../repository_merge_merge/MergeStorage/mergeFilePath.html">mergeFilePath</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  
+
+</dt>
+<dd>
+  Path to the merge file
+  <div class="features"><span class="feature">no setter</span></div>
+
+</dd>
+
+        <dt id="pendingMergeCommitMetaData" class="property">
+  <span class="name"><a href="../repository_merge_merge/MergeStorage/pendingMergeCommitMetaData.html">pendingMergeCommitMetaData</a></span>
+  <span class="signature">&#8594; <a href="../repository_merge_merge/MergeCommitMetaData-class.html">MergeCommitMetaData</a>?</span>
+  
+
+</dt>
+<dd>
+  Get pending merge data <a href="../repository_merge_merge/MergeCommitMetaData-class.html">MergeCommitMetaData</a> from <a href="../repository_merge_merge/MergeStorage/mergeFile.html">mergeFile</a>
+If the <a href="../repository_merge_merge/MergeStorage/mergeFile.html">mergeFile</a> doesn't exist, it will return null
+  <div class="features"><span class="feature">no setter</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="deleteCommitMergeData" class="callable">
+  <span class="name"><a href="../repository_merge_merge/MergeStorage/deleteCommitMergeData.html">deleteCommitMergeData</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; void</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Deletes a <a href="../repository_merge_merge/MergeStorage/mergeFile.html">mergeFile</a>
+  
+
+</dd>
+
+        <dt id="saveCommitMergeData" class="callable">
+  <span class="name"><a href="../repository_merge_merge/MergeStorage/saveCommitMergeData.html">saveCommitMergeData</a></span><span class="signature">(<wbr><span class="parameter" id="saveCommitMergeData-param-mergeData"><span class="type-annotation"><a href="../repository_merge_merge/MergeCommitMetaData-class.html">MergeCommitMetaData</a></span> <span class="parameter-name">mergeData</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../repository_merge_merge/MergeCommitMetaData-class.html">MergeCommitMetaData</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Save <code>mergeData</code> to <a href="../repository_merge_merge/MergeStorage/mergeFile.html">mergeFile</a>
+  
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+    
+
+
+</div> <!-- /.main-content -->
+
+<div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+  <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">balo</a></li>
+    <li><a href="../repository_merge_merge/repository_merge_merge-library.html">merge</a></li>
+    <li class="self-crumb">MergeStorage extension</li>
+</ol>
+
+
+  <h5>merge library</h5>
+  <div id="dartdoc-sidebar-left-content"></div>
+</div>
+
+<div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+
+</main>
+
+<footer>
+  <span class="no-break">
+    balo
+      1.0.0
+  </span>
+
+  
+</footer>
+
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+
+
+</body>
+
+</html>
+
+
+

@@ -7,14 +7,24 @@ Build a distributed source control system in the style of Git. It should be poss
 - Commands have been done with the **Command Design Pattern**
 - The inputs parsed into a Command Facade running a list of commands with the **Facade** pattern
 
+# Documentation generation
+```bash
+    dart doc
+```
+Run documentation [locally](http://localhost:8080/index.html)
+```bash
+    dart doc/doc_server.dart
+```
+
 # Code generation
 ```bash
   dart run build_runner build --delete-conflicting-outputs
 ```
 
 # Test
+Test in isolation
 ```bash
-  dart run test
+  dart run test --concurrency=1
 ```
 
 # Build
@@ -53,6 +63,12 @@ Build a distributed source control system in the style of Git. It should be poss
 ```
 
 # Installing Options
+
+### For dart
+```bash
+    dart pub global activate --source path .
+```
+
 #### For Windows:
 - Copy to System32
 ```bash

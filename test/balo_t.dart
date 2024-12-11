@@ -6,8 +6,19 @@ import 'package:balo/command_line_interface/cli_execution.dart';
 import 'package:balo/command_line_interface/input_parser.dart';
 import 'package:balo/command_line_interface/user_input.dart';
 import 'package:balo/repository/repository.dart';
-import 'package:balo/view/terminal.dart';
 import 'package:path/path.dart';
+import 'package:test/test.dart';
+
+void main() {
+  test('Introduction', () async {
+
+    // Show command help command
+    int helpCode = await runTest([CliCommandsEnum.merge.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
+    assert(helpCode == 0);
+
+  });
+}
+
 
 Future<int> runTest(List<String> arguments) async {
   UserInput userInput = CliUserInput(arguments);
@@ -57,9 +68,9 @@ Future<void> testWithRepository({
       tempRemoteRepository.unInitializeRepository();
       assert(!tempRemoteRepository.isInitialized);
 
-      tempRemoteRepository.workingDirectory.deleteSync(recursive: true);
+      if(tempRemoteRepository.workingDirectory.existsSync()) {
+        tempRemoteRepository.workingDirectory.deleteSync(recursive: true);
+      }
     }
   }
 }
-
-//LGTM
