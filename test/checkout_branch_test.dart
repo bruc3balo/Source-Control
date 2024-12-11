@@ -15,7 +15,7 @@ void main() {
     await test_runner.testWithRepository(
       doTest: (r, _, v) async {
 
-        // Show add help command
+        // Show command help command
         int helpCode = await test_runner.runTest([CliCommandsEnum.merge.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
 

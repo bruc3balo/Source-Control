@@ -15,44 +15,40 @@ void main() {
 
     // Test with repository
     await test_runner.testWithRepository(
-      doTest: (r, _, v) async {
-        // Show add help command
+      doTest: (localRepository, remoteRepository, v) async {
+
+        // Show command help command
         int helpCode = await test_runner.runTest([CliCommandsEnum.remote.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
 
-        //Add a new remoteName
+        //Add a remoteName
         String remoteName = "origin";
-        String url = join(r.path, "remote_repo");
+        String url = remoteRepository.path;
 
-        int createRemoteCommand = await test_runner.runTest(
-          [
+        int addRemoteCommand = await test_runner.runTest([
             CliCommandsEnum.remote.command,
             "-${CliCommandOptionsEnum.add.abbreviation}",
             remoteName,
             "-${CliCommandOptionsEnum.remoteUrl.abbreviation}",
             url,
             v ?"-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
-          ],
-        );
+          ]);
+        assert(addRemoteCommand == 0);
 
-        assert(createRemoteCommand == 0);
-
-        Remote remote = Remote(r, remoteName, url);
+        Remote remote = Remote(localRepository, remoteName, url);
         assert(remote.remoteData.remotes.containsKey(remoteName));
 
-        //Remove remote
-        int removeRemoteCommand = await test_runner.runTest(
-          [
+        //Remove  remote
+        int removeRemoteCommand = await test_runner.runTest([
             CliCommandsEnum.remote.command,
             "-${CliCommandOptionsEnum.remove.abbreviation}",
             remoteName,
             "-${CliCommandOptionsEnum.remoteUrl.abbreviation}",
             url,
             v ?"-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
-          ],
-        );
-
+          ]);
         assert(removeRemoteCommand == 0);
+
         assert(!remote.remoteData.remotes.containsKey(remoteName));
 
       },

@@ -9,7 +9,7 @@ void main() {
   test('initialize repository test', () async {
     await testWithRepository(
       doTest: (r, _, v) async {
-        // Show init help command
+        // Show command help command
         int helpCode = await runTest([CliCommandsEnum.init.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
       },

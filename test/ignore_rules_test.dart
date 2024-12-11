@@ -21,7 +21,7 @@ void main() {
     () async {
       await testWithRepository(
         doTest: (r, _, v) async {
-          // Show add help command
+          // Show command help command
           int helpCode = await runTest([CliCommandsEnum.ignore.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
           assert(helpCode == 0);
 

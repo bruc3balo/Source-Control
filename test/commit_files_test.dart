@@ -13,7 +13,7 @@ void main() {
     // Test with repository
     await test_runner.testWithRepository(
       doTest: (r, _, v) async {
-        // Show add help command
+        // Show command help command
         int helpCode = await test_runner.runTest([CliCommandsEnum.commit.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
 
