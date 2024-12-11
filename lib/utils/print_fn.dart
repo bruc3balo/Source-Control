@@ -9,6 +9,7 @@ void onRepositoryAlreadyInitialized() => printToConsole(message: "Repository has
 void onRepositoryNotInitialized() => printToConsole(message: "Repository is not initialized", color: CliColor.red);
 
 void onRepositorySuccessfullyUninitialized() => printToConsole(message: "Repository uninitialized", color: CliColor.green);
+void onRepositorySuccessfullyInitialized() => printToConsole(message: "Repository initialized", color: CliColor.green);
 
 void onFileSystemException(FileSystemException e) => printToConsole(message: e.message, color: CliColor.red);
 

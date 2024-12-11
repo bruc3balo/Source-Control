@@ -430,12 +430,14 @@ class ShowCommitDiffCommand extends UndoableCommand {
 
   @override
   Future<void> execute() async {
-    await Isolate.run(() async {
-      await thisCommit.compareCommitDiff(
-        other: otherCommit,
-        onDiffCalculated: (d) => d.fullPrint(),
-      );
-    });
+    await Isolate.run(
+      () async {
+        await thisCommit.compareCommitDiff(
+          other: otherCommit,
+          onDiffCalculated: (d) => d.fullPrint(),
+        );
+      },
+    );
   }
 
   @override

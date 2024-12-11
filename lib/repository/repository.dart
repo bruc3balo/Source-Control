@@ -35,7 +35,7 @@ extension RepositoryActions on Repository {
   /// Create a [Repository] in [path]
   void initializeRepository({
     Function()? onAlreadyInitialized = onRepositoryAlreadyInitialized,
-    Function()? onSuccessfullyInitialized = onRepositorySuccessfullyUninitialized,
+    Function()? onSuccessfullyInitialized = onRepositorySuccessfullyInitialized,
   }) {
     if (isInitialized) {
       printToConsole(
@@ -48,9 +48,6 @@ extension RepositoryActions on Repository {
 
     repositoryDirectory.createSync(recursive: true);
     onSuccessfullyInitialized?.call();
-    printToConsole(
-      message: "Repository initialized",
-    );
   }
 }
 

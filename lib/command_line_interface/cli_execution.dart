@@ -105,7 +105,10 @@ abstract class UndoableCommandExecutor {
           CliCommandOptionsEnum.sha,
         );
 
-        printToConsole(message: "Branch $branch, commit $commitSha");
+        printToConsole(
+          message: "Branch $branch, commit $commitSha",
+          color: CliColor.white,
+        );
 
         return CheckoutToBranchInitializer(branch, commitSha);
       case CliCommandsEnum.merge:
