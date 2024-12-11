@@ -30,37 +30,34 @@ Future<void> testWithRepository({
   required Future<void> Function(Repository local, Repository remote, bool verbose) doTest,
 }) async {
   Repository tempRepository = Repository(Directory.current.path);
-  Repository remoteRepository = Repository(join(Directory.current.path, "test-remote"));
+  Repository tempRemoteRepository = Repository(join(Directory.current.path, "test-remote"));
 
   try {
     //Run create repository command
-    int code = await runTest([
+    int createRepositoryCommand = await runTest([
       CliCommandsEnum.init.command,
       "-${CliCommandOptionsEnum.path.abbreviation}",
       tempRepository.path,
       verbose ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : '',
     ]);
-
-    assert(code == 0);
+    assert(createRepositoryCommand == 0);
 
     //Check if repository was created
     bool repositoryFound = Directory(tempRepository.repositoryPath).existsSync();
     assert(repositoryFound);
 
-    await doTest(tempRepository, remoteRepository, verbose);
-  } catch (e, trace) {
-    rethrow;
+    await doTest(tempRepository, tempRemoteRepository, verbose);
   } finally {
     if (cleanup) {
       //Clean up local repository
       tempRepository.unInitializeRepository();
-      bool repositoryDeleted = !Directory(tempRepository.repositoryPath).existsSync();
-      assert(repositoryDeleted);
+      assert(!tempRepository.isInitialized);
 
       //Clean up remote repository
-      remoteRepository.unInitializeRepository();
-      bool remoteRepositoryDeleted = !Directory(remoteRepository.repositoryPath).existsSync();
-      assert(remoteRepositoryDeleted);
+      tempRemoteRepository.unInitializeRepository();
+      assert(!tempRemoteRepository.isInitialized);
+
+      tempRemoteRepository.workingDirectory.deleteSync(recursive: true);
     }
   }
 }

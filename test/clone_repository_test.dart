@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:balo/command_line_interface/cli_arguments.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/merge/merge.dart';
@@ -67,6 +69,15 @@ void main() {
         ]);
         assert(pushToRemoteCommand == 0);
 
+
+        //Clone from remote repository
+        int cloneFromRemoteCommand = await test_runner.runTest([
+          CliCommandsEnum.clone.command,
+          "-${CliCommandOptionsEnum.remoteUrl.abbreviation}",
+          url,
+          v ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
+        ]);
+        assert(cloneFromRemoteCommand == 0);
 
       },
     );
