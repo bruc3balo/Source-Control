@@ -156,7 +156,7 @@ extension RemoteBranchCommon on RemoteBranch {
 
         localRepository.ignore.ignoreFile.createSync();
       },
-      addIgnoreFile: () async => localRepository.ignore.addIgnore(pattern: '/$repositoryWorkingDirName'),
+      addIgnoreFile: () async => defaultIgnore.forEach(localRepository.ignore.addIgnore),
       createNewBranch: () async => Branch(branch.branchName, localRepository),
       createNewStateFile: () async =>
           localRepository.state.saveStateData(stateData: StateData(currentBranch: branch.branchName, currentCommit: latestCommit.sha)),
@@ -233,7 +233,7 @@ extension RemoteBranchCommon on RemoteBranch {
       createRepositoryTemplate(
         initializeRepository: () => remoteRepository.initializeRepository(),
         createIgnoreFile: () => remoteRepository.ignore.createIgnoreFile(),
-        addIgnoreFile: () => remoteRepository.ignore.addIgnore(pattern: '/$repositoryWorkingDirName'),
+        addIgnoreFile: () => defaultIgnore.forEach(localRepository.ignore.addIgnore),
         createNewBranch: () => branch.createBranch(),
         createNewStateFile: () => remoteRepository.state.saveStateData(stateData: StateData(currentBranch: branch.branchName)),
       );

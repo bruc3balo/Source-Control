@@ -28,8 +28,8 @@ extension IgnoreCommons on Ignore {
 
 extension IgnoreStorage on Ignore {
   /// Adds a [pattern] to an [ignoreFile]
-  void addIgnore({
-    required String pattern,
+  void addIgnore(
+    String pattern, {
     Function()? onAlreadyPresent,
     Function()? onAdded,
     Function(FileSystemException)? onFileSystemException,

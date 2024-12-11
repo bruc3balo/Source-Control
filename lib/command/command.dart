@@ -259,7 +259,7 @@ class AddIgnorePatternCommand extends UndoableCommand {
   @override
   Future<void> execute() async {
     repository.ignore.addIgnore(
-      pattern: pattern,
+      pattern,
       onFileSystemException: (e) => debugPrintToConsole(
         message: e.message,
         color: CliColor.red,

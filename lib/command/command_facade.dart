@@ -62,7 +62,7 @@ class RepositoryInitializer implements CommandFacade {
     return [
       InitializeRepositoryCommand(repository),
       CreateIgnoreFileCommand(repository),
-      AddIgnorePatternCommand(repository, '/$repositoryWorkingDirName'),
+      ...defaultIgnore.map((p) => AddIgnorePatternCommand(repository, p)),
       CreateNewBranchCommand(repository, branch),
       CreateStateFileCommand(repository, branch),
     ];
@@ -140,7 +140,6 @@ class ModifyIgnoreFileInitializer implements CommandFacade {
 
 ///[CommandFacade] to create a [Branch]es in a local [Repository]
 class CreateBranchInitializer implements CommandFacade {
-
   final String branchName;
 
   CreateBranchInitializer(this.branchName);
@@ -153,7 +152,6 @@ class CreateBranchInitializer implements CommandFacade {
     return [CreateNewBranchCommand(repository, branch)];
   }
 }
-
 
 ///[CommandFacade] to list all [Branch]es in a local [Repository]
 class ListBranchesInitializer implements CommandFacade {
@@ -351,7 +349,6 @@ class MergeBranchInitializer implements CommandFacade {
     if (thisBranch == null) {
       return [ShowErrorCommand("error")];
     }
-
 
     return [
       MergeBranchCommand(repository, thisBranch, otherBranch),

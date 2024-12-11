@@ -4,6 +4,9 @@ import 'dart:typed_data';
 
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
+import 'package:balo/repository/ignore.dart';
+import 'package:balo/utils/variables.dart';
+import 'package:balo/view/terminal.dart';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart';
 
@@ -58,3 +61,80 @@ String fullPathFromDir({required String relativePath, required String directoryP
       directoryPath,
       stripBeginningPathSeparatorPath(relativePath),
     );
+
+///[path] starts with [Platform.pathSeparator] as a relative path from the [Repository]parent dir
+bool shouldAddPath(String path, {String pattern = star}) {
+  debugPrintToConsole(message: "Checking if should add Path: $path", newLine: true);
+  debugPrintToConsole(message: "Pattern: $pattern");
+
+  if (pattern == dot || pattern == star || pattern.isEmpty) return true;
+
+  final IgnorePatternRules rule = IgnorePatternRules.detectRule(pattern);
+  final bool matched = switch (rule) {
+    IgnorePatternRules.pathFromRoot => rule.patternMatches(
+      testPattern: pattern,
+      inputPattern: path,
+    ),
+    IgnorePatternRules.suffix => rule.patternMatches(
+      testPattern: pattern,
+      inputPattern: path,
+    ),
+    IgnorePatternRules.single => rule.patternMatches(
+      testPattern: pattern,
+      inputPattern: stripBeginningPathSeparatorPath(path),
+    ),
+    IgnorePatternRules.contains => rule.patternMatches(
+      testPattern: pattern,
+      inputPattern: path,
+    ),
+    IgnorePatternRules.exactMatch => rule.patternMatches(
+      testPattern: pattern,
+      inputPattern: stripBeginningPathSeparatorPath(path),
+    ),
+  };
+
+  debugPrintToConsole(message: "Result: $matched");
+  debugPrintToConsole(message: "Description: Pattern matched $matched against $rule");
+
+  return matched;
+}
+
+///[path] starts with [Platform.pathSeparator] as a relative path from the [Repository] parent dir
+bool shouldIgnorePath(String path, List<String> ignoredPatterns) {
+  debugPrintToConsole(message: "Checking if should ignore $path", newLine: true);
+
+  for (String ignorePattern in ignoredPatterns) {
+    IgnorePatternRules rule = IgnorePatternRules.detectRule(ignorePattern);
+
+    final bool matched = switch (rule) {
+      IgnorePatternRules.pathFromRoot => rule.patternMatches(
+        testPattern: ignorePattern,
+        inputPattern: path,
+      ),
+      IgnorePatternRules.suffix => rule.patternMatches(
+        testPattern: ignorePattern,
+        inputPattern: path,
+      ),
+      IgnorePatternRules.single => rule.patternMatches(
+        testPattern: ignorePattern,
+        inputPattern: stripBeginningPathSeparatorPath(path),
+      ),
+      IgnorePatternRules.contains => rule.patternMatches(
+        testPattern: ignorePattern,
+        inputPattern: path,
+      ),
+      IgnorePatternRules.exactMatch => rule.patternMatches(
+        testPattern: ignorePattern,
+        inputPattern: stripBeginningPathSeparatorPath(path),
+      ),
+    };
+
+    if (matched) {
+      debugPrintToConsole(message: "$path will be ignored due to match by $rule on $ignorePattern");
+      return true;
+    }
+  }
+
+  debugPrintToConsole(message: "$path will not be ignored");
+  return false;
+}

@@ -4,8 +4,10 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:balo/command/command.dart';
 import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
+import 'package:balo/repository/ignore.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
@@ -98,8 +100,6 @@ extension BranchMerge on Merge {
       return null;
     }
 
-
-
     //Cannot merge from same branch
     if (otherBranch.branchName == branch.branchName) {
       onSameBranchMerge?.call();
@@ -170,6 +170,7 @@ extension BranchMerge on Merge {
     //Generate patches (otherCommit + thisWorkingDir = merge)
     Directory workingDirectory = repository.workingDirectory;
     Directory patchesDirectory = _generatePatches(
+      patternsToIgnore: repository.ignore.patternsToIgnore,
       workingDirectory: workingDirectory,
       otherBranchObjectsMap: otherBranchObjectsMap,
     );
@@ -207,6 +208,7 @@ extension BranchMerge on Merge {
 
   ///Generates temporary [Directory] with how the merge should look like
   Directory _generatePatches({
+    required List<String> patternsToIgnore,
     required Directory workingDirectory,
     required Map<String, RepoObjects> otherBranchObjectsMap,
   }) {
@@ -216,8 +218,12 @@ extension BranchMerge on Merge {
       message: "Patch Dir: ${patchDirectory.path}",
     );
 
+    String repositoryParent = workingDirectory.path;
     List<File> workingBranchFiles =
-        workingDirectory.listSync(recursive: true).where((e) => e.statSync().type == FileSystemEntityType.file).map((e) => File(e.path)).toList();
+        workingDirectory.listSync(recursive: true)
+            .where((e) => e.statSync().type == FileSystemEntityType.file)
+            .where((f) => !shouldIgnorePath(relativePathFromDir(path: f.path, directoryPath: repositoryParent), patternsToIgnore))
+            .map((e) => File(e.path)).toList();
 
     debugPrintToConsole(
       message: "Starting file comparison for ${workingBranchFiles.length} files",
