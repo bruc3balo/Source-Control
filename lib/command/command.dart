@@ -540,12 +540,13 @@ class MergeBranchCommand extends UndoableCommand {
   final Branch thisBranch;
   final Branch otherBranch;
 
+
   MergeBranchCommand(this.repository, this.thisBranch, this.otherBranch);
 
   @override
   Future<void> execute() async {
     //TODO: FIx merge branch command
-    /*await thisBranch.mergeFromOtherBranchIntoThis(
+    await thisBranch.mergeFromOtherBranchIntoThis(
       otherBranch: otherBranch,
       onSameBranchMerge: () => debugPrintToConsole(
         message: "Cannot merge from the same branch",
@@ -565,7 +566,7 @@ class MergeBranchCommand extends UndoableCommand {
       onNoCommitBranchMetaData: () => debugPrintToConsole(
         message: "No commit branch meta data",
       ),
-    );*/
+    );
   }
 
   @override

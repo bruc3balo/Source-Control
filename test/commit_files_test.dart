@@ -9,9 +9,10 @@ import 'balo_t.dart' as test_runner;
 
 void main() {
   test('Commit staged files test', () async {
+
     // Test with repository
     await test_runner.testWithRepository(
-      testWithRepository: (r) async {
+      doTest: (r, _, v) async {
         // Show add help command
         int helpCode = await test_runner.runTest([CliCommandsEnum.commit.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
@@ -23,7 +24,7 @@ void main() {
           CliCommandsEnum.add.command,
           "-${CliCommandOptionsEnum.filePattern.abbreviation}",
           expectedFile,
-          "-${CliCommandOptionsEnum.verbose.abbreviation}"
+          v ?"-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
         ]);
 
         assert(stageFilesCode == 0);
@@ -35,7 +36,7 @@ void main() {
           CliCommandsEnum.commit.command,
           "-${CliCommandOptionsEnum.message.abbreviation}",
           commitMessage,
-          "-${CliCommandOptionsEnum.verbose.abbreviation}"
+          v ?"-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
         ]);
 
         assert(commitFilesCode == 0);
@@ -54,9 +55,8 @@ void main() {
       },
     );
 
-    //test_runner.tempRepository.delete(recursive: true);
     printToConsole(
-      message: "Commit files test passed",
+      message: "Commit files test completed",
       color: CliColor.brightYellow,
       style: CliStyle.bold,
       newLine: true,

@@ -3,6 +3,7 @@ import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/ignore.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
+import 'package:balo/view/themes.dart';
 import 'package:test/test.dart';
 
 import 'balo_t.dart';
@@ -18,7 +19,7 @@ void main() {
 
   test('add to ignore file', () async {
     await testWithRepository(
-      testWithRepository: (r) async {
+      doTest: (r, _, v) async {
         // Show add help command
         int helpCode = await runTest([CliCommandsEnum.ignore.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
@@ -30,7 +31,7 @@ void main() {
           CliCommandsEnum.ignore.command,
           "-${CliCommandOptionsEnum.add.abbreviation}",
           expectedEntry,
-          "-${CliCommandOptionsEnum.verbose.abbreviation}"
+          v ?"-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
         ]);
 
         assert(addToIgnoreCode == 0);
@@ -45,7 +46,7 @@ void main() {
           CliCommandsEnum.ignore.command,
           "-${CliCommandOptionsEnum.remove.abbreviation}",
           expectedEntry,
-          "-${CliCommandOptionsEnum.verbose.abbreviation}"
+          v ?"-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
         ]);
 
         assert(removeFromIgnoreCode == 0);
@@ -60,4 +61,11 @@ void main() {
       },
     );
   });
+
+  printToConsole(
+    message: "Ignore test completed",
+    color: CliColor.brightYellow,
+    style: CliStyle.bold,
+    newLine: true,
+  );
 }

@@ -12,7 +12,7 @@ void main() {
   test('Stage files test', () async {
     // Do with repository
     await test_runner.testWithRepository(
-      testWithRepository: (r) async {
+      doTest: (r, _, v) async {
         // Show add help command
         int helpCode = await test_runner.runTest([CliCommandsEnum.add.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
@@ -24,7 +24,7 @@ void main() {
           CliCommandsEnum.add.command,
           "-${CliCommandOptionsEnum.filePattern.abbreviation}",
           expectedFile,
-          "-${CliCommandOptionsEnum.verbose.abbreviation}"
+          v ?"-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
         ]);
 
         assert(stageFilesCode == 0);
@@ -41,9 +41,8 @@ void main() {
       },
     );
 
-    //test_runner.tempRepository.delete(recursive: true);
     printToConsole(
-      message: "Stage files test passed",
+      message: "Stage files test completed",
       color: CliColor.brightYellow,
       style: CliStyle.bold,
       newLine: true,

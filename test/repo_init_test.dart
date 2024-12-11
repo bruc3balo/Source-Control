@@ -8,7 +8,7 @@ import 'balo_t.dart';
 void main() {
   test('initialize repository test', () async {
     await testWithRepository(
-      testWithRepository: (r) async {
+      doTest: (r, _, v) async {
         // Show init help command
         int helpCode = await runTest([CliCommandsEnum.init.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
@@ -16,7 +16,7 @@ void main() {
     );
 
     debugPrintToConsole(
-      message: "Initialize repository test passed",
+      message: "Initialize repository test completed",
       color: CliColor.brightYellow,
       style: CliStyle.bold,
       newLine: true,

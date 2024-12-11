@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:balo/view/themes.dart';
 
 ///check to store verbose mode for [debugPrintToConsole]
-bool isVerboseMode = true;
+bool isVerboseMode = false;
 
 ///takes user input from terminal
 String? listenForInput({String? title}) {

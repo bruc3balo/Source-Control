@@ -12,7 +12,7 @@ void main() {
     assert(code == 0);
 
     debugPrintToConsole(
-      message: "Show help test passed",
+      message: "Show help test completed",
       color: CliColor.brightYellow,
       style: CliStyle.reversed,
       newLine: true,

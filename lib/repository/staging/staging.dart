@@ -121,7 +121,7 @@ extension StagingActions on Staging {
         .toList();
 
     HashMap<String, String> filesToBeStagedList = HashMap.from(
-      {for (var f in filesToBeStaged) computeFileSha1Hash(File(f.path)).hash: relativePathFromDir(directoryPath: repositoryParent, path: f.path)},
+      {for (var f in filesToBeStaged) computeFileSha1Hash(File(f.path)).hash  : relativePathFromDir(directoryPath: repositoryParent, path: f.path)},
     );
 
     //Add RepoObjectsData from previous commit that are in working dir
