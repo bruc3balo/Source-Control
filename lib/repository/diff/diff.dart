@@ -11,7 +11,6 @@ import 'package:balo/view/themes.dart';
 import 'package:dart_levenshtein/dart_levenshtein.dart';
 import 'package:path/path.dart';
 
-const maxDiffScore = 100;
 
 ///Represents differences of 2 [Commit]s in memory
 class CommitDiff {
@@ -183,7 +182,6 @@ class FileDiff {
             thisLineNo: lineNo,
             thisLine: thisTotalLines[lineNo],
             otherLine: null,
-            diffScore: maxDiffScore,
             diffType: DiffType.insert,
           ),
         );
@@ -243,7 +241,6 @@ class FileLineDiff {
   int thisLineNo;
   String? thisLine;
   String? otherLine;
-  int diffScore;
   DiffType diffType;
 
   FileLineDiff({
@@ -254,7 +251,6 @@ class FileLineDiff {
     required this.thisLineNo,
     required this.thisLine,
     required this.otherLine,
-    required this.diffScore,
     required this.diffType,
   });
 
@@ -278,7 +274,6 @@ class FileLineDiff {
         thisLineNo: thisLineNo,
         thisLine: null,
         otherLine: null,
-        diffScore: maxDiffScore,
         diffType: DiffType.same,
       );
     }
@@ -295,7 +290,6 @@ class FileLineDiff {
         thisLineNo: thisLineNo,
         thisLine: null,
         otherLine: otherLines[thisLineNo],
-        diffScore: maxDiffScore,
         diffType: DiffType.delete,
       );
     }
@@ -309,7 +303,6 @@ class FileLineDiff {
         thisLineNo: thisLineNo,
         thisLine: thisLines[thisLineNo],
         otherLine: null,
-        diffScore: maxDiffScore,
         diffType: DiffType.insert,
       );
     }
@@ -324,7 +317,6 @@ class FileLineDiff {
         thisLineNo: thisLineNo,
         thisLine: null,
         otherLine: otherLines[thisLineNo],
-        diffScore: maxDiffScore,
         diffType: DiffType.delete,
       );
     }
@@ -339,15 +331,13 @@ class FileLineDiff {
         thisLineNo: thisLineNo,
         thisLine: thisLine,
         otherLine: null,
-        diffScore: maxDiffScore,
         diffType: DiffType.insert,
       );
     }
     String otherLine = otherLines[thisLineNo];
 
     // int diffScore = await levenshteinDistance(thisLine, otherLine);
-    int diffScore = 0;
-    DiffType diffType = diffScore == 0 ? DiffType.same : DiffType.modify;
+    DiffType diffType = thisLine == otherLine ? DiffType.same : DiffType.modify;
     return FileLineDiff(
       thisPath: thisFile.path,
       thisName: thisName,
@@ -356,7 +346,6 @@ class FileLineDiff {
       thisLineNo: thisLineNo,
       thisLine: thisLine,
       otherLine: otherLine,
-      diffScore: diffScore,
       diffType: diffType,
     );
   }
@@ -364,7 +353,6 @@ class FileLineDiff {
   @override
   String toString() => """
   \n  Line: $thisLineNo
-  DiffScore: $diffScore
   DiffType: $diffType
   """;
 }
@@ -506,7 +494,7 @@ extension FileLineDiffPrint on FileLineDiff {
   ///Print a [FileLineDiff]
   void printDiff() {
     int line = thisLineNo + 1;
-    String diff = "${diffType.color.color}${diffType.name}${diffType == DiffType.modify ? '($diffScore)' : ''}${CliColor.defaultColor.color}";
+    String diff = "${diffType.color.color}${diffType.name}${CliColor.defaultColor.color}";
 
     printToConsole(
       message: "Line@$line ($diff)",
