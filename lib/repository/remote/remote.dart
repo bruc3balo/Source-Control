@@ -92,7 +92,7 @@ extension RemoteActions on Remote {
   /// Removes a [RemoteData] into a [remoteFile]
   /// The function is idempotent
   void removeRemote({
-    Function()? onRemoteDoesntExists = onRemoteDoesntAlreadyExists,
+    Function()? onRemoteDoesntExists = onRemoteDoesntExists,
   }) {
     RemoteMetaData metaData = remoteData;
     if (!metaData.remotes.containsKey(name)) {

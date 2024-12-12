@@ -33,7 +33,6 @@ class ParsedCommands {
 
 ///A Basic definition of what a command parser would do
 abstract class CommandParser {
-
   ///Transform [UserInput] into [ParsedCommands]
   ParsedCommands parseUserInput(UserInput userInput);
 
@@ -60,6 +59,7 @@ class ArgsCommandParser extends CommandParser {
     );
 
     ArgResults? command = parsedInput.command;
+
     //All command help
     if (command == null) {
       //Default to help
@@ -83,6 +83,7 @@ class ArgsCommandParser extends CommandParser {
     }
 
     for (String optionName in command.options) {
+
       if (!command.wasParsed(optionName)) continue;
 
       String? optionValue = command[optionName];
@@ -122,7 +123,6 @@ class ArgsCommandParser extends CommandParser {
       for (CommandOption cliCommandOption in commandEnum.options) {
         CliCommandOptionsEnum o = cliCommandOption.optionEnum;
 
-        // Add options to the command parser
         cliCommandOptionsParser.addOption(
           o.option,
           abbr: o.abbreviation,
@@ -231,31 +231,27 @@ class ArgsCommandParser extends CommandParser {
   }
 
   void _printOption(Option o) {
-
     CliCommandOptionsEnum? cli = CliCommandOptionsEnum.cliCommandOptionsMap[o.name];
     if (cli == null) return;
 
     CliColor color = o.mandatory ? CliColor.brightGreen : CliColor.white;
 
     printToConsole(
-      message: "${o.help}: ${CliColor.brightMagenta.color}--${o.name}, -${o.abbr}${color.color}${o.valueHelp == null ? '' : ' = <${o.valueHelp}>'} ${o.defaultsTo == null ? "" : "(default = ${o.defaultsTo})"}",
+      message:
+          "${o.help}: ${CliColor.brightMagenta.color}--${o.name}, -${o.abbr}${color.color}${o.valueHelp == null ? '' : ' = <${o.valueHelp}>'} ${o.defaultsTo == null ? "" : "(default = ${o.defaultsTo})"}",
       color: color,
     );
 
     if (cli == CliCommandOptionsEnum.filePattern) {
-      printToConsole(
-        message: "File pattern rules",
-        color: CliColor.blue,
-        style: CliStyle.underline
-      );
+      printToConsole(message: "File pattern rules", color: CliColor.blue, style: CliStyle.underline);
       for (IgnorePatternRules ipr in IgnorePatternRules.values) {
         printToConsole(
-          message: "${ipr.description}: ${CliColor.brightMagenta.color}${ipr.pattern}${CliColor.defaultColor.color} = <pattern> (pattern position = ${ipr.position.name}) e.g. ${CliColor.brightYellow.color}${ipr.example.testPattern}${CliColor.defaultColor.color}",
+          message:
+              "${ipr.description}: ${CliColor.brightMagenta.color}${ipr.pattern}${CliColor.defaultColor.color} = <pattern> (pattern position = ${ipr.position.name}) e.g. ${CliColor.brightYellow.color}${ipr.example.testPattern}${CliColor.defaultColor.color}",
           color: CliColor.defaultColor,
         );
       }
       printToConsole(message: "");
     }
-
   }
 }

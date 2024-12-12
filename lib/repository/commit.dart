@@ -3,7 +3,7 @@ import 'package:balo/repository/diff/diff.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/utils/print_fn.dart';
 
-///Hash of a sha1 with validation
+/// Hash of a sha1 with validation
 class Sha1 {
   final String hash;
 
@@ -14,7 +14,7 @@ class Sha1 {
   String get short => hash.substring(0, 6);
 }
 
-///Snapshot of a working directory
+/// Snapshot of a working directory
 class Commit {
   final Branch fromBranch;
   final Branch branch;
@@ -54,7 +54,7 @@ extension CommitActions on Commit {
       return null;
     }
 
-    return commitMetaData.commitedObjects;
+    return {for(var o in commitMetaData.commitedObjects.values) o.filePathRelativeToRepository : o};
   }
 
   ///Compare a [CommitDiff] to another commit [other]

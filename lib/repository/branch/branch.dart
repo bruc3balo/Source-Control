@@ -104,13 +104,14 @@ extension BranchCreation on Branch {
   ///If the [Branch] doesn't exist, it will create a new [Branch] and copy the [File]s from the exising branch to the current one
   void checkoutToBranch({
     String? commitSha,
-    Function()? onNoCommitFound,
-    Function()? onSameCommit,
-    Function()? onBranchMetaDataDoesntExists,
-    Function()? onStateDoesntExists,
-    Function()? onRepositoryNotInitialized,
+    Function()? onNoCommitFound = onNoCommit,
+    Function()? onSameCommit = onSameCommit,
+    Function(Branch)? onBranchMetaDataDoesntExists = onNoCommitBranchMetaData,
+    Function()? onStateDoesntExists = onStateDoesntExist,
+    Function()? onRepositoryNotInitialized = onRepositoryNotInitialized,
   }) {
-    if (!branchTreeMetaDataExists) createBranch(isValidBranchName: isValidBranchName);
+    bool newBranch = !branchTreeMetaDataExists;
+    if (newBranch) createBranch(isValidBranchName: isValidBranchName);
 
     State state = State(repository);
 
@@ -122,9 +123,9 @@ extension BranchCreation on Branch {
 
     StateData updatedStateData = stateData;
 
-    BranchTreeMetaData? branchData = branchTreeMetaData;
-    if (branchData == null) {
-      onBranchMetaDataDoesntExists?.call();
+    BranchTreeMetaData? newBranchTree = branchTreeMetaData;
+    if (newBranchTree == null) {
+      onBranchMetaDataDoesntExists?.call(this);
       return;
     }
 
@@ -132,25 +133,40 @@ extension BranchCreation on Branch {
     updatedStateData = updatedStateData.copyWith(currentBranch: branchName);
 
     //Change commit
-    CommitTreeMetaData? commitMetaData = commitSha != null ? branchData.commits[commitSha.trim()] : branchData.latestBranchCommits;
-    if (commitSha != null && commitMetaData == null) {
+    CommitTreeMetaData? newCommitMetaData = commitSha != null ? newBranchTree.commits[commitSha.trim()] : newBranchTree.latestBranchCommits;
+    if (commitSha != null && newCommitMetaData == null) {
       onNoCommitFound?.call();
       return;
     }
 
     //Update commit pointer
-    updatedStateData = updatedStateData.copyWith(currentCommit: commitMetaData?.sha);
+    updatedStateData = updatedStateData.copyWith(currentCommit: newCommitMetaData?.sha);
     if (updatedStateData == stateData) {
       onSameCommit?.call();
       return;
     }
 
     //Move files from latest commit to current working dir
-    if (commitMetaData != null) {
+    if (newCommitMetaData != null) {
       _writeFilesToWorkingDir(
-        objects: commitMetaData.commitedObjects.values.toList(),
+        objects: newCommitMetaData.commitedObjects.values.toList(),
         workingDir: repository.workingDirectory,
       );
+    }
+
+    if (newBranch) {
+      //Copy commits to branch tree
+      Branch? branch = state.getCurrentBranch();
+      if (branch != null) {
+        BranchTreeMetaData? oldBranchTree = branch.branchTreeMetaData;
+        if (oldBranchTree != null) {
+          printToConsole(
+            message: "Creating $branchName from ${branch.branchName}",
+          );
+          newBranchTree = newBranchTree.copyWith(commits: Map.from(oldBranchTree.commits));
+          saveBranchTreeMetaData(newBranchTree);
+        }
+      }
     }
 
     state.saveStateData(
@@ -159,6 +175,10 @@ extension BranchCreation on Branch {
         message: "State saved",
       ),
     );
+
+    printToConsole(
+      message: "Checkout out to branch $branchName",
+    );
   }
 
   ///Write [objects] to working directory
@@ -166,7 +186,7 @@ extension BranchCreation on Branch {
     required List<RepoObjectsData> objects,
     required Directory workingDir,
   }) {
-    printToConsole(message: "copying ${objects.length} files to ${workingDir.path}");
+    debugPrintToConsole(message: "copying ${objects.length} files to ${workingDir.path}");
     for (RepoObjectsData o in objects) {
       RepoObjects? repoObject = o.fetchObject(repository);
       if (repoObject == null) continue;
@@ -192,8 +212,8 @@ extension BranchCreation on Branch {
   ///Delete a [Branch] from a local [Repository]
   ///It doesn't delete the [RepoObjects]
   void deleteBranch({
-    Function()? onBranchDoesntExist,
-    Function()? onBranchDeleted,
+    Function()? onBranchDoesntExist = onBranchDoesntExists,
+    Function(Branch)? onBranchDeleted = onBranchDeleted,
     Function()? onRepositoryNotInitialized = onRepositoryNotInitialized,
   }) {
     if (!repository.isInitialized) {
@@ -207,7 +227,7 @@ extension BranchCreation on Branch {
     }
 
     branchDirectory.deleteSync(recursive: true);
-    onBranchDeleted?.call();
+    onBranchDeleted?.call(this);
   }
 }
 
@@ -261,22 +281,16 @@ extension BranchTreeMetaDataStorage on Branch {
   }
 }
 
-extension BranchManager on Branch {
+extension BranchTree on Branch {
   ///Adds a [commit] to a [managerFile] and performs
   void addCommit({
     required Commit commit,
-    Function()? onMissingManager,
-    Function(CommitTreeMetaData)? onCommitCreated,
-    Function()? onNoMetaData,
+    Function(CommitTreeMetaData)? onCommitCreated = onCommitCreated,
+    Function(Branch)? onNoMetaData = onNoCommitBranchMetaData,
   }) {
-    if (!branchTreeMetaDataExists) {
-      onMissingManager?.call();
-      return;
-    }
-
     BranchTreeMetaData? metaData = branchTreeMetaData;
     if (metaData == null) {
-      onNoMetaData?.call();
+      onNoMetaData?.call(this);
       return;
     }
 

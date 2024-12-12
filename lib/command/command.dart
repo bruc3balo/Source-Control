@@ -412,7 +412,9 @@ class CheckoutToBranchCommand extends UndoableCommand {
   @override
   Future<void> execute() async {
     await Isolate.run(() async {
-      branch.checkoutToBranch(commitSha: commitSha);
+      branch.checkoutToBranch(
+        commitSha: commitSha,
+      );
     });
   }
 

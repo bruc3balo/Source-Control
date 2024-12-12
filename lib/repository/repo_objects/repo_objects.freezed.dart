@@ -22,6 +22,7 @@ RepoObjectsData _$RepoObjectsDataFromJson(Map<String, dynamic> json) {
 mixin _$RepoObjectsData {
   String get sha => throw _privateConstructorUsedError;
   String get filePathRelativeToRepository => throw _privateConstructorUsedError;
+  String get fileName => throw _privateConstructorUsedError;
   DateTime get commitedAt => throw _privateConstructorUsedError;
 
   /// Serializes this RepoObjectsData to a JSON map.
@@ -41,7 +42,10 @@ abstract class $RepoObjectsDataCopyWith<$Res> {
       _$RepoObjectsDataCopyWithImpl<$Res, RepoObjectsData>;
   @useResult
   $Res call(
-      {String sha, String filePathRelativeToRepository, DateTime commitedAt});
+      {String sha,
+      String filePathRelativeToRepository,
+      String fileName,
+      DateTime commitedAt});
 }
 
 /// @nodoc
@@ -61,6 +65,7 @@ class _$RepoObjectsDataCopyWithImpl<$Res, $Val extends RepoObjectsData>
   $Res call({
     Object? sha = null,
     Object? filePathRelativeToRepository = null,
+    Object? fileName = null,
     Object? commitedAt = null,
   }) {
     return _then(_value.copyWith(
@@ -71,6 +76,10 @@ class _$RepoObjectsDataCopyWithImpl<$Res, $Val extends RepoObjectsData>
       filePathRelativeToRepository: null == filePathRelativeToRepository
           ? _value.filePathRelativeToRepository
           : filePathRelativeToRepository // ignore: cast_nullable_to_non_nullable
+              as String,
+      fileName: null == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
               as String,
       commitedAt: null == commitedAt
           ? _value.commitedAt
@@ -89,7 +98,10 @@ abstract class _$$RepoObjectsDataImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String sha, String filePathRelativeToRepository, DateTime commitedAt});
+      {String sha,
+      String filePathRelativeToRepository,
+      String fileName,
+      DateTime commitedAt});
 }
 
 /// @nodoc
@@ -107,6 +119,7 @@ class __$$RepoObjectsDataImplCopyWithImpl<$Res>
   $Res call({
     Object? sha = null,
     Object? filePathRelativeToRepository = null,
+    Object? fileName = null,
     Object? commitedAt = null,
   }) {
     return _then(_$RepoObjectsDataImpl(
@@ -117,6 +130,10 @@ class __$$RepoObjectsDataImplCopyWithImpl<$Res>
       filePathRelativeToRepository: null == filePathRelativeToRepository
           ? _value.filePathRelativeToRepository
           : filePathRelativeToRepository // ignore: cast_nullable_to_non_nullable
+              as String,
+      fileName: null == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
               as String,
       commitedAt: null == commitedAt
           ? _value.commitedAt
@@ -132,6 +149,7 @@ class _$RepoObjectsDataImpl implements _RepoObjectsData {
   _$RepoObjectsDataImpl(
       {required this.sha,
       required this.filePathRelativeToRepository,
+      required this.fileName,
       required this.commitedAt});
 
   factory _$RepoObjectsDataImpl.fromJson(Map<String, dynamic> json) =>
@@ -142,11 +160,13 @@ class _$RepoObjectsDataImpl implements _RepoObjectsData {
   @override
   final String filePathRelativeToRepository;
   @override
+  final String fileName;
+  @override
   final DateTime commitedAt;
 
   @override
   String toString() {
-    return 'RepoObjectsData(sha: $sha, filePathRelativeToRepository: $filePathRelativeToRepository, commitedAt: $commitedAt)';
+    return 'RepoObjectsData(sha: $sha, filePathRelativeToRepository: $filePathRelativeToRepository, fileName: $fileName, commitedAt: $commitedAt)';
   }
 
   @override
@@ -159,14 +179,16 @@ class _$RepoObjectsDataImpl implements _RepoObjectsData {
                     filePathRelativeToRepository) ||
                 other.filePathRelativeToRepository ==
                     filePathRelativeToRepository) &&
+            (identical(other.fileName, fileName) ||
+                other.fileName == fileName) &&
             (identical(other.commitedAt, commitedAt) ||
                 other.commitedAt == commitedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, sha, filePathRelativeToRepository, commitedAt);
+  int get hashCode => Object.hash(
+      runtimeType, sha, filePathRelativeToRepository, fileName, commitedAt);
 
   /// Create a copy of RepoObjectsData
   /// with the given fields replaced by the non-null parameter values.
@@ -189,6 +211,7 @@ abstract class _RepoObjectsData implements RepoObjectsData {
   factory _RepoObjectsData(
       {required final String sha,
       required final String filePathRelativeToRepository,
+      required final String fileName,
       required final DateTime commitedAt}) = _$RepoObjectsDataImpl;
 
   factory _RepoObjectsData.fromJson(Map<String, dynamic> json) =
@@ -198,6 +221,8 @@ abstract class _RepoObjectsData implements RepoObjectsData {
   String get sha;
   @override
   String get filePathRelativeToRepository;
+  @override
+  String get fileName;
   @override
   DateTime get commitedAt;
 

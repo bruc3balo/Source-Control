@@ -105,7 +105,8 @@ abstract class UndoableCommandExecutor {
           CliCommandOptionsEnum.sha,
         );
 
-        printToConsole(
+
+        debugPrintToConsole(
           message: "Branch $branch, commit $commitSha",
           color: CliColor.white,
         );
@@ -248,6 +249,13 @@ abstract class UndoableCommandExecutor {
       }
       return 0;
     } catch (e, trace) {
+      if (!isVerboseMode) {
+        printToConsole(
+          message: "An error has occurred. Run with -${CliCommandOptionsEnum.verbose.abbreviation} to see more details",
+          color: CliColor.red,
+        );
+      }
+
       if (e is FileSystemException) {
         onFileSystemException(e);
       } else {

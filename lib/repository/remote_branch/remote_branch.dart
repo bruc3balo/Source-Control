@@ -95,6 +95,7 @@ extension RemoteBranchCommon on RemoteBranch {
           repository: localRepository,
           sha1: remoteObject!.sha1,
           relativePathToRepository: remoteObject.relativePathToRepository,
+          fileName: remoteObject.fileName,
           commitedAt: remoteObject.commitedAt,
           blob: remoteObject.blob,
         );
@@ -203,6 +204,7 @@ extension RemoteBranchCommon on RemoteBranch {
           repository: localRepository,
           sha1: remoteObject!.sha1,
           relativePathToRepository: remoteObject.relativePathToRepository,
+          fileName: remoteObject.fileName,
           commitedAt: remoteObject.commitedAt,
           blob: remoteObject.blob,
         );
@@ -292,6 +294,7 @@ extension RemoteBranchCommon on RemoteBranch {
           repository: remoteRepository,
           sha1: localObject!.sha1,
           relativePathToRepository: localObject.relativePathToRepository,
+          fileName: localObject.fileName,
           commitedAt: localObject.commitedAt,
           blob: localObject.blob,
         );

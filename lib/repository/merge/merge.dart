@@ -157,6 +157,7 @@ extension BranchMerge on Merge {
             repository: repository,
             sha1: o!.sha1,
             relativePathToRepository: o.relativePathToRepository,
+            fileName: o.fileName,
             commitedAt: o.commitedAt,
             blob: o.blob,
           ),

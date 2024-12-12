@@ -238,11 +238,7 @@ class CheckoutToBranchInitializer implements CommandFacade {
     Repository repository = Repository(Directory.current.path);
     debugPrintToConsole(message: "Repository path is ${repository.path}");
     return [
-      CheckoutToBranchCommand(
-        repository,
-        Branch(branchName, repository),
-        commitSha,
-      ),
+      CheckoutToBranchCommand(repository, Branch(branchName, repository), commitSha),
     ];
   }
 }
@@ -283,7 +279,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
     }
 
     CommitTreeMetaData? thisCommitMetaData =
-        thisCommitSha == null ? thisBranchMetaData.sortedBranchCommitsFromLatest.firstOrNull : thisBranchMetaData.commits[thisCommitSha];
+        thisCommitSha == null ? thisBranchMetaData.latestBranchCommits : thisBranchMetaData.commits[thisCommitSha];
     if (thisCommitMetaData == null) {
       debugPrintToConsole(message: "commitAMetaData == null");
       return [ShowErrorCommand("Commit $thisCommitSha has no meta data")];
@@ -298,7 +294,7 @@ class ShowDiffBetweenCommitsInitializer implements CommandFacade {
     }
 
     CommitTreeMetaData? otherCommitMetaData =
-        otherCommitSha == null ? otherBranchMetaData.sortedBranchCommitsFromLatest.firstOrNull : otherBranchMetaData.commits[otherCommitSha];
+        otherCommitSha == null ? otherBranchMetaData.latestBranchCommits : otherBranchMetaData.commits[otherCommitSha];
     if (otherCommitMetaData == null) {
       debugPrintToConsole(message: "commitBMetaData == null");
       return [ShowErrorCommand("Commit $otherCommitSha has no meta data")];

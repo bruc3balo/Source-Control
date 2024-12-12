@@ -241,7 +241,7 @@ enum CliCommandOptionsEnum {
     abbreviation: "m",
     aliases: ["msg"],
     description: "Provide a commit or operation message",
-    valueHelp: '"commit_message"',
+    valueHelp: "commit_message",
   ),
   remoteName(
     option: "name",
@@ -265,11 +265,12 @@ enum CliCommandOptionsEnum {
     valueHelp: "file_path",
   ),
   filePattern(
-      option: "file",
-      abbreviation: "f",
-      aliases: ["pattern", "files"],
-      description: "Specify a pattern for matching files",
-      valueHelp: "file_pattern"),
+    option: "file",
+    abbreviation: "f",
+    aliases: ["pattern", "files"],
+    description: "Specify a pattern for matching files",
+    valueHelp: "file_pattern",
+  ),
   thisBranch(
     option: "source-branch",
     abbreviation: "t",
@@ -331,6 +332,7 @@ enum CliCommandOptionsEnum {
     for (var c in CliCommandOptionsEnum.values) c.option: c,
   };
 }
+
 
 ///Configuration of a [CliCommandOptionsEnum] with respect
 ///to each [CliCommandsEnum]

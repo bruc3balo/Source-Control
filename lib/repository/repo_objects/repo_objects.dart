@@ -18,6 +18,7 @@ class RepoObjects {
   final Repository repository;
   final Sha1 sha1;
   final String relativePathToRepository;
+  final String fileName;
   final DateTime commitedAt;
   final Uint8List blob;
 
@@ -25,6 +26,7 @@ class RepoObjects {
     required this.repository,
     required this.sha1,
     required this.relativePathToRepository,
+    required this.fileName,
     required this.commitedAt,
     required this.blob,
   });
@@ -33,10 +35,12 @@ class RepoObjects {
     Uint8List blob = file.readAsBytesSync();
     Sha1 sha = computeSha1Hash(blob);
     String relativePathToRepository = file.path.replaceAll(repository.workingDirectory.path, "");
+    String fileName = path.basename(file.path);
     return RepoObjects(
       repository: repository,
       sha1: sha,
       relativePathToRepository: relativePathToRepository,
+      fileName: fileName,
       commitedAt: DateTime.now(),
       blob: blob,
     );
@@ -54,6 +58,7 @@ extension RepoObjectStorage on RepoObjects {
   RepoObjectsData get toRepoObjectsData => RepoObjectsData(
         sha: sha1.hash,
         filePathRelativeToRepository: relativePathToRepository,
+        fileName: fileName,
         commitedAt: commitedAt,
       );
 
@@ -84,6 +89,7 @@ class RepoObjectsData with _$RepoObjectsData {
   factory RepoObjectsData({
     required String sha,
     required String filePathRelativeToRepository,
+    required String fileName,
     required DateTime commitedAt,
   }) = _RepoObjectsData;
 
@@ -112,6 +118,7 @@ extension RepoObjectsDataX on RepoObjectsData {
       repository: repository,
       sha1: sha1,
       relativePathToRepository: filePathRelativeToRepository,
+      fileName: fileName,
       commitedAt: commitedAt,
       blob: objectFile.readAsBytesSync(),
     );

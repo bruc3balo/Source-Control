@@ -13,6 +13,7 @@ import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
+import 'package:balo/view/themes.dart';
 import 'package:path/path.dart';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -79,6 +80,9 @@ extension StagingActions on Staging {
       noOfObjects: repoObjects.length,
       commitedAt: commitedAt,
     );
+
+
+
     Commit commit = Commit(sha1, branch, message, repoObjects, branch, commitedAt);
     commitingBranch.addCommit(commit: commit);
 
@@ -121,7 +125,7 @@ extension StagingActions on Staging {
         .toList();
 
     HashMap<String, String> filesToBeStagedList = HashMap.from(
-      {for (var f in filesToBeStaged) computeFileSha1Hash(File(f.path)).hash  : relativePathFromDir(directoryPath: repositoryParent, path: f.path)},
+      {for (var f in filesToBeStaged) computeFileSha1Hash(File(f.path)).hash: relativePathFromDir(directoryPath: repositoryParent, path: f.path)},
     );
 
     //Add RepoObjectsData from previous commit that are in working dir
@@ -140,6 +144,18 @@ extension StagingActions on Staging {
 
     //Write staging info
     saveStagingData(data);
+
+    printToConsole(
+      message: "${filesToBeStagedList.length} file${filesToBeStagedList.length == 1 ? '' : 's'} staged for commit",
+    );
+
+    for (var d in filesToBeStagedList.values) {
+      printToConsole(
+        message: d,
+        color: CliColor.green,
+      );
+
+    }
   }
 
   ///Deletes data from [stagingFile]
