@@ -9,12 +9,12 @@ import 'package:test/test.dart';
 import 'balo_t.dart' as test_runner;
 
 void main() {
+
+
   test('Push branch test', () async {
 
     // Test with repository
     await test_runner.testWithRepository(
-      cleanup: true,
-      verbose: false,
       doTest: (localRepository, remoteRepository, v) async {
 
         // Show command help command
@@ -93,5 +93,5 @@ void main() {
       style: CliStyle.bold,
       newLine: true,
     );
-  }, timeout: Timeout(Duration(days: 1)));
+  },);
 }

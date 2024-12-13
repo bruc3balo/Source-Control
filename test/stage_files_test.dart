@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:balo/command_line_interface/cli_arguments.dart';
@@ -15,7 +14,7 @@ void main() {
   test('Stage files test', () async {
     // Do with repository
     await test_runner.testWithRepository(
-      doTest: (r, _, v) async {
+      doTest: (localRepository, remoteRepository, v) async {
 
         // Show command help command
         int helpCode = await test_runner.runTest([CliCommandsEnum.add.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
@@ -34,7 +33,7 @@ void main() {
         assert(stageFilesCode == 0);
 
         //Check if staging file exists and contains test file
-        Staging s = Staging(Branch(defaultBranch, r));
+        Staging s = Staging(Branch(defaultBranch, localRepository));
         assert(s.hasStagedFiles);
         assert(s.stagingData != null);
         assert(s.stagingData!.filesToBeStaged.contains(expectedFile));

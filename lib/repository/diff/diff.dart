@@ -407,15 +407,7 @@ extension CommitDiffPrint on CommitDiff {
     for (var a in filesDiff) {
       a.printDiff();
 
-      String fileName = a.thisName;
-      String differenceSummary = a.diffCount.entries.map((e) => "${e.key.name}: ${e.value}").join(", ");
-
-      printToConsole(
-        message: "Line differences -> $fileName ($differenceSummary) \n",
-        color: CliColor.yellow,
-        style: CliStyle.underline,
-      );
-
+      //Only show differences
       for (var b in a.linesDiff.values.where((e) => e.diffType != DiffType.same)) {
         b.printDiff();
       }
@@ -494,12 +486,12 @@ extension FileLineDiffPrint on FileLineDiff {
   ///Print a [FileLineDiff]
   void printDiff() {
     int line = thisLineNo + 1;
-    String diff = "${diffType.color.color}${diffType.name}${CliColor.defaultColor.color}";
+    String diff = "${diffType.color.color}(${diffType.name})${CliColor.defaultColor.color}";
 
     printToConsole(
-      message: "Line@$line ($diff)",
+      message: "Line@$line $diff",
       color: CliColor.brightYellow,
-      style: CliStyle.bold,
+      style: CliStyle.underline,
     );
 
     printToConsole(

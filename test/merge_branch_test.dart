@@ -19,8 +19,7 @@ void main() {
     () async {
       // Test with repository
       await test_runner.testWithRepository(
-        verbose: false,
-        doTest: (r, _, v) async {
+        doTest: (localRepository, remoteRepository, v) async {
           // Show command help command
           int helpCode = await test_runner.runTest([CliCommandsEnum.merge.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
           assert(helpCode == 0);
@@ -55,17 +54,46 @@ void main() {
           ]);
           assert(createNewBranchCommand == 0);
 
-          //Merge commits from default branch to new branch
+          //Stage second file
+          String expectedSecondFile = "${Platform.pathSeparator}${join("test", "checkout_branch_test.dart")}";
+          int expectedSecondFileCode = await test_runner.runTest([
+            CliCommandsEnum.add.command,
+            "-${CliCommandOptionsEnum.filePattern.abbreviation}",
+            expectedSecondFile,
+            v ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
+          ]);
+          assert(expectedSecondFileCode == 0);
+
+          //Commit the staged file
+          String secondCommit = "This is the second commit";
+          int secondCommitCode = await test_runner.runTest([
+            CliCommandsEnum.commit.command,
+            "-${CliCommandOptionsEnum.message.abbreviation}",
+            secondCommit,
+            v ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
+          ]);
+          assert(secondCommitCode == 0);
+
+          //Checkout to a default
+          int backToDefaultBranchCommand = await test_runner.runTest([
+            CliCommandsEnum.checkout.command,
+            "-${CliCommandOptionsEnum.branch.abbreviation}",
+            defaultBranch,
+            v ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
+          ]);
+          assert(backToDefaultBranchCommand == 0);
+
+          //Merge commits from new branch branch to default branch
           int mergeFromDefaultBranchToNewBranchCode = await test_runner.runTest([
             CliCommandsEnum.merge.command,
             "-${CliCommandOptionsEnum.branch.abbreviation}",
-            defaultBranch,
+            newBranch,
             v ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : ''
           ]);
           assert(mergeFromDefaultBranchToNewBranchCode == 0);
 
           //Assert merge file exists
-          Merge merge = Merge(r, Branch(newBranch, r));
+          Merge merge = Merge(localRepository, Branch(defaultBranch, localRepository));
           assert(merge.hasPendingMerge);
 
           //Commit changes
@@ -91,6 +119,5 @@ void main() {
         newLine: true,
       );
     },
-    timeout: Timeout(Duration(days: 1))
   );
 }

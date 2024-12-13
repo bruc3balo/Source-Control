@@ -19,7 +19,7 @@ void main() {
   });
 }
 
-
+///Runs the actual commands
 Future<int> runTest(List<String> arguments) async {
   UserInput userInput = CliUserInput(arguments);
   final UndoableCommandExecutor runner = DefaultCommandLineRunner();
@@ -40,7 +40,7 @@ Future<void> testWithRepository({
   bool verbose = false,
   required Future<void> Function(Repository local, Repository remote, bool verbose) doTest,
 }) async {
-  Repository tempRepository = Repository(Directory.current.path);
+  Repository tempLocalRepository = Repository(Directory.current.path);
   Repository tempRemoteRepository = Repository(join(Directory.current.path, "test-remote"));
 
   try {
@@ -48,21 +48,21 @@ Future<void> testWithRepository({
     int createRepositoryCommand = await runTest([
       CliCommandsEnum.init.command,
       "-${CliCommandOptionsEnum.path.abbreviation}",
-      tempRepository.path,
+      tempLocalRepository.path,
       verbose ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : '',
     ]);
     assert(createRepositoryCommand == 0);
 
-    //Check if repository was created
-    bool repositoryFound = Directory(tempRepository.repositoryPath).existsSync();
+    //Check if local repository was created
+    bool repositoryFound = Directory(tempLocalRepository.repositoryPath).existsSync();
     assert(repositoryFound);
 
-    await doTest(tempRepository, tempRemoteRepository, verbose);
+    await doTest(tempLocalRepository, tempRemoteRepository, verbose);
   } finally {
     if (cleanup) {
       //Clean up local repository
-      tempRepository.unInitializeRepository();
-      assert(!tempRepository.isInitialized);
+      tempLocalRepository.unInitializeRepository();
+      assert(!tempLocalRepository.isInitialized);
 
       //Clean up remote repository
       tempRemoteRepository.unInitializeRepository();
@@ -73,4 +73,5 @@ Future<void> testWithRepository({
       }
     }
   }
+
 }

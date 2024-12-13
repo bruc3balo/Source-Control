@@ -15,7 +15,7 @@ void main() {
 
     // Test with repository
     await test_runner.testWithRepository(
-      doTest: (r, _, v) async {
+      doTest: (localRepository, remoteRepository, v) async {
         // Show command help command
         int helpCode = await test_runner.runTest([CliCommandsEnum.commit.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
         assert(helpCode == 0);
@@ -45,7 +45,7 @@ void main() {
         assert(commitFilesCode == 0);
 
         //Check for the commit
-        Branch branch = Branch(defaultBranch, r);
+        Branch branch = Branch(defaultBranch, localRepository);
 
         BranchTreeMetaData? branchTree = branch.branchTreeMetaData;
         assert(branchTree != null);

@@ -14,8 +14,7 @@ void main() {
     'Diff test',
     () async {
       await test_runner.testWithRepository(
-        cleanup: false,
-        doTest: (r, _, v) async {
+        doTest: (localRepository, remoteRepository, v) async {
           // Show command help command
           int helpCode = await test_runner.runTest([CliCommandsEnum.diff.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
           assert(helpCode == 0);
@@ -88,8 +87,5 @@ void main() {
         newLine: true,
       );
     },
-    timeout: Timeout(
-      Duration(days: 1),
-    ),
   );
 }

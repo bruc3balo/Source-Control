@@ -25,7 +25,7 @@ void debugPrintToConsole({
   CliColor color = CliColor.magenta,
   CliStyle? style,
 }) {
-  if (!isVerboseMode) return;
+  // if (!isVerboseMode) return;
   printToConsole(
     message: message,
     newLine: newLine,

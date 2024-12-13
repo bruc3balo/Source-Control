@@ -14,6 +14,7 @@ import 'package:balo/repository/remote_branch/remote_branch.dart';
 import 'package:balo/repository/repository.dart';
 import 'package:balo/repository/staging/staging.dart';
 import 'package:balo/repository/state/state.dart';
+import 'package:balo/utils/print_fn.dart';
 import 'package:balo/utils/utils.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
@@ -383,7 +384,7 @@ class GetBranchCommitHistoryCommand extends UndoableCommand {
     }
 
     if (metaData.commits.isEmpty) {
-      printToConsole(message: "No commits found", newLine: true, color: CliColor.brightRed);
+      onNoCommitsFound();
       return;
     }
 

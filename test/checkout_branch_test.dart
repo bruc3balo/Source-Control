@@ -11,7 +11,7 @@ void main() {
 
     // Test with repository
     await test_runner.testWithRepository(
-      doTest: (r, _, v) async {
+      doTest: (localRepository, remoteRepository, v) async {
 
         // Show command help command
         int helpCode = await test_runner.runTest([CliCommandsEnum.merge.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
@@ -30,7 +30,7 @@ void main() {
 
         assert(createNewBranchCommand == 0);
 
-        State state = State(r);
+        State state = State(localRepository);
         Branch? branch = state.getCurrentBranch();
 
         assert(newBranch == branch?.branchName);

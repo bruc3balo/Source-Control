@@ -18,8 +18,6 @@ void main() {
 
     // Test with repository
     await test_runner.testWithRepository(
-      cleanup: true,
-      verbose: false,
       doTest: (localRepository, remoteRepository, v) async {
 
         // Show command help command
@@ -85,5 +83,5 @@ void main() {
       style: CliStyle.bold,
       newLine: true,
     );
-  }, timeout: Timeout(Duration(days: 1)));
+  },);
 }

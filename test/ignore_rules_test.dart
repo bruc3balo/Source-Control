@@ -20,7 +20,7 @@ void main() {
     'add to ignore file',
     () async {
       await testWithRepository(
-        doTest: (r, _, v) async {
+        doTest: (localRepository, remoteRepository, v) async {
           // Show command help command
           int helpCode = await runTest([CliCommandsEnum.ignore.command, "-${CliCommandOptionsEnum.help.abbreviation}"]);
           assert(helpCode == 0);
@@ -38,7 +38,7 @@ void main() {
           assert(addToIgnoreCode == 0);
 
           //Check if ignore file exists and contains expectedEntry
-          Ignore s = Ignore(r);
+          Ignore s = Ignore(localRepository);
           assert(s.ignoreFile.existsSync());
           assert(s.patternsToIgnore.contains(expectedEntry));
 
