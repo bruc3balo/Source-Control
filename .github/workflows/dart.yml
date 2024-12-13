@@ -1,0 +1,40 @@
+name: Dart CI with Merge to Release
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v4
+
+      # Set up the Dart SDK
+      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+
+      # Install dependencies
+      - name: Install dependencies
+        run: dart pub get
+
+      # Analyze the code
+      - name: Analyze project source
+        run: dart analyze
+
+      # Run Dart tests
+      - name: Run tests
+        run: dart test
+
+      # Merge changes to the release branch if tests pass
+      - name: Merge to Release
+        if: success()
+        run: |
+          git config user.name "bruc3balo"
+          git config user.email "brucelosis12@gmail.com"
+          git checkout release
+          git merge main --no-ff --commit -m "Merge from main to release [skip ci]"
+          git push origin release
