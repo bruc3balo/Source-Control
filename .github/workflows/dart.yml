@@ -24,13 +24,3 @@ jobs:
       # Run Dart tests
       - name: Run tests
         run: dart run test --concurrency=1
-
-      # Merge changes to the release branch if tests pass
-      - name: Merge to Release
-        if: success()
-        run: |
-          git config user.name "bruc3balo"
-          git config user.email "brucelosis12@gmail.com"
-          git checkout release
-          git merge main --no-ff --commit -m "Merge from main to release [skip ci]"
-          git push origin release
