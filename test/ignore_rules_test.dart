@@ -1,7 +1,5 @@
 import 'package:balo/command_line_interface/cli_arguments.dart';
-import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/ignore.dart';
-import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
 import 'package:test/test.dart';

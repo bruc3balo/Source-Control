@@ -5,10 +5,8 @@ import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/commit.dart';
 import 'package:balo/repository/repo_objects/repo_objects.dart';
 import 'package:balo/utils/print_fn.dart';
-import 'package:balo/utils/utils.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
-import 'package:dart_levenshtein/dart_levenshtein.dart';
 import 'package:path/path.dart';
 
 

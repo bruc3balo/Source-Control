@@ -1,12 +1,7 @@
 import 'package:balo/command_line_interface/cli_arguments.dart';
-import 'package:balo/repository/branch/branch.dart';
 import 'package:balo/repository/remote/remote.dart';
-import 'package:balo/repository/staging/staging.dart';
-import 'package:balo/repository/state/state.dart';
-import 'package:balo/utils/variables.dart';
 import 'package:balo/view/terminal.dart';
 import 'package:balo/view/themes.dart';
-import 'package:path/path.dart';
 import 'package:test/test.dart';
 import 'balo_t.dart' as test_runner;
 

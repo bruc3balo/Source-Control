@@ -57,6 +57,19 @@ Future<void> testWithRepository({
     bool repositoryFound = Directory(tempLocalRepository.repositoryPath).existsSync();
     assert(repositoryFound);
 
+    //Run create remote repository command
+    int createRemoteRepositoryCommand = await runTest([
+      CliCommandsEnum.init.command,
+      "-${CliCommandOptionsEnum.path.abbreviation}",
+      tempRemoteRepository.path,
+      verbose ? "-${CliCommandOptionsEnum.verbose.abbreviation}" : '',
+    ]);
+    assert(createRemoteRepositoryCommand == 0);
+
+    //Check if remote repository was created
+    bool remoteRepositoryFound = Directory(tempLocalRepository.repositoryPath).existsSync();
+    assert(remoteRepositoryFound);
+
     await doTest(tempLocalRepository, tempRemoteRepository, verbose);
   } finally {
     if (cleanup) {

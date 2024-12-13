@@ -21,7 +21,7 @@ class Remote {
 
   Remote(this.repository, this.name, this.url);
 
-  bool get isPath => url.startsWith("/");
+  bool get isPath => !url.startsWith("http");
 }
 
 extension RemoteCommons on Remote {
